@@ -65,12 +65,14 @@ app.use((err, req, res, next) => {
 
 // MONGOOSE SETUP
 
-console.log(process.env, " env....");
+const isProd = process.env.NODE_ENV === "production";
+
+console.log(process.env, isProd, " env....");
 
 mongoose
   .connect(
     process.env[
-      process.env.NODE_ENV !== "production"
+      process.env.NODE_ENV === "production"
         ? "MONGODB_PROD_URI"
         : "MONGODB_DEV_URI"
     ],
