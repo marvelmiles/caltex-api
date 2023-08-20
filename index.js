@@ -65,11 +65,20 @@ app.use((err, req, res, next) => {
 
 // MONGOOSE SETUP
 
+console.log(process.env, " env....");
+
 mongoose
-  .connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+  .connect(
+    process.env[
+      process.env.NODE_ENV !== "production"
+        ? "MONGODB_PROD_URI"
+        : "MONGODB_DEV_URI"
+    ],
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
+  )
   .then(() => {
     socket(app);
   })
