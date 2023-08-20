@@ -65,10 +65,6 @@ app.use((err, req, res, next) => {
 
 // MONGOOSE SETUP
 
-const isProd = process.env.NODE_ENV === "production";
-
-console.log(process.env, isProd, " env....");
-
 mongoose
   .connect(
     process.env[
