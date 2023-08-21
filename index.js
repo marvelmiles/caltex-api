@@ -8,11 +8,15 @@ import { CLIENT_ENDPOINT } from "./constants";
 import authRouter from "./routers/auth";
 import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
+import path from "path";
+import { fileURLToPath } from "url";
 
 // CONFIGURATIONS
 
 dotenv.config();
 const app = express();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // MIDDLEWARES
 
@@ -33,6 +37,8 @@ app.use(
 app.use(express.urlencoded({ extended: true }));
 
 app.use(cookieParser());
+
+app.use(express.static("public"));
 
 // ROUTES
 

@@ -1,0 +1,32 @@
+/* Apply styles to the table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+/* Apply styles to table headers */
+.cell-heading {
+  border: 1px solid #ddd;
+  padding: 8px;
+  background-color: #f2f2f2;
+  text-align: center;
+  font-weight: 600;
+}
+
+th {
+  border: 1px solid #ddd;
+  padding: 8px 12px;
+}
+
+/* Apply styles to table cells */
+td {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+/* Apply special style to the heading row */
+#heading {
+  text-align: center;
+  font-weight: bold;
+}
