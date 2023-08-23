@@ -1,4 +1,3 @@
-import { isEmail } from "../utils/validators";
 import User from "../models/User";
 import { createError } from "../utils/error";
 import bcrypt from "bcrypt";

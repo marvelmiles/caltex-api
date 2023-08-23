@@ -23,6 +23,7 @@ th {
 td {
   border: 1px solid #ddd;
   padding: 8px;
+  white-space: pre-wrap;
 }
 
 /* Apply special style to the heading row */
@@ -31,6 +32,10 @@ td {
   font-weight: bold;
 }
 
-p {
-  text-align:center;
+.center {
+  text-align: center;
+}
+
+.content {
+  line-height: 32px;
 }

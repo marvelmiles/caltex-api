@@ -1,7 +1,7 @@
 export const getMongooseErrMsg = err => {
   let msg = "";
 
-  const obj = err.errors;
+  const obj = err.errors || {};
   const keys = Object.keys(obj);
 
   for (let i = 0; i < keys.length; i++) {
@@ -13,10 +13,14 @@ export const getMongooseErrMsg = err => {
           info = prop.minlength.message;
           break;
         default:
+          info = info.message;
           break;
       }
     }
-    msg += msg ? `${i === keys.length - 1 ? " and" : ","} ` + info : info;
+
+    msg += msg
+      ? `${i === keys.length - 1 ? " and" : ","} ` + info.toLowerCase()
+      : info;
   }
   return msg;
 };
@@ -30,6 +34,8 @@ export const createError = (message, status) => {
     err.message =
       typeof message === "string" ? message : "Something went wrong!";
     err.status = status || (message.length ? 400 : 500);
+
+    err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
   };
   console.log(
     message.code,
@@ -40,6 +46,7 @@ export const createError = (message, status) => {
   );
   switch (message.name?.toLowerCase()) {
     case "validationerror":
+      err.code = "VALIDATION_ERROR";
       err.message = getMongooseErrMsg(message);
 
       err.status = status || 400;
@@ -62,6 +69,8 @@ export const createError = (message, status) => {
           err.message = "File field not found!";
           err.status = 400;
           break;
+        case "11000":
+          console.log(message.errors);
         default:
           setDefault();
           break;
@@ -73,7 +82,10 @@ export const createError = (message, status) => {
       err.status = 400;
       break;
     default:
-      switch (message.code?.toLowerCase?.()) {
+      switch (
+        message.code &&
+          (message.code.toLowerCase ? message.code.toLowerCase() : message.code)
+      ) {
         case "edns":
         case "econnection":
         case "enotfound":
@@ -81,6 +93,8 @@ export const createError = (message, status) => {
           err.message = "Something went wrong or check network";
           err.status = 504;
           break;
+        case 11000:
+
         default:
           setDefault();
           break;
@@ -95,6 +109,8 @@ export const createError = (message, status) => {
         message.url
       } at ${new Date()}. `
     );
+
+  err.success = false;
 
   return err;
 };
