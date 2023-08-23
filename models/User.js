@@ -5,11 +5,14 @@ import { generateBcryptHash } from "../utils/auth";
 
 const schema = new mongoose.Schema(
   {
-    displayName: String,
+    fullname: {
+      type: String,
+      required: "Your fullname is required"
+    },
     username: {
       type: String,
-      required: "Your username is required",
-      unique: true
+      unique: true,
+      message: "Username isn't available"
     },
     email: {
       type: String,
@@ -68,14 +71,11 @@ schema.pre("save", async function(next) {
     try {
       if (this.password)
         this.password = await generateBcryptHash(this.password);
-
-      next();
     } catch (error) {
       return next(error);
     }
-  } else {
-    return next();
   }
+  next();
 });
 
 export default mongoose.model("user", schema);

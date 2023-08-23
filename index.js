@@ -10,6 +10,8 @@ import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
 import path from "path";
 import { fileURLToPath } from "url";
+import investmentRouter from "./routers/investment";
+import userRouter from "./routers/user";
 
 // CONFIGURATIONS
 
@@ -20,29 +22,30 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // MIDDLEWARES
 
-app.use(
-  cors({
-    origin: CLIENT_ENDPOINT,
-    optionsSuccessStatus: 200,
-    credentials: true
-  })
-);
-
-app.use(
-  express.json({
-    limit: "200mb",
-    extended: true
-  })
-);
-app.use(express.urlencoded({ extended: true }));
-
-app.use(cookieParser());
-
-app.use(express.static("public"));
+app
+  .use(
+    cors({
+      origin: CLIENT_ENDPOINT,
+      optionsSuccessStatus: 200,
+      credentials: true
+    })
+  )
+  .use(
+    express.json({
+      limit: "200mb",
+      extended: true
+    })
+  )
+  .use(express.urlencoded({ extended: true }))
+  .use(cookieParser())
+  .use(express.static("public"));
 
 // ROUTES
 
-app.use("/api/auth", authRouter);
+app
+  .use("/api/auth", authRouter)
+  .use("/api/investments", investmentRouter)
+  .use("/api/users", userRouter);
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {
@@ -58,7 +61,7 @@ app.use((err, req, res, next) => {
       ? err
       : (err.message ? (err.url = req.url || "-") : true) && createError(err);
 
-    if (err) res.status(err.status).json(err.message);
+    if (err) res.status(err.status).json(err);
   }
 
   if (req.file) deleteFile(req.file.publicUrl);
