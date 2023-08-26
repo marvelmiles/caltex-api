@@ -9,13 +9,14 @@ const cwd = process.cwd();
 
 // Read the contents of the directory
 
+const key = process.env.FIREBASE_PRIVATE_KEY;
+
 const files = fs.readdirSync(cwd);
 
 // Print the list of files and folders
 console.log(
   "Contents of the current directory ",
-  process.env.FIREBASE_PRIVATE_KEY,
-  process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/, "\n"),
+  key,
   files
 );
 
@@ -37,7 +38,7 @@ export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/, "\n"),
+  private_key: key,
   client_email: "firebase-adminsdk-hocuy@caltex-api.iam.gserviceaccount.com",
   client_id: "113433279036650090499",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
