@@ -31,7 +31,7 @@ fh("FIRE_LORD");
 fh("FIRE_LORD.txt");
 
 const filePath = path.join(process.env.RENDER_SRC_ROOT, "FIRE_LORD");
-const fileContent = fs.readFileSync(filePath);
+const fileContent = fs.readFileSync(filePath,"utf-8");
 console.log(filePath,fileContent);
 } catch(e){
   console.log(e.message)
