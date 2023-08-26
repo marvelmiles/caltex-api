@@ -1,9 +1,23 @@
 import admin from "firebase-admin";
 import dotenv from "dotenv";
+import fs from "fs";
 
 dotenv.config();
 
 console.log(process.env);
+
+const cwd = process.cwd();
+
+// Read the contents of the directory
+fs.readdir(cwd, (err, files) => {
+  if (err) {
+    console.error("Error reading directory:", err);
+    return;
+  }
+
+  // Print the list of files and folders
+  console.log("Contents of the current directory: ", files);
+});
 
 export const firebaseCredential = admin.credential.cert({
   type: "service_account",
