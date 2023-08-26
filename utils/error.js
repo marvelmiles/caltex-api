@@ -25,10 +25,28 @@ export const getMongooseErrMsg = err => {
   return msg;
 };
 
+export const console500MSG = message =>
+  console.log(
+    `[SERVER_ERROR ${message.name}]: [code:${message.code}]: ${
+      message.message
+    }. URL:${message.url} at ${new Date()}. `
+  );
+
 export const createError = (message, status) => {
-  if (message.status) return message;
+  console.log(
+    message.code,
+    message.message || message,
+    message.url,
+    message.name,
+    "---err"
+  );
 
   const err = new Error();
+
+  if (message.status) {
+    console500MSG(message);
+    return message;
+  }
 
   const setDefault = () => {
     err.message =
@@ -37,13 +55,7 @@ export const createError = (message, status) => {
 
     err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
   };
-  console.log(
-    message.code,
-    message.message || message,
-    message.url,
-    message.name,
-    "---err"
-  );
+
   switch (message.name?.toLowerCase()) {
     case "validationerror":
       err.code = "VALIDATION_ERROR";
@@ -60,6 +72,7 @@ export const createError = (message, status) => {
     case "customerror":
       err.message = message.message || message;
       err.status = status || 400;
+      err.name = message.errName || message.name;
       break;
     case "rangeerror":
     case "referenceerror":
@@ -79,7 +92,7 @@ export const createError = (message, status) => {
     case "fetcherror":
     case "econnreset":
       err.message = "Netowrk error. Check connectivity";
-      err.status = 400;
+      err.status = 504;
       break;
     default:
       switch (
@@ -102,15 +115,9 @@ export const createError = (message, status) => {
       break;
   }
 
-  if (err.status === 500)
-    console.log(
-      `[SERVER_ERROR ${message.name || err.name}]: [code:${message.code ||
-        err.code}]: ${message.message || err.message}. URL:${
-        message.url
-      } at ${new Date()}. `
-    );
+  if (err.status === 500) console500MSG(message);
 
   err.success = false;
-
+  err.details = message.details;
   return err;
 };

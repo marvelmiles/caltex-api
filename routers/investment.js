@@ -8,7 +8,7 @@ import {
 const investmentRouter = express.Router();
 
 investmentRouter
-  .post("/invest", userExist, verifyToken, setupUserInvestment)
+  .post("/invest", verifyToken, userExist, setupUserInvestment)
   .get("/:investmentId", verifyToken, getInvestmentById);
 
 export default investmentRouter;
