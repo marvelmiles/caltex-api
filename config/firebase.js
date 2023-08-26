@@ -4,7 +4,7 @@ import fs from "fs";
 import path from "path";
 
 dotenv.config();
-
+try {
 const cwd = process.cwd();
 
 // Read the contents of the directory
@@ -31,9 +31,11 @@ fh("FIRE_LORD");
 fh("FIRE_LORD.txt");
 
 const filePath = path.join(process.env.RENDER_SRC_ROOT, "FIRE_LORD");
-const fileContent = fs.readfileSync(filePath);
+const fileContent = fs.readFileSync(filePath);
 console.log(filePath,fileContent);
-
+} catch(e){
+  console.log(e.message)
+}
 export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
