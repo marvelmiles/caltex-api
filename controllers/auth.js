@@ -8,7 +8,7 @@ import {
   generateBcryptHash
 } from "../utils/auth";
 import jwt from "jsonwebtoken";
-import { COOKIE_PWD_RESET_KEY, TOKEN_INVALID_MSG } from "../constants";
+import { COOKIE_PWD_RESET_KEY, TOKEN_INVALID_MSG } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
 
@@ -36,6 +36,14 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
+    if (
+      !(
+        !(req.body.placeholder || req.body.email || req.body.username) ||
+        req.body.password
+      )
+    )
+      throw "Invalid body request. Expect (placeholder or email or username) and password included";
+
     const query = {
       $or: [
         { email: req.body.placeholder || req.body.email },

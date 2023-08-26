@@ -4,7 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import socket from "./socket";
-import { CLIENT_ENDPOINT } from "./constants";
+import { CLIENT_ENDPOINT } from "./config/constants";
 import authRouter from "./routers/auth";
 import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";

@@ -9,7 +9,7 @@ import {
   refreshToken
 } from "../controllers/auth";
 import { verifyToken } from "../middlewares";
-import { COOKIE_PWD_RESET_KEY } from "../constants";
+import { COOKIE_PWD_RESET_KEY } from "../config/constants";
 
 const authRouter = express.Router();
 

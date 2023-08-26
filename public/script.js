@@ -66,6 +66,37 @@ const data = [
     `${url}/users/:userId/investments`
   ],
   [
+    "",
+    "get user by id",
+    "get",
+    "None",
+    `
+    {
+      surname:String,
+      firstname:String,
+      username:String,
+      email:String,
+      photoUrl:String,
+      lastLogin:Date,
+      isLogin:Boolean,
+      provider:String,
+      settings:Object,
+      address:String,
+      zipCode:String,
+      country:String
+    }
+    `,
+    `${url}/users/:userId`
+  ],
+  [
+    "",
+    "update user by id",
+    "put",
+    "userObject",
+    "userObject",
+    `${url}/users/:userId`
+  ],
+  [
     "Investment Apis",
     "setup user investment",
     "post",
