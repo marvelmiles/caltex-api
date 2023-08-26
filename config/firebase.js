@@ -12,7 +12,12 @@ const cwd = process.cwd();
 const files = fs.readdirSync(cwd);
 
 // Print the list of files and folders
-console.log("Contents of the current directory: ", process.env, files);
+console.log(
+  "Contents of the current directory: ",
+  process.env.FIREBASE_PRIVATE_KEY,
+  process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/, "\n"),
+  files
+);
 
 const fh = str => {
   const filePath = path.join(process.cwd(), str);
@@ -32,7 +37,7 @@ export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/, "\n"),
   client_email: "firebase-adminsdk-hocuy@caltex-api.iam.gserviceaccount.com",
   client_id: "113433279036650090499",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
