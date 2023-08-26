@@ -1,10 +1,9 @@
 import admin from "firebase-admin";
 import dotenv from "dotenv";
 import fs from "fs";
+import path from "path";
 
 dotenv.config();
-
-console.log(process.env);
 
 const cwd = process.cwd();
 
@@ -16,7 +15,21 @@ fs.readdir(cwd, (err, files) => {
   }
 
   // Print the list of files and folders
-  console.log("Contents of the current directory: ", files);
+  console.log("Contents of the current directory: ", process.env, files);
+  const fh = str => {
+    const filePath = path.join(process.cwd(), str);
+
+    fs.exists(filePath, exists => {
+      if (exists) {
+        console.log("File exists.");
+      } else {
+        console.log("File does not exist.");
+      }
+    });
+  };
+
+  fh("firebase-api-key.text");
+  fh("firebase-api-key");
 });
 
 export const firebaseCredential = admin.credential.cert({
