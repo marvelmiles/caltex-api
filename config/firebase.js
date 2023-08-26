@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+console.log(process.env);
+
 export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
