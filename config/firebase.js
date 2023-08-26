@@ -14,11 +14,7 @@ const key = process.env.FIREBASE_PRIVATE_KEY;
 const files = fs.readdirSync(cwd);
 
 // Print the list of files and folders
-console.log(
-  "Contents of the current directory ",
-  key,
-  files
-);
+console.log("Contents of the current directorys ", key, files);
 
 const fh = str => {
   const filePath = path.join(process.cwd(), str);
