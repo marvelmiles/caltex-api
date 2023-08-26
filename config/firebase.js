@@ -13,7 +13,7 @@ const files = fs.readdirSync(cwd);
 
 // Print the list of files and folders
 console.log(
-  "Contents of the current directory: ",
+  "Contents of the current directory ",
   process.env.FIREBASE_PRIVATE_KEY,
   process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/, "\n"),
   files
