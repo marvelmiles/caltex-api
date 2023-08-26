@@ -9,7 +9,7 @@ const cwd = process.cwd();
 
 // Read the contents of the directory
 
-const key = process.env.FIREBASE_PRIVATE_KEY.replace(/\n/g, "\r\n");
+const key = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
 
 const files = fs.readdirSync(cwd);
 
