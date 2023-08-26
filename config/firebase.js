@@ -8,29 +8,25 @@ dotenv.config();
 const cwd = process.cwd();
 
 // Read the contents of the directory
-fs.readdir(cwd, (err, files) => {
-  if (err) {
-    console.error("Error reading directory:", err);
-    return;
+
+const files = fs.readdirSync(cwd);
+
+// Print the list of files and folders
+console.log("Contents of the current directory: ", process.env, files);
+
+const fh = str => {
+  const filePath = path.join(process.cwd(), str);
+
+  const exists = fs.existsSync(filePath);
+  if (exists) {
+    console.log("File exists.");
+  } else {
+    console.log("File does not exist.");
   }
+};
 
-  // Print the list of files and folders
-  console.log("Contents of the current directory: ", process.env, files);
-  const fh = str => {
-    const filePath = path.join(process.cwd(), str);
-
-    fs.exists(filePath, exists => {
-      if (exists) {
-        console.log("File exists.");
-      } else {
-        console.log("File does not exist.");
-      }
-    });
-  };
-
-  fh("firebase-api-key.text");
-  fh("firebase-api-key");
-});
+fh("firebase-api-key.text");
+fh("firebase-api-key");
 
 export const firebaseCredential = admin.credential.cert({
   type: "service_account",
