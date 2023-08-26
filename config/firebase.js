@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 
 dotenv.config();
+let fileContent;
 try {
 const cwd = process.cwd();
 
@@ -31,7 +32,7 @@ fh("FIRE_LORD");
 fh("FIRE_LORD.txt");
 
 const filePath = path.join(process.env.RENDER_SRC_ROOT, "FIRE_LORD");
-const fileContent = fs.readFileSync(filePath,"utf-8");
+ fileContent = fs.readFileSync(filePath,"utf-8");
 console.log(filePath,fileContent);
 } catch(e){
   console.log(e.message)
