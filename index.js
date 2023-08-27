@@ -12,6 +12,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import investmentRouter from "./routers/investment";
 import userRouter from "./routers/user";
+import transactionRouter from "./routers/transaction";
 
 // CONFIGURATIONS
 
@@ -38,14 +39,16 @@ app
   )
   .use(express.urlencoded({ extended: true }))
   .use(cookieParser())
-  .use(express.static("public"));
+  .use(express.static("public"))
+  .use("/payment", express.static("public/payment.html"));
 
 // ROUTES
 
 app
   .use("/api/auth", authRouter)
   .use("/api/investments", investmentRouter)
-  .use("/api/users", userRouter);
+  .use("/api/users", userRouter)
+  .use("/api/transactions", transactionRouter);
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {

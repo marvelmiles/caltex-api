@@ -73,3 +73,16 @@ export const generateHmac = (input, secret = process.env.JWT_SECRET) => {
   hmac.update(input + "");
   return hmac.digest("hex");
 };
+
+export const generatePaymentAccessToken = async (url, config) => {
+  const response = await fetch(url, {
+    method: "POST",
+    body: "grant_type=client_credentials",
+    headers: {
+      Authorization: `Basic ${config.auth}`
+    }
+  });
+  const data = await response.json();
+
+  return data.access_token;
+};
