@@ -33,7 +33,7 @@ fh("FIRE_LORD.txt");
 
 const filePath = path.join(process.env.RENDER_SRC_ROOT, "FIRE_LORD");
  fileContent = fs.readFileSync(filePath,"utf-8");
- fileContent = fileContent.replace(/\\\\n/gm,"\n");
+ fileContent =  process.env.FIREBASE_PRIVATE_KEY.replace(/\\\\n/gm,"\n");
  console.log(filePath,fileContent);
 } catch(e){
   console.log(e.message)
