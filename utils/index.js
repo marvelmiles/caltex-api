@@ -27,8 +27,22 @@ export const getAll = async ({
     }
   ];
 
+  const addFields = {
+    id: "$_id"
+  };
+
+  const unsetProject = {
+    _id: 0
+  };
+
   for (let i = 0; i < lookups.length; i++) {
-    const pipe = createLookupPipeline(lookups[i]);
+    const lookup = lookups[i];
+    const path = `${lookup.from}._id`;
+
+    unsetProject[path] = 0;
+    addFields[`${lookup.from}.id`] = `$${path}`;
+
+    const pipe = createLookupPipeline(lookup);
 
     if (i === 0) pipeline = pipeline.concat(pipe);
     else {
@@ -46,6 +60,12 @@ export const getAll = async ({
     pipeline.length,
     0,
     {
+      $addFields: addFields
+    },
+    {
+      $project: unsetProject
+    },
+    {
       $facet: {
         data: [{ $limit: limit }],
         totalCount: [{ $count: "count" }]
@@ -61,8 +81,8 @@ export const getAll = async ({
   );
 
   const { data, totalCount } = (await model.aggregate(pipeline))[0] || {
-    data: [],
-    totalCount: 0
+    data,
+    totalCount
   };
   return {
     success: true,
