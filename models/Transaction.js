@@ -14,6 +14,15 @@ const schema = new mongoose.Schema(
       required:
         "Transaction status is required. Expect either processing, approved or rejected"
     },
+    amount: {
+      type: Number,
+      required: "Transaction amount required"
+    },
+    user: {
+      type: String,
+      ref: "user",
+      required: "Transaction user id is required"
+    },
     investment: {
       type: String,
       ref: "investment",
