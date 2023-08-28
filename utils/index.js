@@ -81,8 +81,8 @@ export const getAll = async ({
   );
 
   const { data, totalCount } = (await model.aggregate(pipeline))[0] || {
-    data,
-    totalCount
+    data: [],
+    totalCount: 0
   };
   return {
     success: true,
