@@ -60,3 +60,10 @@ export const capturePayPalOrder = async (req, res, next) => {
     next(err);
   }
 };
+
+export const createCryptoOrder = (req, res, next) => {
+  try {
+  } catch (err) {
+    next(err);
+  }
+};
