@@ -3,6 +3,7 @@ import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/normailizers";
+import { getAll } from "../utils";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -59,7 +60,8 @@ export const getUserById = (req, res, next) => {
 export const getUserTransactionsById = async (req, res, next) => {
   try {
     let {
-      filterDate,
+      createdAt,
+      updatedAt,
       type,
       status,
       amount,
@@ -72,13 +74,15 @@ export const getUserTransactionsById = async (req, res, next) => {
     const query = {},
       investmentQuery = {};
 
-    filterDate && createInEqualityQuery(filterDate, "createdAt", query, String);
+    createdAt && createInEqualityQuery(createdAt, "createdAt", query, Date);
+
+    updatedAt && createInEqualityQuery(updatedAt, "updatedAt", query, Date);
 
     type && (query.type = type);
 
     status && (query.status = status);
 
-    amount && createInEqualityQuery(amount, "amount");
+    amount && createInEqualityQuery(amount, "amount", query, Number);
 
     plan && (investmentQuery.plan = plan);
 
@@ -89,18 +93,25 @@ export const getUserTransactionsById = async (req, res, next) => {
 
     roi && createInEqualityQuery(roi, "roi", investmentQuery);
 
-    res.json({
-      success: true,
-      data: await Transaction.find(query).populate([
-        {
-          path: "user"
-        },
-        {
-          path: "investment",
-          match: investmentQuery
-        }
-      ])
-    });
+    res.json(
+      await getAll({
+        model: Transaction,
+        match: query,
+        lookups: [
+          {
+            from: "investment",
+            pipeline: [
+              {
+                $match: investmentQuery
+              }
+            ]
+          },
+          {
+            from: "user"
+          }
+        ]
+      })
+    );
   } catch (err) {
     next(err);
   }
