@@ -13,6 +13,7 @@ import { fileURLToPath } from "url";
 import investmentRouter from "./routers/investment";
 import userRouter from "./routers/user";
 import transactionRouter from "./routers/transaction";
+import queryType from "query-types";
 
 // CONFIGURATIONS
 
@@ -38,6 +39,7 @@ app
     })
   )
   .use(express.urlencoded({ extended: true }))
+  .use(queryType.middleware())
   .use(cookieParser())
   .use(express.static("public"))
   .use("/payment", express.static("public/payment.html"));

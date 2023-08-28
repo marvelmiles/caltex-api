@@ -4,10 +4,13 @@ export const createInEqualityQuery = (
   query = {},
   castFn = Number
 ) => {
-  let index = 1;
-  const op = str[0] + (str[1] === "=" ? "=" && (index = 2) : "");
+  let index = 0;
+  const op =
+    { ">": ">", "<": "<" }[str[0]] + (str[1] === "=" ? (index = 2) && "=" : "");
 
-  str = castFn(str.slice(index));
+  str = str.slice(index);
+
+  str = castFn.name === "Date" ? new castFn(str) : castFn(str);
 
   switch (op) {
     case ">":
@@ -28,4 +31,41 @@ export const createInEqualityQuery = (
   }
 
   return query;
+};
+
+export const createLookupPipeline = ({
+  from,
+  localField,
+  foreignField = "_id",
+  as: lookupAs,
+  strict = true,
+  ...lookup
+}) => {
+  from = lookup.from || from;
+  localField = localField || from;
+  lookupAs = lookupAs || from;
+
+  return [
+    {
+      $lookup: {
+        from,
+        localField,
+        foreignField,
+        as: lookupAs,
+        ...lookup
+      }
+    },
+    {
+      $addFields: {
+        [lookupAs]: { $arrayElemAt: [`$${lookupAs}`, 0] }
+      }
+    },
+    {
+      $match: strict
+        ? {
+            [lookupAs]: { $ne: null, $exists: true }
+          }
+        : {}
+    }
+  ];
 };

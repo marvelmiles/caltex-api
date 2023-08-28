@@ -19,12 +19,12 @@ const schema = new mongoose.Schema(
       required: "Transaction amount required"
     },
     user: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       ref: "user",
       required: "Transaction user id is required"
     },
     investment: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       ref: "investment",
       required: "Transaction investment id is required."
     }

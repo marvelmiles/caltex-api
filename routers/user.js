@@ -13,7 +13,7 @@ const userRouter = express.Router();
 userRouter
   .get("/:userId", verifyToken, userExist, getUserById)
   .get("/:userId/investments", verifyToken, userExist, getUserInvestmentsById)
-  .get("/:userId", verifyToken, userExist, getUserTransactionsById)
+  .get("/:userId/transactions", verifyToken, userExist, getUserTransactionsById)
   .put("/:userId", verifyToken, uploadFile(), updateUser);
 
 export default userRouter;
