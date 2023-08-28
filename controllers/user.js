@@ -1,8 +1,10 @@
 import Investment from "../models/Investment";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
+import Transaction from "../models/Transaction";
+import { createInEqualityQuery } from "../utils/normailizers";
 
-export const getInvestments = async (req, res, next) => {
+export const getUserInvestmentsById = async (req, res, next) => {
   try {
     res.json({
       success: true,
@@ -49,6 +51,56 @@ export const updateUser = async (req, res, next) => {
 export const getUserById = (req, res, next) => {
   try {
     res.json(req.user);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserTransactionsById = async (req, res, next) => {
+  try {
+    let {
+      filterDate,
+      type,
+      status,
+      amount,
+      plan,
+      tradeType,
+      roi,
+      totalAmount
+    } = req.query;
+
+    const query = {},
+      investmentQuery = {};
+
+    filterDate && createInEqualityQuery(filterDate, "createdAt", query, String);
+
+    type && (query.type = type);
+
+    status && (query.status = status);
+
+    amount && createInEqualityQuery(amount, "amount");
+
+    plan && (investmentQuery.plan = plan);
+
+    totalAmount &&
+      createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
+
+    tradeType && (investmentQuery.tradeType = tradeType);
+
+    roi && createInEqualityQuery(roi, "roi", investmentQuery);
+
+    res.json({
+      success: true,
+      data: await Transaction.find(query).populate([
+        {
+          path: "user"
+        },
+        {
+          path: "investment",
+          match: investmentQuery
+        }
+      ])
+    });
   } catch (err) {
     next(err);
   }
