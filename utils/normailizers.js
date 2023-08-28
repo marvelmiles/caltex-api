@@ -38,7 +38,7 @@ export const createLookupPipeline = ({
   localField,
   foreignField = "_id",
   as: lookupAs,
-  strict = true,
+  strict,
   ...lookup
 }) => {
   from = lookup.from || from;

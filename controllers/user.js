@@ -100,6 +100,7 @@ export const getUserTransactionsById = async (req, res, next) => {
         lookups: [
           {
             from: "investment",
+            strict: true,
             pipeline: [
               {
                 $match: investmentQuery
