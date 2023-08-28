@@ -2,11 +2,11 @@ import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
-    type: {
+    action: {
       type: String,
       enum: ["deposit", "withdrawal"],
       required:
-        "Transaction type is required. Expect either deposit or withdrawal"
+        "Transaction deposit is required. Expect either deposit or withdrawal"
     },
     status: {
       type: String,

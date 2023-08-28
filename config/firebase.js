@@ -20,7 +20,6 @@ export const firebaseCredential = admin.credential.cert({
 admin.initializeApp({
   credential: firebaseCredential
 });
-
 export const storage = admin.storage();
 
 export default admin;
