@@ -10,4 +10,7 @@ export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
 
 export const COINGATE_BASE_URL = "https://api-sandbox.coingate.com/v2";
 
-export const SERVER_DOMAIN = "http://localhost:8080";
+export const SERVER_DOMAIN =
+  process.env.NODE_ENV === "production"
+    ? "https://caltex-api.onrender.com"
+    : "http://localhost:8080";
