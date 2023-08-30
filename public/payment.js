@@ -17,7 +17,7 @@ try {
     "pk_test_51Njo5KBLHOVbSsbcuetnlZZSgIXWWjGLvj4zcRATikgfpLeMt70HpBokJVNT4svg5duUfdsjPhsZdLxc4cOFeOB100FaWSCs4x"
   );
 
-  const url = "http://localhost:8080/api/transactions";
+  const url = `${window.baseUrl}/api/transactions`;
 
   const elements = stripe.elements();
   const cardNumber = elements.create("cardNumber", {

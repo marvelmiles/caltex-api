@@ -1,9 +1,4 @@
-const baseUrl =
-  window.location.hostname === "localhost"
-    ? "http://localhost:8080"
-    : "https://caltex-api.onrender.com";
-
-const url = `${baseUrl}/api`;
+const url = `${window.baseUrl}/api`;
 
 const data = [
   [
@@ -111,7 +106,7 @@ const data = [
   ],
   [
     "Transaction apis",
-    `process payment. visit ${baseUrl}/payment.html`,
+    `process payment. visit ${window.baseUrl}/payment.html`,
     "post",
     ` 
     {

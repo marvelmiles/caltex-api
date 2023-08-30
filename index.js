@@ -41,8 +41,8 @@ app
   .use(express.urlencoded({ extended: true }))
   .use(queryType.middleware())
   .use(cookieParser())
-  .use(express.static("public"))
-  .use("/playground", express.static("public/playground.html"));
+  .use(express.static("public"));
+
 // ROUTES
 
 app
