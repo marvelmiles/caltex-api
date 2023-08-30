@@ -9,7 +9,7 @@ import {
   refreshToken
 } from "../controllers/auth";
 import { verifyToken } from "../middlewares";
-import { COOKIE_VERIFICATION_TOKEN } from "../constants";
+import { COOKIE_VERIFICATION_TOKEN } from "../config/constants";
 
 const authRouter = express.Router();
 

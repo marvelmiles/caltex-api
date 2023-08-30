@@ -1,15 +1,21 @@
 import mongoose from "mongoose";
-import bcrypt from "bcrypt";
 import { isEmail } from "../utils/validators";
 import { generateBcryptHash } from "../utils/auth";
 
 const schema = new mongoose.Schema(
   {
-    displayName: String,
+    lastname: {
+      type: String,
+      required: "Your lastname is required"
+    },
+    firstname: {
+      type: String,
+      required: "Your firstname is required"
+    },
     username: {
       type: String,
-      required: "Your username is required",
-      unique: true
+      unique: true,
+      message: "Username isn't available"
     },
     email: {
       type: String,
@@ -19,7 +25,7 @@ const schema = new mongoose.Schema(
         validator: function(v) {
           return isEmail(v);
         },
-        message: props => "Your email address is invalid"
+        message: "Your email address is invalid"
       }
     },
     password: {
@@ -47,7 +53,6 @@ const schema = new mongoose.Schema(
     emailVerified: {
       type: Boolean,
       default: function() {
-        console.log(this, "... this.");
         return !!this.provider;
       }
     }
@@ -59,8 +64,12 @@ const schema = new mongoose.Schema(
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
+
         delete ret._id;
         delete ret.password;
+        delete ret.resetToken;
+        delete ret.resetDate;
+
         if (ret.settings) delete ret.settings._id;
       }
     }
@@ -77,6 +86,7 @@ schema.pre("save", async function(next) {
   } catch (error) {
     return next(error);
   }
+  next();
 });
 
 export default mongoose.model("user", schema);

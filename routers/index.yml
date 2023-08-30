@@ -1,0 +1,11 @@
+version: "2"
+authtoken: 2UeLyq1qPqos4g576SEidek5Ea0_4VqsCJ7PX3VBdMBdrXU1p
+tunnels:
+  nodejs-dev-env:
+    addr: 8080
+    proto: http
+    host_header: rewrite
+    hostname: https://enormously-sure-werewolf.ngrok-free.app
+    request_header:
+      add:
+        - "skip-browser-warning: true"

@@ -1,9 +1,9 @@
 export const getMongooseErrMsg = err => {
   let msg = "";
 
-  const obj = err.errors;
+  const obj = err.errors || {};
   const keys = Object.keys(obj);
-
+console.log(obj)
   for (let i = 0; i < keys.length; i++) {
     let info = obj[keys[i]];
     if (info.properties) {
@@ -13,33 +13,56 @@ export const getMongooseErrMsg = err => {
           info = prop.minlength.message;
           break;
         default:
+          info = info.message;
           break;
       }
     }
-    msg += msg ? `${i === keys.length - 1 ? " and" : ","} ` + info : info;
+
+    msg += msg
+      ? `${i === keys.length - 1 ? " and" : ","} ` + info.toLowerCase()
+      : info;
   }
   return msg;
 };
 
+export const console500MSG = message =>
+  console.log(
+    `[SERVER_ERROR ${message.name}]: [code:${message.code}]: ${
+      message.message
+    }. URL:${message.url} at ${new Date()}. `
+  );
+
 export const createError = (message, status) => {
-  if (message.status) return message;
-
-  const err = new Error();
-
-  const setDefault = () => {
-    err.message =
-      typeof message === "string" ? message : "Something went wrong!";
-    err.status = status || (message.length ? 400 : 500);
-  };
   console.log(
     message.code,
     message.message || message,
     message.url,
     message.name,
+    message.type,
+    message.status,
     "---err"
   );
-  switch (message.name?.toLowerCase()) {
+
+  const err = new Error();
+
+  if (message.status) {
+    console500MSG(message);
+    return message;
+  }
+
+  const setDefault = () => {
+    err.message =
+      typeof message === "string" || status
+        ? message.message || message
+        : "Something went wrong!";
+    err.status = status || (message.length ? 400 : 500);
+
+    err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
+  };
+
+  switch (message.type?.toLowerCase() || message.name?.toLowerCase()) {
     case "validationerror":
+      err.code = "VALIDATION_ERROR";
       err.message = getMongooseErrMsg(message);
 
       err.status = status || 400;
@@ -53,6 +76,12 @@ export const createError = (message, status) => {
     case "customerror":
       err.message = message.message || message;
       err.status = status || 400;
+      err.name = message.errName || message.name;
+      break;
+    case "stripeinvalidrequesterror":
+      err.message = "Payment process failed. Invalid request body";
+      err.status = message.statusCode || 400;
+      err.name = message.type;
       break;
     case "rangeerror":
     case "referenceerror":
@@ -62,6 +91,8 @@ export const createError = (message, status) => {
           err.message = "File field not found!";
           err.status = 400;
           break;
+        case "11000":
+          console.log(message.errors);
         default:
           setDefault();
           break;
@@ -70,10 +101,13 @@ export const createError = (message, status) => {
     case "fetcherror":
     case "econnreset":
       err.message = "Netowrk error. Check connectivity";
-      err.status = 400;
+      err.status = 504;
       break;
     default:
-      switch (message.code?.toLowerCase?.()) {
+      switch (
+        message.code &&
+          (message.code.toLowerCase ? message.code.toLowerCase() : message.code)
+      ) {
         case "edns":
         case "econnection":
         case "enotfound":
@@ -81,6 +115,7 @@ export const createError = (message, status) => {
           err.message = "Something went wrong or check network";
           err.status = 504;
           break;
+        case 11000:
         default:
           setDefault();
           break;
@@ -88,13 +123,9 @@ export const createError = (message, status) => {
       break;
   }
 
-  if (err.status === 500)
-    console.log(
-      `[SERVER_ERROR ${message.name || err.name}]: [code:${message.code ||
-        err.code}]: ${message.message || err.message}. URL:${
-        message.url
-      } at ${new Date()}. `
-    );
+  if (err.status === 500) console500MSG(message);
 
+  err.success = false;
+  err.details = message.details;
   return err;
 };

@@ -1,18 +1,19 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { setFutureDate } from ".";
 
 export const setSessionCookies = async (res, id, rememberMe, accessOnly) => {
   rememberMe = rememberMe === "true";
 
   const shortT = new Date();
-  const longT = new Date();
+  let longT = new Date();
 
   if (id) {
-    shortT.setMinutes(shortT.getMinutes() + 30);
+    if (rememberMe || true) shortT.setHours(shortT.getHours() + 15);
+    else shortT.setMinutes(shortT.getMinutes() + 15);
 
-    if (rememberMe) longT.setDate(longT.getDate() + 28);
-    else longT.setHours(longT.getHours() + 6);
+    longT = setFutureDate(rememberMe ? 28 : 5);
   } else {
     shortT.setFullYear(1990);
     longT.setFullYear(1990);
@@ -27,7 +28,7 @@ export const setSessionCookies = async (res, id, rememberMe, accessOnly) => {
           },
           process.env.JWT_SECRET,
           {
-            expiresIn: "10m"
+            expiresIn: rememberMe ? "1h" : "15h"
           }
         )
       : "",
@@ -47,7 +48,7 @@ export const setSessionCookies = async (res, id, rememberMe, accessOnly) => {
                 id
               },
               process.env.JWT_SECRET,
-              { expiresIn: "15m" }
+              { expiresIn: rememberMe ? "28d" : "5d" }
             ),
             rememberMe
           })

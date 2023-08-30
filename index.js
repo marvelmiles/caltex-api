@@ -4,12 +4,15 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import socket from "./socket";
-import { CLIENT_ENDPOINT } from "./constants";
+import { CLIENT_ENDPOINT } from "./config/constants";
 import authRouter from "./routers/auth";
 import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
 import path from "path";
 import { fileURLToPath } from "url";
+import investmentRouter from "./routers/investment";
+import userRouter from "./routers/user";
+import transactionRouter from "./routers/transaction";
 import queryType from "query-types";
 
 // CONFIGURATIONS
@@ -21,29 +24,32 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // MIDDLEWARES
 
-app.use(
-  cors({
-    origin: CLIENT_ENDPOINT,
-    optionsSuccessStatus: 200,
-    credentials: true
-  })
-);
-
-app.use(
-  express.json({
-    limit: "200mb",
-    extended: true
-  })
-);
-app.use(express.urlencoded({ extended: true })).use(queryType.middleware());
-
-app.use(cookieParser());
-
-app.use(express.static("public"));
-
+app
+  .use(
+    cors({
+      origin: CLIENT_ENDPOINT,
+      optionsSuccessStatus: 200,
+      credentials: true
+    })
+  )
+  .use(
+    express.json({
+      limit: "200mb",
+      extended: true
+    })
+  )
+  .use(express.urlencoded({ extended: true }))
+  .use(queryType.middleware())
+  .use(cookieParser())
+  .use(express.static("public"))
+  .use("/playground", express.static("public/playground.html"));
 // ROUTES
 
-app.use("/api/auth", authRouter);
+app
+  .use("/api/auth", authRouter)
+  .use("/api/investments", investmentRouter)
+  .use("/api/users", userRouter)
+  .use("/api/transactions", transactionRouter);
 
 app.use((err, req, res, next) => {
   if (res.headersSent) {
@@ -59,11 +65,7 @@ app.use((err, req, res, next) => {
       ? err
       : (err.message ? (err.url = req.url || "-") : true) && createError(err);
 
-    if (err)
-      res.status(err.status).json({
-        success: false,
-        message: err.message
-      });
+    if (err) res.status(err.status).json(err);
   }
 
   if (req.file) deleteFile(req.file.publicUrl);

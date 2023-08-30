@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import { createError } from "../utils/error";
-import { TOKEN_INVALID_MSG } from "../constants";
+import { TOKEN_INVALID_MSG } from "../config/constants";
+import User from "../models/User";
+import { isObjectId } from "../utils/validators";
 
 export const verifyToken = (req, res = {}, next) => {
   const { applyRefresh, cookieKey = "access_token" } = res;
@@ -30,8 +32,22 @@ export const verifyToken = (req, res = {}, next) => {
       else next(err);
       return;
     }
-    req.user = user;
+    req.user = req.user || user;
     req.body && delete req.body._id;
     !throwErr && next();
   });
+};
+
+export const userExist = async (req, res, next) => {
+  try {
+    const uid = req.params.userId || req.body.userId;
+
+    if (!uid || !isObjectId(uid)) throw "Invalid user id";
+
+    if (!(req.user = await User.findById(uid))) throw "User doesn't exist";
+
+    next();
+  } catch (err) {
+    next(err);
+  }
 };

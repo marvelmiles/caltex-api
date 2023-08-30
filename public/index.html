@@ -13,23 +13,155 @@
     <h4>Base url: https://caltex-api.onrender.com</h4>
     <h4>Api url: https://caltex-api.onrender.com/api</h4>
 
+    <h4>Result column specifiy the endpoint object e.g user apis returns user object defined in the get endpoint of that api</h4>
+
+    <div>
+      <strong>Error Body:</strong>
+      {
+        success: false,
+        message:String,
+        code:String,
+        status:Number
+      }
+    </div>
+
+    <div style="margin:20px 0px" > 
+      <strong>Success Body:</strong>
+      { success: true, data: data of result column }
+    </div>
+
     <table>
       <thead id="headerRow">
         <tr>
+          <th>Reason</th>
           <th>Method</th>
           <th>Body</th>
           <th>Result</th>
-          <th>Endpoint</th>
           <th>
-            Error Status
+            Endpoint
           </th>
         </tr>
       </thead>
       <tbody id="tableBody"></tbody>
     </table>
-    <p>
+    <div class="content">
+      <h4 class="center">Investment Api Detiails</h4>
+
+      <div>
+        <strong>tradeType:</strong> String (one of ["forex","crypto"] default to
+        forex)
+      </div>
+      
+      <div>
+        <strong>plan:</strong> String (one of ["starter","professional","master"]
+        default to starter)
+      </div>
+       
+      <div>
+        <strong>duration:</strong> Number (difference between start and end date)
+      </div>
+        
+      <div>
+        <strong>totalAmount:</strong> Number (roi + amount)
+      </div>
+      
+      <div>
+        <strong>withdrawalFeePct: Number (Range 0 - 100)</strong>
+        <li>forex</li>
+        
+        <ul>
+    <li>starter: 10%</li>
+    <li>professional: 7%</li>
+    <li>master: 5%</li>
+  </ul>
+
+  <li>crypto</li>
+  <ul>
+    <li>starter: 5%</li>
+    <li>professional: 10%</li>
+    <li>master: 10%</li>
+  </ul>
+
+</div>
+
+<div>
+  <strong>roiPct: Number (Range 0 - 100)</strong>
+  <li>forex: 2.5%</li>
+
+  <li>crypto</li>
+  <ul>
+    <li>starter: 3.0%</li>
+    <li>professional: 3.5%</li>
+    <li>master: 4.0%</li>
+  </ul>
+
+</div>
+
+
+      <div>
+        <strong>minInvestment: Number </strong>
+         <li>forex</li>
+       
+         <ul>
+       <li>starter: 100</li>
+      <li>professional: 11000</li>
+        <li>master: 51000</li>
+     </ul>
+
+    <li>crypto</li>
+    <ul>
+      <li>starter: 300</li>
+      <li>professional: 16000</li>
+      <li>master: 101000</li>
+    </ul>
+
+    </div>
+
+    <div>
+      <strong>maxInvestment: Number</strong>
+      <li>forex</li>
+    
+      <ul>
+        <li>starter: 10000</li>
+        <li>professional: 50000</li>
+        <li>master: 100000</li>
+      </ul>
+    
+      <li>crypto</li>
+      <ul>
+        <li>starter: 15000</li>
+        <li>professional: 101000</li>
+        <li>master: Unlimited</li>
+      </ul>
+    
+    </div>
+
+    <div>
+      <strong>duration: Number (investment duration in days)</strong>
+      <li>forex</li>
+    
+      <ul>
+        <li>starter: 7</li>
+        <li>professional: 14</li>
+        <li>master: 21</li>
+      </ul>
+    
+      <li>crypto</li>
+      <ul>
+        <li>starter: 10</li>
+        <li>professional: 20</li>
+        <li>master: 30</li>
+      </ul>
+    
+    </div>
+
+
+
+    <p class="center">
       &copy;2023 caltex-api v1
     </p>
     <script src="script.js"></script>
   </body>
 </html>
+
+ 

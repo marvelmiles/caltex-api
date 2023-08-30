@@ -11,7 +11,7 @@ import {
   COOKIE_VERIFICATION_TOKEN,
   TOKEN_INVALID_MSG,
   CLIENT_ENDPOINT
-} from "../constants";
+} from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
 import { generateUserToken } from "../utils/serializers";
@@ -34,6 +34,18 @@ export const signup = async (req, res, next) => {
     const io = req.app.get("socketIo");
     io && io.emit("user", user);
 
+    const sendBody = () =>
+      res.json({
+        success: true,
+        data: `Thank you for signing up${
+          req.body.provider
+            ? ""
+            : ". Please check your email and verify your account"
+        }!`
+      });
+
+    if (user.provider) return sendBody();
+
     sendMail(
       {
         to: req.body.email,
@@ -49,15 +61,9 @@ export const signup = async (req, res, next) => {
         `
       },
       err => {
-        if (err) {
-          return next(err);
-        } else {
-          return res.json({
-            success: true,
-            data:
-              "Thank you for signing up. Please check your email and verify your account!"
-          });
-        }
+        if (err) next(err);
+        else sendBody();
+        return;
       }
     );
   } catch (err) {
@@ -67,6 +73,14 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
+    if (
+      !(
+        !(req.body.placeholder || req.body.email || req.body.username) ||
+        req.body.password
+      )
+    )
+      throw "Invalid body request. Expect (placeholder or email or username) and password included";
+
     const query = {
       $or: [
         { email: req.body.placeholder || req.body.email },
