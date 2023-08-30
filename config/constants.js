@@ -1,6 +1,6 @@
-export const CLIENT_ENDPOINT = "*";
+export const CLIENT_ENDPOINT = "http://localhost:8080/client-test.html";
 
-export const COOKIE_PWD_RESET_KEY = "pwd_reset_token";
+export const COOKIE_VERIFICATION_TOKEN = "verification_access_token";
 
 export const TOKEN_INVALID_MSG = "Authorization credentials is invalid";
 

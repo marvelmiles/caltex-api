@@ -4,9 +4,9 @@ import { generateBcryptHash } from "../utils/auth";
 
 const schema = new mongoose.Schema(
   {
-    surname: {
+    lastname: {
       type: String,
-      required: "Your surname is required"
+      required: "Your lastname is required"
     },
     firstname: {
       type: String,
@@ -42,10 +42,7 @@ const schema = new mongoose.Schema(
     lastLogin: Date,
     isLogin: {
       type: Boolean,
-      set(v) {
-        v && (this.lastLogin = new Date());
-        return v;
-      }
+      default: false
     },
     provider: String,
     resetToken: String,
@@ -53,12 +50,12 @@ const schema = new mongoose.Schema(
     settings: {
       type: Object
     },
-    address: {
-      type: [String],
-      default: []
-    },
-    zipCode: String,
-    country: String
+    emailVerified: {
+      type: Boolean,
+      default: function() {
+        return !!this.provider;
+      }
+    }
   },
   {
     collection: "user",
@@ -80,13 +77,14 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre("save", async function(next) {
-  if (this.isModified("password") || this.isNew) {
-    try {
+  try {
+    if (this.isModified("password") || this.isNew) {
       if (this.password)
         this.password = await generateBcryptHash(this.password);
-    } catch (error) {
-      return next(error);
     }
+    next();
+  } catch (error) {
+    return next(error);
   }
   next();
 });

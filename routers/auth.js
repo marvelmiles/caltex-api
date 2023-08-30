@@ -9,7 +9,7 @@ import {
   refreshToken
 } from "../controllers/auth";
 import { verifyToken } from "../middlewares";
-import { COOKIE_PWD_RESET_KEY } from "../config/constants";
+import { COOKIE_VERIFICATION_TOKEN } from "../config/constants";
 
 const authRouter = express.Router();
 
@@ -22,7 +22,7 @@ authRouter
   .post(
     "/reset-password",
     (req, res, next) =>
-      verifyToken(req, { cookieKey: COOKIE_PWD_RESET_KEY }, next),
+      verifyToken(req, { cookieKey: COOKIE_VERIFICATION_TOKEN }, next),
     resetPwd
   )
   .get("/refresh-token", refreshToken);
