@@ -1,4 +1,9 @@
-const url = "https://caltex-api.onrender.com/api";
+const baseUrl =
+  window.location.hostname === "localhost"
+    ? "http://localhost:8080"
+    : "https://caltex-api.onrender.com";
+
+const url = `${baseUrl}/api`;
 
 const data = [
   [
@@ -67,6 +72,14 @@ const data = [
   ],
   [
     "",
+    "get user transactions by id",
+    "get",
+    "None",
+    "[transactionObject] (array of transaction object)",
+    `${url}/users/:userId/transactions`
+  ],
+  [
+    "",
     "get user by id",
     "get",
     "None",
@@ -95,6 +108,19 @@ const data = [
     "userObject",
     "userObject",
     `${url}/users/:userId`
+  ],
+  [
+    "Transaction apis",
+    `process payment. visit ${baseUrl}/payment.html`,
+    "post",
+    ` 
+    {
+    paymentMethodId: String (Required),
+    amount: Number (Required),
+    }
+    `,
+    "paymentIntentObject",
+    `${url}/transactions/process-payment`
   ],
   [
     "Investment Apis",
