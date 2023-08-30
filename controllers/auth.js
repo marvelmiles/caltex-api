@@ -29,7 +29,10 @@ export const signup = async (req, res, next) => {
     const io = req.app.get("socketIo");
     io && io.emit("user", user);
 
-    res.json("Thank you for signing up. You can signin!");
+    res.json({
+      success: true,
+      data: "Thank you for signing up. You can signin!"
+    });
   } catch (err) {
     next(err);
   }
@@ -65,7 +68,10 @@ export const signin = async (req, res, next) => {
       { new: true }
     );
     await setSessionCookies(res, user.id, req.query.rememberMe);
-    res.json(user);
+    res.json({
+      success: true,
+      data: user
+    });
   } catch (err) {
     next(err);
   }
@@ -74,7 +80,7 @@ export const signin = async (req, res, next) => {
 export const signout = async (req, res, next) => {
   try {
     setSessionCookies(res);
-    res.json("You just got signed out!");
+    res.json({ success: true, data: "You just got signed out!" });
     const user = await User.findByIdAndUpdate(req.user.id, {
       isLogin: false
     });
@@ -121,7 +127,10 @@ export const recoverPwd = async (req, res, next) => {
         if (err) {
           return next(err);
         } else {
-          return res.json("An email has been sent to you");
+          return res.json({
+            success: true,
+            data: "An email has been sent to you"
+          });
         }
       }
     );
@@ -155,7 +164,10 @@ export const verifyUserToken = async (req, res, next) => {
         httpOnly: true
       }
     );
-    res.json("Verification code has been verified");
+    res.json({
+      success: true,
+      data: "Verification code has been verified"
+    });
   } catch (err) {
     next(err);
   }
@@ -186,7 +198,10 @@ export const resetPwd = async (req, res, next) => {
 
     res.cookie(COOKIE_PWD_RESET_KEY, "", { httpOnly: true, expires });
 
-    res.json("Password reset successful");
+    res.json({
+      success: true,
+      data: "Password reset successful"
+    });
   } catch (err) {
     next(err);
   }
@@ -205,7 +220,10 @@ export const refreshToken = async (req, res, next) => {
         true
       );
     else throw createError(`Forbidden access`, 403);
-    res.json("Token refreshed");
+    res.json({
+      success: true,
+      data: "Token refreshed"
+    });
   } catch (err) {
     next(err);
   }
