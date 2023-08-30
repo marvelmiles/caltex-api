@@ -7,12 +7,21 @@ import { getAll } from "../utils";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
-    res.json({
-      success: true,
-      data: await Investment.find({
-        user: req.params.userId
+    const match = {
+      user: req.user._id
+    };
+
+    res.json(
+      await getAll({
+        model: Investment,
+        match,
+        lookups: [
+          {
+            from: "user"
+          }
+        ]
       })
-    });
+    );
   } catch (err) {
     next(err);
   }
@@ -51,7 +60,7 @@ export const updateUser = async (req, res, next) => {
 
 export const getUserById = (req, res, next) => {
   try {
-    res.json(req.user);
+    res.json({ success: true, data: req.user });
   } catch (err) {
     next(err);
   }
@@ -71,32 +80,34 @@ export const getUserTransactionsById = async (req, res, next) => {
       totalAmount
     } = req.query;
 
-    const query = {},
+    const match = {
+        user: req.user._id
+      },
       investmentQuery = {};
 
-    createdAt && createInEqualityQuery(createdAt, "createdAt", query, Date);
+    createdAt && createInEqualityQuery(createdAt, "createdAt", match, Date);
 
-    updatedAt && createInEqualityQuery(updatedAt, "updatedAt", query, Date);
+    updatedAt && createInEqualityQuery(updatedAt, "updatedAt", match, Date);
 
-    type && (query.type = type);
+    amount && createInEqualityQuery(amount, "amount", match, Number);
 
-    status && (query.status = status);
+    type && (match.type = type);
 
-    amount && createInEqualityQuery(amount, "amount", query, Number);
+    status && (match.status = status);
 
     plan && (investmentQuery.plan = plan);
-
-    totalAmount &&
-      createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
 
     tradeType && (investmentQuery.tradeType = tradeType);
 
     roi && createInEqualityQuery(roi, "roi", investmentQuery);
 
+    totalAmount &&
+      createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
+
     res.json(
       await getAll({
         model: Transaction,
-        match: query,
+        match,
         lookups: [
           {
             from: "investment",
