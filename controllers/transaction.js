@@ -112,7 +112,7 @@ export const processPayment = async (req, res, next) => {
     let { investment } = req.body.metadata;
 
     if (!isObject(investment)) {
-      if (process.env.NODE_ENV === "production")
+      if (process.env.NODE_ENV === "production" && false)
         throw "Invalid body metadata. Expect investment object";
       else {
         investment = {
