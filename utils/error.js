@@ -3,7 +3,7 @@ export const getMongooseErrMsg = err => {
 
   const obj = err.errors || {};
   const keys = Object.keys(obj);
-
+console.log(obj)
   for (let i = 0; i < keys.length; i++) {
     let info = obj[keys[i]];
     if (info.properties) {

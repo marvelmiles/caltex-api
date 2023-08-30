@@ -7,14 +7,9 @@ const schema = new mongoose.Schema(
       type: String,
       required: "Transaction payment intent id is required"
     },
-    amount: {
-      type: Number,
-      required: "Transaction amount required"
-    },
     user: {
       type: mongoose.Types.ObjectId,
-      ref: "user",
-      required: "Transaction user id is required"
+      ref: "user"
     },
     investment: {
       type: mongoose.Types.ObjectId,
@@ -36,7 +31,8 @@ const schema = new mongoose.Schema(
       enum: ["processing", "approved", "rejected"],
       default: "processing"
     },
-    amount: Number
+    amount: Number,
+    email: String
   },
   {
     collection: "transaction",

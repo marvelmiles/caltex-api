@@ -5,6 +5,7 @@ import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
 import { createObjBody } from "../utils/serializers";
+import User from "../models/User";
 
 const stripe = stripeModule(process.env.STRIPE_SECRET_KEY);
 
@@ -156,7 +157,11 @@ export const processPayment = async (req, res, next) => {
       desc: intent.desc,
       currency: intent.currency,
       type: intent.object,
-      amount: intent.amount
+      amount: intent.amount,
+      email: req.body.email,
+      user: (await User.aggregate([
+        { $sample: { size: 1 } }
+      ]))[0]?._id.toString()
     });
 
     await transaction.save();
