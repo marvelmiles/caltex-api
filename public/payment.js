@@ -92,6 +92,7 @@ try {
             amount: document.getElementById("amount").value,
             currency: "usd",
             desc,
+            email,
             metadata: {}
           })
         });

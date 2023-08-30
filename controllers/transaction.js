@@ -135,6 +135,7 @@ export const processPayment = async (req, res, next) => {
       currency: req.body.currency || "usd",
       payment_method: req.body.paymentMethodId,
       description: req.body.desc,
+      receipt_email: req.body.email,
       automatic_payment_methods: {
         enabled: true,
         ...req.body["automatic_payment_methods"]
@@ -166,7 +167,8 @@ export const processPayment = async (req, res, next) => {
       success: true,
       data: createObjBody(
         await stripe.paymentIntents.confirm(intent.id, {
-          return_url: `${SERVER_DOMAIN}/api/transactions/success.html`
+          return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
+          receipt_email: req.body.email
         })
       )
     });
