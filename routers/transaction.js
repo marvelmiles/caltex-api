@@ -1,15 +1,19 @@
 import express from "express";
 import {
-  createPayPalOrder,
-  capturePayPalOrder,
-  createCryptoOrder
+  createCryptoOrder,
+  captureCryptoOrder,
+  captureStipeWebhook,
+  processPayment
 } from "../controllers/transaction";
 
 const transactionRouter = express.Router();
 
 transactionRouter
-  .post("/create-paypal-order", createPayPalOrder)
-  .post("/capture-paypal-order", capturePayPalOrder)
-  .post("/create-crypto-order", createCryptoOrder);
+  .use("/success.html", express.static("public/success.html"))
+  .use("/cancel.html", express.static("public/cancel.html"))
+  .post("/process-payment", processPayment)
+  .post("/stripe-webhook", captureStipeWebhook)
+  .post("/create-crypto-order", createCryptoOrder)
+  .post("/orders/:orderId/capture-crypto-order", captureCryptoOrder);
 
 export default transactionRouter;

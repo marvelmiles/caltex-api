@@ -42,8 +42,7 @@ app
   .use(queryType.middleware())
   .use(cookieParser())
   .use(express.static("public"))
-  .use("/payment", express.static("public/payment.html"));
-
+  .use("/playground", express.static("public/playground.html"));
 // ROUTES
 
 app

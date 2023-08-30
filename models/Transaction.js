@@ -1,18 +1,11 @@
 import mongoose from "mongoose";
+import Investment from "./Investment";
 
 const schema = new mongoose.Schema(
   {
-    action: {
+    paymentIntent: {
       type: String,
-      enum: ["deposit", "withdrawal"],
-      required:
-        "Transaction deposit is required. Expect either deposit or withdrawal"
-    },
-    status: {
-      type: String,
-      enum: ["processing", "approved", "rejected"],
-      required:
-        "Transaction status is required. Expect either processing, approved or rejected"
+      required: "Transaction payment intent id is required"
     },
     amount: {
       type: Number,
@@ -27,7 +20,23 @@ const schema = new mongoose.Schema(
       type: mongoose.Types.ObjectId,
       ref: "investment",
       required: "Transaction investment id is required."
-    }
+    },
+    desc: String,
+    currency: {
+      type: String,
+      default: "usd"
+    },
+    type: {
+      type: String,
+      enum: ["deposit", "withdrawal"],
+      default: "deposit"
+    },
+    status: {
+      type: String,
+      enum: ["processing", "approved", "rejected"],
+      default: "processing"
+    },
+    amount: Number
   },
   {
     collection: "transaction",
@@ -40,5 +49,28 @@ const schema = new mongoose.Schema(
     }
   }
 );
+
+// Pre-save middleware
+
+schema.pre("validate", function(next) {
+  if (this.isModified("type") || this.isNew) {
+    this.type = {
+      payment_intent: "deposit"
+    }[this.type];
+  }
+  next();
+});
+
+schema.pre("save", async function(next) {
+  try {
+    if (!this.amount && this.investment) {
+      const doc = await Investment.findById(this.investment);
+      if (doc) this.amount = doc.amount;
+    }
+    next();
+  } catch (error) {
+    return next(error);
+  }
+});
 
 export default mongoose.model("transaction", schema);
