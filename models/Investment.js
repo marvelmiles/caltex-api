@@ -5,7 +5,7 @@ import { isTodayDate } from "../utils/validators";
 const schema = new mongoose.Schema(
   {
     user: {
-      type: String,
+      type: mongoose.Types.ObjectId,
       required: "User id is required",
       ref: "user"
     },
