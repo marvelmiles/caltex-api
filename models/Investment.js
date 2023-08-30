@@ -202,10 +202,6 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.virtual("userId").set(function(v) {
-  this.user = v;
-});
-
 schema.virtual("roi").get(function() {
   if (this.amount && this.roiPct) return (this.roiPct / 100) * this.amount;
 });

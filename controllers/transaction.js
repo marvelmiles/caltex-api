@@ -159,9 +159,7 @@ export const processPayment = async (req, res, next) => {
       type: intent.object,
       amount: intent.amount,
       email: req.body.email,
-      user: (await User.aggregate([
-        { $sample: { size: 1 } }
-      ]))[0]?._id.toString()
+      user: (await User.aggregate([{ $sample: { size: 1 } }]))[0]?._id
     });
 
     await transaction.save();
