@@ -116,9 +116,7 @@ export const processPayment = async (req, res, next) => {
         throw "Invalid body metadata. Expect investment object";
       else {
         investment = {
-          id: (await Investment.aggregate([
-            { $sample: { size: 1 } }
-          ]))[0]?._id.toString()
+          id: (await Investment.aggregate([{ $sample: { size: 1 } }]))[0]?._id
         };
       }
     }
