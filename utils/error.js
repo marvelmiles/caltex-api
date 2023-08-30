@@ -38,6 +38,8 @@ export const createError = (message, status) => {
     message.message || message,
     message.url,
     message.name,
+    message.type,
+    message.status,
     "---err"
   );
 
@@ -50,13 +52,15 @@ export const createError = (message, status) => {
 
   const setDefault = () => {
     err.message =
-      typeof message === "string" ? message : "Something went wrong!";
+      typeof message === "string" || status
+        ? message.message || message
+        : "Something went wrong!";
     err.status = status || (message.length ? 400 : 500);
 
     err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
   };
 
-  switch (message.name?.toLowerCase()) {
+  switch (message.type?.toLowerCase() || message.name?.toLowerCase()) {
     case "validationerror":
       err.code = "VALIDATION_ERROR";
       err.message = getMongooseErrMsg(message);
@@ -73,6 +77,11 @@ export const createError = (message, status) => {
       err.message = message.message || message;
       err.status = status || 400;
       err.name = message.errName || message.name;
+      break;
+    case "stripeinvalidrequesterror":
+      err.message = "Payment process failed. Invalid request body";
+      err.status = message.statusCode || 400;
+      err.name = message.type;
       break;
     case "rangeerror":
     case "referenceerror":
@@ -107,7 +116,6 @@ export const createError = (message, status) => {
           err.status = 504;
           break;
         case 11000:
-
         default:
           setDefault();
           break;

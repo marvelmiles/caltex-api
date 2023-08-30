@@ -16,14 +16,12 @@ const schema = new mongoose.Schema(
       validate: {
         validator: function(v) {
           if (v === Infinity) return false;
-          return v >= this.minInvestment && v <= this.maxInvestment;
+          return v >= this.minAmount && v <= this.maxAmount;
         },
         message: function(props, doc) {
           return `Investment amount must be an integer between ${
-            doc.minInvestment
-          } and ${
-            doc.maxInvestment === Infinity ? "Unlimited" : doc.maxInvestment
-          }`;
+            doc.minAmount
+          } and ${doc.maxAmount === Infinity ? "Unlimited" : doc.maxAmount}`;
         }
       }
     },
@@ -73,7 +71,7 @@ const schema = new mongoose.Schema(
       enum: ["forex", "crypto"],
       default: "forex"
     },
-    minInvestment: {
+    minAmount: {
       type: Number,
       default: function() {
         if (this.tradeType === "crypto") {
@@ -97,7 +95,7 @@ const schema = new mongoose.Schema(
         }
       }
     },
-    maxInvestment: {
+    maxAmount: {
       type: Number,
       default: function() {
         if (this.tradeType === "crypto") {
@@ -183,6 +181,11 @@ const schema = new mongoose.Schema(
           }
         } else return 2.5;
       }
+    },
+    status: {
+      type: String,
+      enum: ["new", "awaiting", "invested", "rejected"],
+      default: "new"
     }
   },
   {

@@ -1,69 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta name="viewport" contenlt="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+    <title>Accept a payment</title>
+    <meta name="description" content="A demo of a payment on Stripe" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="payment.js" defer></script>
+    <style>
+       
+
+      .error { 
+        display:none;
+      }
+
+      .error strong {
+        display:block;
+      }
+
+      .error #payment-message {
+        color:red;
+        margin:16px 0;
+      }
+
+html body .card-input {
+  width: 200px;
+  margin-bottom:16px; 
+}
+
+.card-input input {
+  width: inherit;
+}
+
+     html body input, html body .StripeElement {
+        border: 1px solid #333;
+        padding:4px; 
+      }
+
+
+
+    </style>
   </head>
 
   <body>
-    <!-- Replace "test" with your own sandbox Business account app client ID -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AdaWiw49a_-kM2QYqsmKn4VvXBlAmxbsHfhBcrRTmB9KE5alVjzF8shvGlJuqdC_1HaJDEQoPaxmpnjY&currency=USD"></script>
-    <!-- Set up a container element for the button -->
-    <div id="paypal-button-container"></div>
-    <script>
-      const url = `http://localhost:8080/api/payment`;
-      paypal
-        .Buttons({
-          // Order is created on the server and the order id is returned
-          createOrder() {
-            return fetch(`${url}/create-paypal-order`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              // use the "body" param to optionally pass additional order information
-              // like product skus and quantities
-              body: JSON.stringify({
-                sku: "YOUR_PRODUCT_STOCK_KEEPING_UNIT",
-                quantity: "YOUR_PRODUCT_QUANTITY"
-              })
-            })
-              .then(response => response.json())
-              .then(({ data }) => data.id)
-              .catch(err => console.log(err.message));
-          },
-          // Finalize the transaction on the server after payer approval
-          onApprove(data) {
-            return fetch(`${url}/capture-paypal-order`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify({
-                orderID: data.orderID
-              })
-            })
-              .then(response => response.json())
-              .then(orderData => {
-                // Successful capture! For dev/demo purposes:
-                console.log(
-                  "Capture result",
-                  orderData,
-                  JSON.stringify(orderData, null, 2)
-                );
-                // const transaction =
-                //   orderData.purchase_units[0].payments.captures[0];
-                // alert(
-                //   `Transaction ${transaction.status}: ${transaction.id}\n\nSee console for all available details`
-                // );
-                // When ready to go live, remove the alert and show a success message within this page. For example:
-                // const element = document.getElementById('paypal-button-container');
-                // element.innerHTML = '<h3>Thank you for your payment!</h3>';
-                // Or go to another URL:  window.location.href = 'thank_you.html';
-              })
-              .catch(err => console.log(err.message));
-          }
-        })
-        .render("#paypal-button-container");
-    </script>
+    <!-- Display a payment form -->
+    <form id="payment-form">
+      <h3>Demo deposit page...</h3>
+<p>
+  <strong id="desc" >Description: Forex master plan investment</strong>
+</p>
+      <p>
+        <h4>Test Card: Fill all input using stripe test card.</h4>
+        <p> <strong>Card number:</strong> 5555555555554444</p>
+        <p> <strong>Card exp:</strong> 03/27</p>
+        <p> <strong>Card number:</strong> 343</p>
+      </p> 
+
+      <div class="card-input" id="card-number"></div>
+
+      <div class="card-input" id="card-exp"></div>
+
+      <div class="card-input" id="card-cvc"></div>
+ 
+      <div class="card-input" id="card-cvc"></div>
+  
+      <p> --------------- OPTIONAL -------------</p>
+
+      <div class="card-input">
+        <input type="email" id="user-email" placeholder="Email" />
+      </div>
+
+      <div class="card-input" >
+        <input type="text" id="user-name" placeholder="Fullname" />
+      </div>
+
+      <div class="card-input" >
+        <input type="tel" id="user-phone" placeholder="Phone" />
+      </div>
+
+      <div class="card-input" >
+        <input type="text" id="amount" value="50000" placeholder="Amount"  />
+      </div>
+ <p>
+   Amount in cent. Demo use case 
+   <br /> <br /> 
+   $1.00 = 100 cents. 
+  <br /> <br /> 
+  $500.00 = 50000 cents
+</p>
+
+<p style="color:red" >Amount lesser than $1.00(100 cents) will reject as invalid payment</p>
+
+      <button type="submit" id="submit"> 
+        Pay now
+      </button> 
+ 
+                <p class="error">
+                  <strong>Response message:</strong>
+                  <strong id="payment-message"></strong>
+                
+                </p>
+                
+
+ 
+    </form>
+ 
   </body>
 </html>
