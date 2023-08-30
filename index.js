@@ -10,6 +10,7 @@ import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
 import path from "path";
 import { fileURLToPath } from "url";
+import queryType from "query-types";
 
 // CONFIGURATIONS
 
@@ -34,7 +35,7 @@ app.use(
     extended: true
   })
 );
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })).use(queryType.middleware());
 
 app.use(cookieParser());
 
@@ -58,7 +59,11 @@ app.use((err, req, res, next) => {
       ? err
       : (err.message ? (err.url = req.url || "-") : true) && createError(err);
 
-    if (err) res.status(err.status).json(err.message);
+    if (err)
+      res.status(err.status).json({
+        success: false,
+        message: err.message
+      });
   }
 
   if (req.file) deleteFile(req.file.publicUrl);

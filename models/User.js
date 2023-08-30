@@ -36,16 +36,20 @@ const schema = new mongoose.Schema(
     lastLogin: Date,
     isLogin: {
       type: Boolean,
-      set(v) {
-        v && (this.lastLogin = new Date());
-        return v;
-      }
+      default: false
     },
     provider: String,
     resetToken: String,
     resetDate: Date,
     settings: {
       type: Object
+    },
+    emailVerified: {
+      type: Boolean,
+      default: function() {
+        console.log(this, "... this.");
+        return !!this.provider;
+      }
     }
   },
   {
@@ -64,17 +68,14 @@ const schema = new mongoose.Schema(
 );
 
 schema.pre("save", async function(next) {
-  if (this.isModified("password") || this.isNew) {
-    try {
+  try {
+    if (this.isModified("password") || this.isNew) {
       if (this.password)
         this.password = await generateBcryptHash(this.password);
-
-      next();
-    } catch (error) {
-      return next(error);
     }
-  } else {
-    return next();
+    next();
+  } catch (error) {
+    return next(error);
   }
 });
 

@@ -1,17 +1,20 @@
-import { isEmail } from "../utils/validators";
 import User from "../models/User";
 import { createError } from "../utils/error";
 import bcrypt from "bcrypt";
 import {
   setSessionCookies,
-  generateRandomCode,
   generateHmac,
   generateBcryptHash
 } from "../utils/auth";
 import jwt from "jsonwebtoken";
-import { COOKIE_PWD_RESET_KEY, TOKEN_INVALID_MSG } from "../constants";
+import {
+  COOKIE_VERIFICATION_TOKEN,
+  TOKEN_INVALID_MSG,
+  CLIENT_ENDPOINT
+} from "../constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
+import { generateUserToken } from "../utils/serializers";
 
 export const signup = async (req, res, next) => {
   try {
@@ -24,15 +27,39 @@ export const signup = async (req, res, next) => {
 
     req.body.photoUrl = req.file?.publicUrl;
 
+    const token = generateUserToken(req.body);
+
     user = await new User(req.body).save();
 
     const io = req.app.get("socketIo");
     io && io.emit("user", user);
 
-    res.json({
-      success: true,
-      data: "Thank you for signing up. You can signin!"
-    });
+    sendMail(
+      {
+        to: req.body.email,
+        from: "noreply@gmail.com",
+        subject: "Caltex account verification",
+        text: `
+        Welcome to our caltex! 🌱 To get started on your financial 
+        journey, kindly click the link below for OTP verification.
+        Your account's security and growth are our top priorities. 
+        Let's build a prosperous future together! [Verification Link]
+        OTP = ${token}
+        ${CLIENT_ENDPOINT}
+        `
+      },
+      err => {
+        if (err) {
+          return next(err);
+        } else {
+          return res.json({
+            success: true,
+            data:
+              "Thank you for signing up. Please check your email and verify your account!"
+          });
+        }
+      }
+    );
   } catch (err) {
     next(err);
   }
@@ -56,6 +83,10 @@ export const signin = async (req, res, next) => {
         break;
       default:
         if (!user) throw createError("Account is not registered");
+
+        if (!user.emailVerified)
+          throw createError("Login access denied. Account is not verified");
+
         if (!(await bcrypt.compare(req.body.password, user.password || "")))
           throw createError("Email or password is incorrect");
         break;
@@ -63,7 +94,8 @@ export const signin = async (req, res, next) => {
     user = await User.findByIdAndUpdate(
       { _id: user.id },
       {
-        isLogin: true
+        isLogin: true,
+        lastLogin: new Date()
       },
       { new: true }
     );
@@ -109,10 +141,7 @@ export const recoverPwd = async (req, res, next) => {
     });
     if (!user) throw createError("Account isn't registered", 400);
 
-    const resetToken = generateRandomCode();
-
-    user.resetToken = generateHmac(resetToken);
-    user.resetDate = Date.now() + 3600000; // 1 hour
+    const resetToken = generateUserToken(user);
 
     await user.save();
 
@@ -141,29 +170,42 @@ export const recoverPwd = async (req, res, next) => {
 
 export const verifyUserToken = async (req, res, next) => {
   try {
+    req.query.withCookie =
+      req.query.withCookie === undefined || req.query.withCookie;
+
     const user = await User.findOne({
       email: req.body.email,
       resetToken: generateHmac(req.body.token),
       resetDate: { $gt: Date.now() }
     });
 
-    if (!user) return res.json(TOKEN_INVALID_MSG);
+    if (!user) throw TOKEN_INVALID_MSG;
 
-    res.cookie(
-      COOKIE_PWD_RESET_KEY,
-      jwt.sign(
+    user.resetToken = "";
+
+    if (req.query.withCookie)
+      res.cookie(
+        COOKIE_VERIFICATION_TOKEN,
+        jwt.sign(
+          {
+            id: user.id
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "1h"
+          }
+        ),
         {
-          id: user.id
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "1h"
+          httpOnly: true
         }
-      ),
-      {
-        httpOnly: true
-      }
-    );
+      );
+    else {
+      user.resetDate = null;
+      user.emailVerified = true;
+    }
+
+    await user.save();
+
     res.json({
       success: true,
       data: "Verification code has been verified"
@@ -196,7 +238,7 @@ export const resetPwd = async (req, res, next) => {
     const expires = new Date();
     expires.setFullYear(1990);
 
-    res.cookie(COOKIE_PWD_RESET_KEY, "", { httpOnly: true, expires });
+    res.cookie(COOKIE_VERIFICATION_TOKEN, "", { httpOnly: true, expires });
 
     res.json({
       success: true,
