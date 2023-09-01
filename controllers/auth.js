@@ -57,7 +57,7 @@ export const signup = async (req, res, next) => {
         Your account's security and growth are our top priorities. 
         Let's build a prosperous future together! [Verification Link]
         OTP = ${token}
-        ${CLIENT_ENDPOINT}
+        ${CLIENT_ENDPOINT}/client-test.html
         `
       },
       err => {

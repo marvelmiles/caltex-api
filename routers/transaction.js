@@ -1,19 +1,17 @@
 import express from "express";
 import {
-  createCryptoOrder,
-  captureCryptoOrder,
   captureStipeWebhook,
-  processPayment
+  processFiatPayment,
+  processCryptoPayment,
+  captureCoinbaseWebhook
 } from "../controllers/transaction";
 
 const transactionRouter = express.Router();
 
 transactionRouter
-  .use("/success.html", express.static("public/success.html"))
-  .use("/cancel.html", express.static("public/cancel.html"))
-  .post("/process-payment", processPayment)
-  .post("/stripe-webhook", captureStipeWebhook)
-  .post("/create-crypto-order", createCryptoOrder)
-  .post("/orders/:orderId/capture-crypto-order", captureCryptoOrder);
+  .post("/process-fiat-payment", processFiatPayment)
+  .post("/webhooks/stripe", captureStipeWebhook)
+  .post("/process-crypto-payment", processCryptoPayment)
+  .post("/webhooks/coinbase", captureCoinbaseWebhook);
 
 export default transactionRouter;

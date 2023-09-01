@@ -1,9 +1,17 @@
+export const invalidate = (msg, path, name = "ValidationError") => {
+  const err = new Error();
+  err.message = msg;
+  err.name = name;
+  err.path = path;
+  throw err;
+};
+
 export const getMongooseErrMsg = err => {
   let msg = "";
 
   const obj = err.errors || {};
   const keys = Object.keys(obj);
-console.log(obj)
+
   for (let i = 0; i < keys.length; i++) {
     let info = obj[keys[i]];
     if (info.properties) {
@@ -22,7 +30,7 @@ console.log(obj)
       ? `${i === keys.length - 1 ? " and" : ","} ` + info.toLowerCase()
       : info;
   }
-  return msg;
+  return msg || err.message;
 };
 
 export const console500MSG = message =>
@@ -59,7 +67,7 @@ export const createError = (message, status) => {
 
     err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
   };
-
+  console.log(message.type, message.name, message.code, "__==__");
   switch (message.type?.toLowerCase() || message.name?.toLowerCase()) {
     case "validationerror":
       err.code = "VALIDATION_ERROR";
@@ -104,9 +112,16 @@ export const createError = (message, status) => {
       err.status = 504;
       break;
     default:
+      const msg = message.message || message;
+      console.log("500... defualting ", msg, msg.indexOf("getaddrinfo"));
       switch (
-        message.code &&
-          (message.code.toLowerCase ? message.code.toLowerCase() : message.code)
+        (message.code &&
+          (message.code.toLowerCase
+            ? message.code.toLowerCase()
+            : message.code)) ||
+          (msg?.indexOf &&
+            msg.toLowerCase().indexOf("getaddrinfo") > -1 &&
+            "econnection")
       ) {
         case "edns":
         case "econnection":

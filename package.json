@@ -8,13 +8,14 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node --experimental-modules --experimental-specifier-resolution=node index.js",
     "dev": "nodemon --experimental-modules --experimental-specifier-resolution=node index.js",
-    "dev:ngrok": "ngrok http --domain=enormously-sure-werewolf.ngrok-free.app 8080"
+    "ngrok": "ngrok http --domain=enormously-sure-werewolf.ngrok-free.app 8080"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "coinbase-commerce-node": "^1.0.4",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
