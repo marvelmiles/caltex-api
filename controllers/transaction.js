@@ -38,16 +38,25 @@ export const updatePaymentIntent = async (intent, data) => {
   });
 };
 
-export const validateAndSerializeReqBody = async (body, user) => {
+export const validateAndSerializeReqBody = async (
+  body,
+  userId,
+  stringifyAll = true
+) => {
   body.currency = (body.currency || "usd").toLowerCase();
 
   body.metadata = {};
 
   let investment;
 
-  if (body.investmentId)
-    investment = await Investment.findById(body.investmentId);
-  else if (body.investment) {
+  if (body.investmentId) {
+    investment = await Investment.findById({
+      user: userId,
+      _id: body.investmentId
+    });
+    if (!investment)
+      throw `Ivalid body. No investment record exists for id ${body.investmentId}`;
+  } else if (body.investment) {
     if (
       !(
         body.investment.id &&
@@ -76,7 +85,11 @@ export const validateAndSerializeReqBody = async (body, user) => {
       investment.tradeType
     } ${investment.plan} plan investment`;
 
-  if (user) body.metadata.userId = user.id;
+  body.metadata.user = {
+    id: userId
+  };
+
+  stringifyAll && (body.metadata.user = JSON.stringify(body.metadata.user));
 
   const transId = new mongoose.Types.ObjectId();
 
@@ -103,7 +116,8 @@ const handlePostPaymentIntention = async ({
   currencyType,
   type,
   amount,
-  user = {}
+  userId,
+  customerId
 }) => {
   if (investId)
     await Investment.updateOne({ _id: investId }, { status: "awaiting" });
@@ -118,7 +132,8 @@ const handlePostPaymentIntention = async ({
     investment: investId,
     payment: paymentId,
     email: user.email,
-    user: (await User.aggregate([{ $sample: { size: 1 } }]))[0]?._id
+    user: userId,
+    customer: customerId
   });
 
   await transaction.save();
@@ -128,7 +143,11 @@ export const processFiatPayment = async (req, res, next) => {
   try {
     console.log("proces pay ");
 
-    const { transId, investId } = await validateAndSerializeReqBody(req.body);
+    const { transId, investId } = await validateAndSerializeReqBody(
+      req.body,
+      req.user.id,
+      false
+    );
 
     req.query.denomination = req.query.denomination || "note";
 
@@ -141,12 +160,27 @@ export const processFiatPayment = async (req, res, next) => {
       }
     }
 
+    const user = (await User.findById(req.user.id)).toObject();
+
+    let updateUser =  false;
+
+    const customerId =
+      user.ids.stripe ||
+      ((updateUser = true) && (await stripe.customers.create(user)).id);
+
+    req.body.metadata.user.stripeId = customerId;
+
+    req.body.metadata.user = JSON.stringify(req.body.metadata.user);
+
+    const receiptMail = req.body.email || user.email;
+
     let intent = await stripe.paymentIntents.create({
       amount: req.body.amount, // Amount in currency minimum e.g cent
       currency: req.body.currency,
       payment_method: req.body.paymentMethodId,
       description: req.body.description,
-      receipt_email: req.body.email,
+      receipt_email: receiptMail,
+      customer: customerId,
       automatic_payment_methods: {
         enabled: true,
         ...req.body["automatic_payment_methods"]
@@ -162,7 +196,8 @@ export const processFiatPayment = async (req, res, next) => {
       currency: intent.currency,
       type: intent.object,
       amount: intent.amount,
-      user: req.body
+      userId: user.id,
+      customerId: customerId
     });
 
     console.log("confirming paym...");
@@ -172,11 +207,27 @@ export const processFiatPayment = async (req, res, next) => {
       data: convertToCamelCase(
         await stripe.paymentIntents.confirm(intent.id, {
           return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
-          receipt_email: req.body.email
+          receipt_email: receiptMail
         }),
         "stripeConfirmPaymentIntent"
       )
     });
+
+    try {
+      updateuser &&
+        (await User.updateOne(
+          {
+            _id: user.id
+          },
+          {
+            [`ids.stripe`]: customerId
+          }
+        ));
+    } catch (err) {
+      console.log(
+        `SERVER_WARNING: Failed to update ids.stripe=${customerId} for user ${user.id}`
+      );
+    }
   } catch (err) {
     next(err);
   }
@@ -218,7 +269,10 @@ export const captureStipeWebhook = async (req, res, next) => {
 
 export const processCryptoPayment = async (req, res, next) => {
   try {
-    const { transId, investId } = await validateAndSerializeReqBody(req.body);
+    const { transId, investId } = await validateAndSerializeReqBody(
+      req.body,
+      req.user.id
+    );
 
     const charge = convertToCamelCase(
       await coinbaseSDK.resources.Charge.create({
@@ -243,7 +297,8 @@ export const processCryptoPayment = async (req, res, next) => {
       currency: charge.pricing.local.currency,
       amount: charge.pricing.local.amount,
       user: req.body,
-      currencyType: "crypto"
+      currencyType: "crypto",
+      user: req.user.id
     });
 
     res.json({
