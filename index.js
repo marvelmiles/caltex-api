@@ -22,12 +22,14 @@ const app = express();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+const isProdMode = process.env.NODE_ENV === "production";
+
 // MIDDLEWARES
 
 app
   .use(
     cors({
-      origin: CLIENT_ENDPOINT,
+      origin: isProdMode ? CLIENT_ENDPOINT : "*",
       optionsSuccessStatus: 200,
       credentials: true
     })
@@ -79,17 +81,10 @@ app.use((err, req, res, next) => {
 // MONGOOSE SETUP
 
 mongoose
-  .connect(
-    process.env[
-      process.env.NODE_ENV === "production"
-        ? "MONGODB_PROD_URI"
-        : "MONGODB_DEV_URI"
-    ],
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    }
-  )
+  .connect(process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"], {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   .then(() => {
     socket(app);
   })
