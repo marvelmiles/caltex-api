@@ -67,7 +67,9 @@ export const createError = (message, status) => {
 
     err.code = message.length ? "BAD_REQUEST" : "ERROR_CODE";
   };
+
   console.log(message.type, message.name, message.code, "__==__");
+
   switch (message.type?.toLowerCase() || message.name?.toLowerCase()) {
     case "validationerror":
       err.code = "VALIDATION_ERROR";
