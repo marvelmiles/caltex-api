@@ -162,7 +162,7 @@ export const processFiatPayment = async (req, res, next) => {
 
     const user = (await User.findById(req.user.id)).toObject();
 
-    let updateUser =  false;
+    let updateUser = false;
 
     const customerId =
       user.ids.stripe ||
