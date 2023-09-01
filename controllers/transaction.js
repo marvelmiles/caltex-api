@@ -1,24 +1,25 @@
-import { COINGATE_BASE_URL, SERVER_DOMAIN } from "../config/constants";
-import stripeModule from "stripe";
+import { SERVER_DOMAIN } from "../config/constants";
 import { isObject } from "util";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
-import { createObjBody } from "../utils/serializers";
+import stripeSDK from "stripe";
+import coinbaseSDK from "coinbase-commerce-node";
+import {
+  convertToCamelCase,
+  serializePaymentObject
+} from "../utils/serializers";
 import User from "../models/User";
+import { handlePaymentWebhook } from "../hooks/payment-webhook";
 
-const stripe = stripeModule(process.env.STRIPE_SECRET_KEY);
+const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
-const serializePaymentIntent = intent => {
-  intent.metadata.investment = JSON.parse(intent.metadata.investment);
-  intent.metadata.transaction = JSON.parse(intent.metadata.transaction);
-  return intent;
-};
+coinbaseSDK.Client.init(process.env.COINBASE_API_KEY);
 
 export const updatePaymentIntent = async (intent, data) => {
   if (typeof intent === "string") {
     intent = await stripe.paymentIntents.retrieve(intent);
-    const obj = serializePaymentIntent({
+    const obj = serializePaymentObject({
       metadata: intent.metadata
     });
 
@@ -37,105 +38,114 @@ export const updatePaymentIntent = async (intent, data) => {
   });
 };
 
-export const createCryptoOrder = async (req, res, next) => {
-  try {
-    const url = "http://localhost:8080/api/transactions";
-    console.log("creating...");
+export const validateAndSerializeReqBody = async (body, user) => {
+  body.currency = (body.currency || "usd").toLowerCase();
 
-    const expire = new Date();
+  body.metadata = {};
 
-    expire.setMinutes(expire.getMinutes() + 20);
+  let investment;
 
-    let response = await fetch(`${COINGATE_BASE_URL}/orders/94314/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.COIN_GATE_TOKEN}`
-      },
-      body: JSON.stringify({
-        title: "Order #9995" + Date.now(),
-        price_amount: "1149",
-        price_currency: "EUR",
-        receive_currency: "EUR",
-        callback_url: "http://localhost:8080/callback",
-        success_url: "http://localhost:8080/success",
-        cancel_url: "http://localhost:8080/cancel",
-        order_id: "94313", //Date.now() + "",
-        description: "new one",
-        pay_amount: "50",
-        pay_currency: "ETH",
-        expire_at: expire
-      })
-    });
+  if (body.investmentId)
+    investment = await Investment.findById(body.investmentId);
+  else if (body.investment) {
+    if (
+      !(
+        body.investment.id &&
+        body.investment.duration &&
+        body.investment.tradeType &&
+        body.investment.amount &&
+        body.investment.plan
+      )
+    )
+      throw "Invalid body.investment. Investment id, amount, tradeType, plan and duration are required";
 
-    response = await response.json();
-    console.log(response);
-    res.json(response);
-  } catch (err) {
-    next(err);
-  }
+    investment = body.investment;
+  } else throw "Invalid body. Investment id or investment object is required";
+
+  body.amount = body.amount === undefined ? investment.amount : body.amount;
+
+  if (body.amount === undefined)
+    throw "Transaction amount is required when an investment id or object is absent";
+
+  if (body.amount < 1)
+    throw `Payment process failed. Expect amount to be in the lowest denomination and must be greater than zero`;
+
+  body.description =
+    body.description ||
+    `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
+      investment.tradeType
+    } ${investment.plan} plan investment`;
+
+  if (user) body.metadata.userId = user.id;
+
+  const transId = new mongoose.Types.ObjectId();
+
+  body.metadata.transaction = JSON.stringify({
+    id: transId
+  });
+
+  body.metadata.investment = JSON.stringify({
+    id: investment.id
+  });
+
+  return {
+    transId,
+    investId: investment.id
+  };
 };
 
-export const captureCryptoOrder = async (req, res, next) => {
-  try {
-    const response = await fetch(
-      `${COINGATE_BASE_URL}/orders/${req.params.orderId}/checkout`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.COIN_GATE_TOKEN}`
-        },
-        body: JSON.stringify({
-          pay_currency: "BTC",
-          pay_method: "crypto"
-          // platform_id: "2"
-        })
-      }
-    );
-    console.log(req.params, response?.json);
-    res.json(await response.json());
-  } catch (err) {
-    next(err);
-  }
+const handlePostPaymentIntention = async ({
+  investId,
+  transId,
+  paymentId,
+  description,
+  currency,
+  currencyType,
+  type,
+  amount,
+  user = {}
+}) => {
+  if (investId)
+    await Investment.updateOne({ _id: investId }, { status: "awaiting" });
+
+  const transaction = new Transaction({
+    description,
+    currency,
+    currencyType,
+    type,
+    amount,
+    _id: transId,
+    investment: investId,
+    payment: paymentId,
+    email: user.email,
+    user: (await User.aggregate([{ $sample: { size: 1 } }]))[0]?._id
+  });
+
+  await transaction.save();
 };
 
-export const processPayment = async (req, res, next) => {
+export const processFiatPayment = async (req, res, next) => {
   try {
-    console.log("proces pay ", req.body);
+    console.log("proces pay ");
 
-    if (req.body.amount < 100) throw "Payment process failed. Invalid amount";
+    const { transId, investId } = await validateAndSerializeReqBody(req.body);
 
-    if (!isObject(req.body.metadata))
-      throw "Invalid body expect payment metadata";
+    req.query.denomination = req.query.denomination || "note";
 
-    let { investment } = req.body.metadata;
-
-    if (!isObject(investment)) {
-      if (process.env.NODE_ENV === "production")
-        throw "Invalid body metadata. Expect investment object";
-      else {
-        investment = {
-          id: (await Investment.aggregate([
-            { $sample: { size: 1 } }
-          ]))[0]?._id.toString()
-        };
+    if (req.query.denomination === "note") {
+      switch (req.body.currency) {
+        default:
+          // 1cent = $100
+          req.body.amount = req.body.amount * 100;
+          break;
       }
     }
 
-    const transId = new mongoose.Types.ObjectId();
-
-    req.body.metadata.transaction = JSON.stringify({
-      id: transId
-    });
-
-    req.body.metadata.investment = JSON.stringify(investment);
-
     let intent = await stripe.paymentIntents.create({
       amount: req.body.amount, // Amount in currency minimum e.g cent
-      currency: req.body.currency || "usd",
+      currency: req.body.currency,
       payment_method: req.body.paymentMethodId,
-      description: req.body.desc,
+      description: req.body.description,
       receipt_email: req.body.email,
       automatic_payment_methods: {
         enabled: true,
@@ -144,37 +154,27 @@ export const processPayment = async (req, res, next) => {
       metadata: req.body.metadata
     });
 
-    if (investment.id)
-      await Investment.updateOne(
-        { _id: investment.id },
-        { status: "awaiting" }
-      );
-
-    const transaction = new Transaction({
-      _id: transId,
-      investment: investment.id,
-      paymentIntent: intent.id,
-      desc: intent.desc,
+    await handlePostPaymentIntention({
+      transId,
+      investId,
+      paymentId: intent.id,
+      description: intent.description,
       currency: intent.currency,
       type: intent.object,
       amount: intent.amount,
-      email: req.body.email,
-      user: (await User.aggregate([
-        { $sample: { size: 1 } }
-      ]))[0]?._id.toString()
+      user: req.body
     });
-
-    await transaction.save();
 
     console.log("confirming paym...");
 
     res.json({
       success: true,
-      data: createObjBody(
+      data: convertToCamelCase(
         await stripe.paymentIntents.confirm(intent.id, {
           return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
           receipt_email: req.body.email
-        })
+        }),
+        "stripeConfirmPaymentIntent"
       )
     });
   } catch (err) {
@@ -203,34 +203,73 @@ export const captureStipeWebhook = async (req, res, next) => {
 
     const intent = req.body.data.object;
 
-    console.log("capture webhook...", req.body.type, intent.id);
+    handlePaymentWebhook(req.body, res, async reason => {
+      switch (reason) {
+        case "get-payment-object":
+          return await stripe.paymentIntents.retrieve(intent.payment_intent);
+        default:
+          return;
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 
-    switch (req.body.type) {
-      case "charge.succeeded":
-        const pay = await stripe.paymentIntents.retrieve(intent.payment_intent);
+export const processCryptoPayment = async (req, res, next) => {
+  try {
+    const { transId, investId } = await validateAndSerializeReqBody(req.body);
 
-        serializePaymentIntent(pay);
+    const charge = convertToCamelCase(
+      await coinbaseSDK.resources.Charge.create({
+        name: "Caltex",
+        description: req.body.description,
+        local_price: {
+          amount: req.body.amount,
+          currency: req.body.currency
+        },
+        pricing_type: "fixed_price",
+        metadata: req.body.metadata
+      })
+    );
 
-        await Transaction.updateOne(
-          {
-            _id: pay.metadata.transaction.id
-          },
-          { status: "approved" }
-        );
+    console.log("payemnt succesfful...", charge.id);
 
-        await Investment.updateOne(
-          {
-            _id: pay.metadata.investment.id
-          },
-          { status: "invested" }
-        );
-        break;
-      default:
-        break;
-    }
+    await handlePostPaymentIntention({
+      transId,
+      investId,
+      paymentId: charge.id,
+      description: charge.description,
+      currency: charge.pricing.local.currency,
+      amount: charge.pricing.local.amount,
+      user: req.body,
+      currencyType: "crypto"
+    });
 
     res.json({
-      received: true
+      success: true,
+      data: charge
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const captureCoinbaseWebhook = async (req, res, next) => {
+  try {
+    const event = coinbaseSDK.Webhook.verifyEventBody(
+      JSON.stringify(req.body),
+      req.headers["x-cc-webhook-signature"],
+      process.env.COINBASE_WEBHOOK_SECRET
+    );
+
+    await handlePaymentWebhook(event, res, reason => {
+      switch (reason) {
+        case "get-payment-object":
+          return event.data;
+        default:
+          return;
+      }
     });
   } catch (err) {
     next(err);

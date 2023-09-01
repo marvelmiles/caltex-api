@@ -8,6 +8,4 @@ export const MAIL_USER = "marvellousabidemi2@gmail.com";
 
 export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
 
-export const COINGATE_BASE_URL = "https://api-sandbox.coingate.com/v2";
-
 export const SERVER_DOMAIN = "http://localhost:8080";

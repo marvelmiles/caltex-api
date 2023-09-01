@@ -82,7 +82,7 @@ try {
           return;
         }
 
-        const response = await fetch(`${url}/process-payment`, {
+        const response = await fetch(`${url}/process-fiat-payment`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json"
@@ -93,7 +93,7 @@ try {
             currency: "usd",
             desc,
             email,
-            metadata: {}
+            investmentId: "64e5d7e1b79d2faa8d809fd4"
           })
         });
 
