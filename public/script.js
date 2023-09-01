@@ -106,16 +106,37 @@ const data = [
   ],
   [
     "Transaction apis",
-    `process payment. visit ${window.baseUrl}/payment.html`,
+    `
+    process fiat payment.
+    visit ${window.baseUrl}/payment.html for demo preview
+    `,
     "post",
     ` 
     {
     paymentMethodId: String (Required),
     amount: Number (Required),
+    investmentId:String,
+    investment: investmentObject
     }
     `,
     "paymentIntentObject",
-    `${url}/transactions/process-payment`
+    `${url}/transactions/process-fiat-payment`
+  ],
+  [
+    "Transaction apis",
+    `
+    process crypto payment. 
+    `,
+    "post",
+    ` 
+    { 
+    amount: Number (Required),
+    investmentId:String,
+    investment: investmentObject
+    }
+    `,
+    "coinbase Charge object",
+    `${url}/transactions/process-fiat-payment`
   ],
   [
     "Investment Apis",
