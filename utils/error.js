@@ -70,7 +70,9 @@ export const createError = (message, status) => {
 
   console.log(message.type, message.name, message.code, "__==__");
 
-  switch (message.type?.toLowerCase() || message.name?.toLowerCase()) {
+  switch (
+    (message.type = message.type?.toLowerCase()) || message.name?.toLowerCase()
+  ) {
     case "validationerror":
       err.code = "VALIDATION_ERROR";
       err.message = getMongooseErrMsg(message);
@@ -117,10 +119,11 @@ export const createError = (message, status) => {
       const msg = message.message || message;
       console.log("500... defualting ", msg, msg.indexOf("getaddrinfo"));
       switch (
-        (message.code &&
-          (message.code.toLowerCase
-            ? message.code.toLowerCase()
-            : message.code)) ||
+        message.type ||
+          (message.code &&
+            (message.code.toLowerCase
+              ? message.code.toLowerCase()
+              : message.code)) ||
           (msg?.indexOf &&
             msg.toLowerCase().indexOf("getaddrinfo") > -1 &&
             "econnection")
@@ -129,6 +132,7 @@ export const createError = (message, status) => {
         case "econnection":
         case "enotfound":
         case "esocket":
+        case "stripeconnectionerror":
           err.message = "Something went wrong or check network";
           err.status = 504;
           break;

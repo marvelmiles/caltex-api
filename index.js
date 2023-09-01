@@ -8,21 +8,16 @@ import { CLIENT_ENDPOINT } from "./config/constants";
 import authRouter from "./routers/auth";
 import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
-import path from "path";
-import { fileURLToPath } from "url";
 import investmentRouter from "./routers/investment";
 import userRouter from "./routers/user";
 import transactionRouter from "./routers/transaction";
 import queryType from "query-types";
+import { isProdMode } from "./utils/validators";
 
 // CONFIGURATIONS
 
 dotenv.config();
 const app = express();
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const isProdMode = process.env.NODE_ENV === "production";
 
 // MIDDLEWARES
 
