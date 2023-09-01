@@ -70,11 +70,14 @@ export const createError = (message, status) => {
 
   console.log(message.type, message.name, message.code, "__==__");
 
-  switch (
-    (message.type = message.type?.toLowerCase()) || message.name?.toLowerCase()
-  ) {
+  const keyName =
+    message.type?.toLowerCase() ||
+    message.name?.toLowerCase() ||
+    message.code?.toLowerCase();
+
+  switch (keyName) {
     case "validationerror":
-      err.code = "VALIDATION_ERROR";
+      err.code = message.name;
       err.message = getMongooseErrMsg(message);
 
       err.status = status || 400;
@@ -119,11 +122,7 @@ export const createError = (message, status) => {
       const msg = message.message || message;
       console.log("500... defualting ", msg, msg.indexOf("getaddrinfo"));
       switch (
-        message.type ||
-          (message.code &&
-            (message.code.toLowerCase
-              ? message.code.toLowerCase()
-              : message.code)) ||
+        keyName ||
           (msg?.indexOf &&
             msg.toLowerCase().indexOf("getaddrinfo") > -1 &&
             "econnection")
