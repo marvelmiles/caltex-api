@@ -9,8 +9,9 @@ import {
   convertToCamelCase,
   serializePaymentObject
 } from "../utils/serializers";
-import User from "../models/User";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
+import { createInvestmentDesc } from "../utils/serializers";
+import User from "../models/User";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -55,7 +56,7 @@ export const validateAndSerializeReqBody = async (
       _id: body.investmentId
     });
     if (!investment)
-      throw `Ivalid body. No investment record exists for id ${body.investmentId}`;
+      throw "Ivalid body.investmentId. You can't make payment without creating an investment plan";
   } else if (body.investment) {
     if (
       !(
@@ -79,14 +80,11 @@ export const validateAndSerializeReqBody = async (
   if (body.amount < 1)
     throw `Payment process failed. Expect amount to be in the lowest denomination and must be greater than zero`;
 
-  body.description =
-    body.description ||
-    `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
-      investment.tradeType
-    } ${investment.plan} plan investment`;
+  body.description = body.description || createInvestmentDesc(investment);
 
   body.metadata.user = {
-    id: userId
+    id: userId,
+    email: body.email
   };
 
   stringifyAll && (body.metadata.user = JSON.stringify(body.metadata.user));
@@ -116,6 +114,7 @@ const handlePostPaymentIntention = async ({
   currencyType,
   type,
   amount,
+  email,
   userId,
   customerId
 }) => {
@@ -128,10 +127,10 @@ const handlePostPaymentIntention = async ({
     currencyType,
     type,
     amount,
+    email,
     _id: transId,
     investment: investId,
     payment: paymentId,
-    email: user.email,
     user: userId,
     customer: customerId
   });
@@ -141,7 +140,9 @@ const handlePostPaymentIntention = async ({
 
 export const processFiatPayment = async (req, res, next) => {
   try {
-    console.log("proces pay ");
+    console.log("process pay ");
+
+    req.body.email = req.body.email || req.user.email;
 
     const { transId, investId } = await validateAndSerializeReqBody(
       req.body,
@@ -160,26 +161,29 @@ export const processFiatPayment = async (req, res, next) => {
       }
     }
 
-    const user = (await User.findById(req.user.id)).toObject();
-
     let updateUser = false;
 
     const customerId =
-      user.ids.stripe ||
-      ((updateUser = true) && (await stripe.customers.create(user)).id);
+      req.user.ids.stripe ||
+      ((updateUser = true) &&
+        (await stripe.customers.create({
+          address: req.user.address.line1 && req.user.address,
+          email: req.user.email,
+          name: req.user.fullname,
+          payment_method: req.body.paymentMethodId,
+          phone: req.user.phone[0]
+        })).id);
 
     req.body.metadata.user.stripeId = customerId;
 
     req.body.metadata.user = JSON.stringify(req.body.metadata.user);
-
-    const receiptMail = req.body.email || user.email;
 
     let intent = await stripe.paymentIntents.create({
       amount: req.body.amount, // Amount in currency minimum e.g cent
       currency: req.body.currency,
       payment_method: req.body.paymentMethodId,
       description: req.body.description,
-      receipt_email: receiptMail,
+      receipt_email: req.body.email,
       customer: customerId,
       automatic_payment_methods: {
         enabled: true,
@@ -194,9 +198,10 @@ export const processFiatPayment = async (req, res, next) => {
       paymentId: intent.id,
       description: intent.description,
       currency: intent.currency,
+      email: req.body.email,
       type: intent.object,
       amount: intent.amount,
-      userId: user.id,
+      userId: req.user.id,
       customerId: customerId
     });
 
@@ -207,27 +212,26 @@ export const processFiatPayment = async (req, res, next) => {
       data: convertToCamelCase(
         await stripe.paymentIntents.confirm(intent.id, {
           return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
-          receipt_email: receiptMail
-        }),
-        "stripeConfirmPaymentIntent"
+          receipt_email: req.body.email
+        })
       )
     });
 
-    try {
-      updateuser &&
-        (await User.updateOne(
-          {
-            _id: user.id
-          },
-          {
-            [`ids.stripe`]: customerId
-          }
-        ));
-    } catch (err) {
-      console.log(
-        `SERVER_WARNING: Failed to update ids.stripe=${customerId} for user ${user.id}`
-      );
-    }
+    updateUser &&
+      User.updateOne(
+        {
+          _id: req.user.id
+        },
+        {
+          [`ids.stripe`]: customerId
+        }
+      )
+        .then(data => data)
+        .catch(err =>
+          console.log(
+            `[SERVER_WARNING: process-fiat-payment]: Failed to update ids.stripe=${customerId} for user ${user.id}`
+          )
+        );
   } catch (err) {
     next(err);
   }
@@ -269,6 +273,10 @@ export const captureStipeWebhook = async (req, res, next) => {
 
 export const processCryptoPayment = async (req, res, next) => {
   try {
+    console.log("procesing crypto...");
+
+    req.body.email = req.body.email || req.user.id;
+
     const { transId, investId } = await validateAndSerializeReqBody(
       req.body,
       req.user.id
@@ -292,13 +300,14 @@ export const processCryptoPayment = async (req, res, next) => {
     await handlePostPaymentIntention({
       transId,
       investId,
+      email: req.body.email,
       paymentId: charge.id,
       description: charge.description,
       currency: charge.pricing.local.currency,
       amount: charge.pricing.local.amount,
       user: req.body,
       currencyType: "crypto",
-      user: req.user.id
+      userId: req.user.id
     });
 
     res.json({

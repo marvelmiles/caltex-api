@@ -1,5 +1,9 @@
 const msg = document.getElementById("payment-message");
 
+const headers = {
+  "Content-Type": "application/json"
+};
+
 const showMessage = (err, color = "red") => {
   console.log(err);
   msg.parentElement.style.display = "block";
@@ -17,7 +21,7 @@ try {
     "pk_test_51Njo5KBLHOVbSsbcuetnlZZSgIXWWjGLvj4zcRATikgfpLeMt70HpBokJVNT4svg5duUfdsjPhsZdLxc4cOFeOB100FaWSCs4x"
   );
 
-  const url = "http://localhost:8080/api/transactions";
+  const url = `${window.API_ENDPOINT}/transactions`;
 
   const elements = stripe.elements();
   const cardNumber = elements.create("cardNumber", {
@@ -39,38 +43,102 @@ try {
 
   const btn = document.getElementById("submit");
 
+  const paymentEmail = document.getElementById("user-email");
+
+  const paymentName = document.getElementById("user-name");
+
+  const paymentAmount = document.getElementById("amount");
+
+  const investDesc = document.getElementById("invest-desc");
+
+  const amount = paymentAmount.value;
+
   const resetInputs = () => {
     btn.textContent = "Pay now";
     btn.disabled = false;
   };
+
+  let investmentId;
+
+  document
+    .getElementById("signin-form")
+    .addEventListener("submit", async function(e) {
+      try {
+        console.log("submit signin...");
+        e.preventDefault();
+        let user = await fetch(`${window.API_ENDPOINT}/auth/signin`, {
+          headers,
+          method: "POST",
+          body: JSON.stringify({
+            email: document.getElementById("signin-email").value,
+            password: document.getElementById("signin-password").value
+          })
+        });
+
+        user = await user.json();
+
+        console.log(user);
+
+        if (user.success === false) throw user;
+
+        let invest = await fetch(`${window.API_ENDPOINT}/investments/invest`, {
+          headers,
+          method: "POST",
+          body: JSON.stringify({
+            amount,
+            startDate: new Date()
+          })
+        });
+
+        invest = await invest.json();
+
+        console.log(invest);
+
+        if (invest.success === false) throw invest;
+
+        invest = invest.data;
+
+        investmentId = invest.id;
+
+        investDesc.textContent =
+          "Investment description: " + invest.description;
+
+        paymentEmail.value = user.email;
+
+        if (user.lastname)
+          paymentName.value = user.firstname + " " + user.lastname;
+
+        showMessage("Signin successful", "green");
+      } catch (err) {
+        console.log(err);
+        showMessage("Login error: " + err.message);
+      }
+    });
 
   document
     .getElementById("payment-form")
     .addEventListener("submit", async function(e) {
       try {
         clearMessage();
-        console.log("submitting...");
+        console.log("submitting payment...");
 
         btn.textContent = "processing...";
         btn.disabled = true;
 
         e.preventDefault();
 
-        const email = document.getElementById("user-email").value;
+        const email = paymentEmail.value;
 
-        const name = document.getElementById("user-name").value;
+        const name = paymentName.value;
 
-        const phone = document.getElementById("user-phone").value;
-
-        const desc = document.getElementById("desc").textContent;
+        const description = investDesc.textContent;
 
         const { paymentMethod, error } = await stripe.createPaymentMethod({
           type: "card",
           card: cardNumber,
           billing_details: {
             email,
-            name,
-            phone
+            name
           }
         });
 
@@ -83,17 +151,15 @@ try {
         }
 
         const response = await fetch(`${url}/process-fiat-payment`, {
+          headers,
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
           body: JSON.stringify({
+            investmentId,
+            amount,
             paymentMethodId: paymentMethod.id,
-            amount: document.getElementById("amount").value,
             currency: "usd",
-            desc,
-            email,
-            investmentId: "64e5d7e1b79d2faa8d809fd4"
+            description,
+            email
           })
         });
 
@@ -109,7 +175,7 @@ try {
           "green"
         );
       } catch (err) {
-        console.log(err, err.message);
+        console.log(err);
         showMessage("Payment error: " + err.message);
       } finally {
         resetInputs();

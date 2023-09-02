@@ -4,9 +4,9 @@ import { generateBcryptHash } from "../utils/auth";
 
 const schema = new mongoose.Schema(
   {
-    surname: {
+    lastname: {
       type: String,
-      required: "Your surname is required"
+      required: "Your lastname is required"
     },
     firstname: {
       type: String,
@@ -54,11 +54,26 @@ const schema = new mongoose.Schema(
       type: Object
     },
     address: {
-      type: [String],
-      default: []
+      type: new mongoose.Schema(
+        {
+          city: String,
+          country: String,
+          line1: String,
+          line2: String,
+          postalCode: String,
+          state: String
+        },
+        {}
+      ),
+      default: {}
     },
-    zipCode: String,
-    country: String
+    country: String,
+    ids: {
+      type: Map,
+      of: String,
+      default: {}
+    },
+    phone: [String]
   },
   {
     collection: "user",
@@ -72,12 +87,18 @@ const schema = new mongoose.Schema(
         delete ret.password;
         delete ret.resetToken;
         delete ret.resetDate;
+        delete ret.address._id;
 
         if (ret.settings) delete ret.settings._id;
       }
     }
   }
 );
+
+schema.virtual("fullname").get(function() {
+  console.log("gotten fullname...");
+  return this.firstname + " " + this.lastname;
+});
 
 schema.pre("save", async function(next) {
   if (this.isModified("password") || this.isNew) {

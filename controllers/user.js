@@ -2,7 +2,7 @@ import Investment from "../models/Investment";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 import Transaction from "../models/Transaction";
-import { createInEqualityQuery } from "../utils/normailizers";
+import { createInEqualityQuery } from "../utils/normalizers";
 import { getAll } from "../utils";
 
 export const getUserInvestmentsById = async (req, res, next) => {
@@ -18,7 +18,7 @@ export const getUserInvestmentsById = async (req, res, next) => {
   }
 };
 
-export const updateUser = async (req, res, next) => {
+export const updateUserById = async (req, res, next) => {
   try {
     const uid = req.params.userId;
 

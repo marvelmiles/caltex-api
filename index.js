@@ -43,6 +43,7 @@ app
   .use(cookieParser())
   .use(express.static("public"))
   .use("/playground", express.static("public/playground.html"));
+
 // ROUTES
 
 app

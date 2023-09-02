@@ -27,7 +27,7 @@ export const getMongooseErrMsg = err => {
     }
 
     msg += msg
-      ? `${i === keys.length - 1 ? " and" : ","} ` + info.toLowerCase()
+      ? `${i === keys.length - 1 ? " and " : ", "}` + info.toLowerCase()
       : info;
   }
   return msg || err.message;
@@ -87,7 +87,7 @@ export const createError = (message, status) => {
       err.name = message.errName || message.name;
       break;
     case "stripeinvalidrequesterror":
-      err.message = "Payment process failed. Invalid request body";
+      err.message = message.message || message;
       err.status = message.statusCode || 400;
       err.name = message.type;
       break;

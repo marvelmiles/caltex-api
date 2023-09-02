@@ -40,7 +40,7 @@ export const verifyToken = (req, res = {}, next) => {
 
 export const userExist = async (req, res, next) => {
   try {
-    const uid = req.params.userId || req.body.userId;
+    const uid = req.params.userId || req.body.userId || req.user?.id;
 
     if (!uid || !isObjectId(uid)) throw "Invalid user id";
 
