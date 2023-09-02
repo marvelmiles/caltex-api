@@ -105,6 +105,37 @@ const data = [
     `${url}/users/:userId`
   ],
   [
+    "",
+    "verify user identity",
+    "post",
+    `
+    {
+      documentType:String,
+      documentNumber:Number
+    }
+    `,
+    `
+    {
+      documentType:String,
+      documentNumber:Number,
+      verificationResult:true,
+      verificationDate:Date,
+      location:{
+        latitude:String,
+        longitude:String,
+        address:{
+          street:String,
+          city:String,
+          state:String,
+          zip:Number,
+          country:String
+        }
+      }
+    }
+      `,
+    `${url}/users/verify`
+  ],
+  [
     "Transaction apis",
     `
     process fiat payment.

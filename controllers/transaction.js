@@ -154,7 +154,6 @@ export const processFiatPayment = async (req, res, next) => {
     if (req.query.denomination === "note") {
       switch (req.body.currency) {
         default:
-          // 1cent = $100
           req.body.amount = req.body.amount * 100;
           break;
       }

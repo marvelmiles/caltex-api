@@ -53,8 +53,6 @@ try {
 
   const investDesc = document.getElementById("invest-desc");
 
-  const amount = paymentAmount.value;
-
   const resetInputs = () => {
     btn.textContent = "Pay now";
     btn.disabled = false;
@@ -87,7 +85,7 @@ try {
           headers,
           method: "POST",
           body: JSON.stringify({
-            amount,
+            amount: paymentAmount.value,
             startDate: new Date()
           })
         });
@@ -104,6 +102,8 @@ try {
 
         investDesc.textContent =
           "Investment description: " + invest.description;
+
+        user = user.data;
 
         paymentEmail.value = user.email;
 
@@ -151,13 +151,13 @@ try {
           resetInputs();
           return;
         }
-
+        console.log(paymentAmount.value, " amoutn ");
         const response = await fetch(`${url}/process-fiat-payment`, {
           headers,
           method: "POST",
           body: JSON.stringify({
             investmentId,
-            amount,
+            amount: paymentAmount.value,
             paymentMethodId: paymentMethod.id,
             currency: "usd",
             description,

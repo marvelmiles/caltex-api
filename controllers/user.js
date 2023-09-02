@@ -4,6 +4,7 @@ import { isObjectId } from "../utils/validators";
 import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/normalizers";
 import { getAll } from "../utils";
+import { v4 as uniq } from "uuid";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -124,6 +125,220 @@ export const getUserTransactionsById = async (req, res, next) => {
         ]
       })
     );
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyUserIdentity = (req, res, next) => {
+  try {
+    // this is just a pseudo code and actual api code will be used in production
+
+    const { documentType, documentNumber } = req.body;
+
+    if (!(documentType && documentNumber))
+      throw "Document type and document number are required";
+
+    const driverLicenseNumbers = [
+      "A123-456-789-012",
+      "B987-654-321-098",
+      "C567-890-123-456",
+      "D321-098-765-432",
+      "E678-901-234-567"
+    ];
+
+    const passportNumbers = [
+      "AB123456",
+      "CD987654",
+      "EF567890",
+      "GH123456",
+      "IJ987654"
+    ];
+
+    const nationalIDNumbers = [
+      "987654321B",
+      "987654321",
+      "567890123",
+      "321098765",
+      "678901234"
+    ];
+
+    const mockVerification = () => {
+      const isVerified = Math.random() > 0.5; // Mock result (true or false)
+
+      function camelToSnake(str) {
+        return str.replace(/[A-Z]/g, match => `_${match.toLowerCase()}`);
+      }
+
+      const generateRandomLoc = () => {
+        function getRandomAddressInUSA() {
+          // Sample data for generating random addresses
+          const streetNames = [
+            "Main St",
+            "Elm St",
+            "Oak Ave",
+            "Maple Ln",
+            "Cedar Dr",
+            "Pine Rd",
+            "River View Rd"
+          ];
+
+          const cities = [
+            "New York",
+            "Los Angeles",
+            "Chicago",
+            "Houston",
+            "Phoenix",
+            "Philadelphia",
+            "San Antonio",
+            "San Diego",
+            "Dallas",
+            "San Jose"
+          ];
+
+          const states = [
+            "Alabama",
+            "Alaska",
+            "Arizona",
+            "Arkansas",
+            "California",
+            "Colorado",
+            "Connecticut",
+            "Delaware",
+            "Florida",
+            "Georgia",
+            "Hawaii",
+            "Idaho",
+            "Illinois",
+            "Indiana",
+            "Iowa",
+            "Kansas",
+            "Kentucky",
+            "Louisiana",
+            "Maine",
+            "Maryland",
+            "Massachusetts",
+            "Michigan",
+            "Minnesota",
+            "Mississippi",
+            "Missouri",
+            "Montana",
+            "Nebraska",
+            "Nevada",
+            "New Hampshire",
+            "New Jersey",
+            "New Mexico",
+            "New York",
+            "North Carolina",
+            "North Dakota",
+            "Ohio",
+            "Oklahoma",
+            "Oregon",
+            "Pennsylvania",
+            "Rhode Island",
+            "South Carolina",
+            "South Dakota",
+            "Tennessee",
+            "Texas",
+            "Utah",
+            "Vermont",
+            "Virginia",
+            "Washington",
+            "West Virginia",
+            "Wisconsin",
+            "Wyoming"
+          ];
+
+          // Generate random elements for the address
+          const randomStreetName =
+            streetNames[Math.floor(Math.random() * streetNames.length)];
+          const randomCity = cities[Math.floor(Math.random() * cities.length)];
+          const randomState = states[Math.floor(Math.random() * states.length)];
+          const randomZIPCode = Math.floor(Math.random() * 90000) + 10000; // Generate a 5-digit ZIP code
+
+          // Construct the random address
+          const address = {
+            street: `${Math.floor(Math.random() * 2000) +
+              1} ${randomStreetName}`,
+            city: randomCity,
+            state: randomState,
+            zip: randomZIPCode,
+            country: "United States"
+          };
+
+          return address;
+        }
+
+        const getRandomBoundaries = () => {
+          // Define boundaries for latitude and longitude within the USA
+          const minLatitude = 24.396308; // Southernmost point in the USA
+          const maxLatitude = 49.384358; // Northernmost point in the USA
+          const minLongitude = -125.0; // Westernmost point in the USA
+          const maxLongitude = -66.93457; // Easternmost point in the USA
+
+          // Generate random latitude within the boundaries
+          const latitude =
+            Math.random() * (maxLatitude - minLatitude) + minLatitude;
+
+          // Generate random longitude within the boundaries
+          const longitude =
+            Math.random() * (maxLongitude - minLongitude) + minLongitude;
+          return { longitude, latitude };
+        };
+
+        const { latitude, longitude } = getRandomBoundaries();
+
+        return {
+          latitude,
+          longitude,
+          address: getRandomAddressInUSA()
+        };
+      };
+
+      // Generate a detailed response body
+      const response = {
+        TransactionRecordID: uniq(),
+        RecordStatus: "match",
+        DatasourceResults: [],
+        uploadedDt: new Date().toISOString(),
+        verified: isVerified,
+        documentType: camelToSnake(documentType),
+        documentNumber: documentNumber,
+        verificationResult: isVerified,
+        location: generateRandomLoc()
+      };
+
+      return response;
+    };
+
+    // Simulate the verification process based on the document type
+    let result = null;
+
+    switch (documentType) {
+      case "nationalId":
+        if (!nationalIDNumbers.includes(documentNumber))
+          throw "Invalid national identity number";
+        result = mockVerification();
+        break;
+      case "driverLicense":
+        if (!driverLicenseNumbers.includes(documentNumber))
+          throw "Invalid national identity number";
+        result = mockVerification();
+        break;
+      case "passport":
+        if (!passportNumbers.includes(documentNumber))
+          throw "Invalid national identity number";
+        result = mockVerification();
+        break;
+      default:
+        res.status(400).json({ error: "Invalid document type" });
+        return;
+    }
+
+    res.json({
+      success: true,
+      data: result
+    });
   } catch (err) {
     next(err);
   }
