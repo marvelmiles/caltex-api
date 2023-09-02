@@ -34,6 +34,8 @@ export const updateUserById = async (req, res, next) => {
 
     if (!uid || !isObjectId(uid)) throw "Invalid user id";
 
+    console.log(uid, "uid..");
+
     const update = {
       $set: req.body,
       photoUrl: req.file?.publicUrl
@@ -41,9 +43,22 @@ export const updateUserById = async (req, res, next) => {
 
     delete update.$set.address;
     delete update.$set.password;
+    delete update.$set.phone;
 
     for (const key in req.body.address) {
       update[`address.${key}`] = req.body.address[key];
+    }
+
+    if (req.body.phone) {
+      if (Array.isArray(req.body.phone))
+        update.$addToSet = {
+          phone: { $each: req.body.phone }
+        };
+      else if (typeof req.body.phone === "string")
+        update.$addToSet = {
+          phone: req.body.phone
+        };
+      else throw "Invalid body.phone expect an array or string";
     }
 
     const user = await User.findByIdAndUpdate(uid, update, { new: true });
