@@ -14,6 +14,7 @@ userRouter
   .get("/:userId", verifyToken, userExist, getUserById)
   .get("/:userId/investments", verifyToken, userExist, getUserInvestmentsById)
   .get("/:userId/transactions", verifyToken, userExist, getUserTransactionsById)
-  .put("/:userId", verifyToken, uploadFile(), updateUserById);
+  .put("/:userId", verifyToken, uploadFile(), updateUserById)
+  .put("/verify");
 
 export default userRouter;
