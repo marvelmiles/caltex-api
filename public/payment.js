@@ -60,6 +60,8 @@ try {
 
   let investmentId;
 
+  console.log(window.API_ENDPOINT, window.baseUrl, "--");
+
   document
     .getElementById("signin-form")
     .addEventListener("submit", async function(e) {
