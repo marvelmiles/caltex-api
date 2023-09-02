@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
    <script src="polyfills.js" ></script>
     <script src="https://js.stripe.com/v3/"></script>
+    <script src="polyfills.js"></script>
     <script src="payment.js" defer></script>
     <style>
        
@@ -44,19 +45,26 @@ html body .card-input {
   </head>
 
   <body>
-     <!-- Display a payment form -->
-    <form id="payment-form">
+ <p style="color:red" >You need to signin and invest before payment. For test sake investment plan is created automatically </p>
       <h3>Demo deposit page...</h3>
-<p>
-  <strong id="desc" >Description: Caltex 14 days forex master plan investment</strong>
-</p>
+      <p>
+        <strong id="invest-desc"></strong>
+      </p>
       <p>
         <h4>Test Card: Fill all input using stripe test card.</h4>
         <p> <strong>Card number:</strong> 5555555555554444</p>
         <p> <strong>Card exp:</strong> 03/27</p>
         <p> <strong>Card number:</strong> 343</p>
-      </p> 
+      </p>
 
+      <form id="signin-form" style="margin-bottom:24px;" >
+        <input type="email" placeholder="Email" id="signin-email" />
+        <input type="password" placeholder="Password" id="signin-password" />
+        <button type="submit" style="margin-top:16px;" >Signin and invest</button>
+      </form>
+    
+    <form id="payment-form">
+ 
       <div class="card-input" id="card-number"></div>
 
       <div class="card-input" id="card-exp"></div>
@@ -74,10 +82,7 @@ html body .card-input {
       <div class="card-input" >
         <input type="text" id="user-name" placeholder="Fullname" />
       </div>
-
-      <div class="card-input" >
-        <input type="tel" id="user-phone" placeholder="Phone" />
-      </div>
+ 
 
       <div class="card-input" >
         <input type="text" id="amount" value="500" placeholder="Amount"  />

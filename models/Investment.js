@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { setFutureDate, getDaysDifference } from "../utils";
 import { isTodayDate } from "../utils/validators";
+import { createInvestmentDesc } from "../utils/serializers";
 
 const schema = new mongoose.Schema(
   {
@@ -38,6 +39,8 @@ const schema = new mongoose.Schema(
       type: Date,
       validate: {
         validator: function(v) {
+          if (!this.startDate) return true;
+
           const uDate = new Date(v);
           const sDate = new Date(this.startDate);
 
@@ -51,7 +54,7 @@ const schema = new mongoose.Schema(
           );
         },
         message:
-          "Invalid date. Expect end date to be at least a day ahead of start date"
+          "The expected end date should be at least a day ahead of start date"
       },
       set(v) {
         if (this.startDate && v)
@@ -208,6 +211,10 @@ schema.virtual("roi").get(function() {
 
 schema.virtual("totalAmount").get(function() {
   if (this.roi && this.amount) return this.amount + this.roi;
+});
+
+schema.virtual("description").get(function() {
+  return createInvestmentDesc(this);
 });
 
 export default mongoose.model("investment", schema);

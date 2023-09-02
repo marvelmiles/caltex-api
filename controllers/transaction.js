@@ -8,8 +8,9 @@ import {
   convertToCamelCase,
   serializePaymentObject
 } from "../utils/serializers";
-import User from "../models/User";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
+import { createInvestmentDesc } from "../utils/serializers";
+import User from "../models/User";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -37,16 +38,25 @@ export const updatePaymentIntent = async (intent, data) => {
   });
 };
 
-export const validateAndSerializeReqBody = async (body, user) => {
+export const validateAndSerializeReqBody = async (
+  body,
+  userId,
+  stringifyAll = true
+) => {
   body.currency = (body.currency || "usd").toLowerCase();
 
   body.metadata = {};
 
   let investment;
 
-  if (body.investmentId)
-    investment = await Investment.findById(body.investmentId);
-  else if (body.investment) {
+  if (body.investmentId) {
+    investment = await Investment.findById({
+      user: userId,
+      _id: body.investmentId
+    });
+    if (!investment)
+      throw "Ivalid body.investmentId. You can't make payment without creating an investment plan";
+  } else if (body.investment) {
     if (
       !(
         body.investment.id &&
@@ -69,13 +79,14 @@ export const validateAndSerializeReqBody = async (body, user) => {
   if (body.amount < 1)
     throw `Payment process failed. Expect amount to be in the lowest denomination and must be greater than zero`;
 
-  body.description =
-    body.description ||
-    `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
-      investment.tradeType
-    } ${investment.plan} plan investment`;
+  body.description = body.description || createInvestmentDesc(investment);
 
-  if (user) body.metadata.userId = user.id;
+  body.metadata.user = {
+    id: userId,
+    email: body.email
+  };
+
+  stringifyAll && (body.metadata.user = JSON.stringify(body.metadata.user));
 
   const transId = new mongoose.Types.ObjectId();
 
@@ -102,7 +113,9 @@ const handlePostPaymentIntention = async ({
   currencyType,
   type,
   amount,
-  user = {}
+  email,
+  userId,
+  customerId
 }) => {
   if (investId)
     await Investment.updateOne({ _id: investId }, { status: "awaiting" });
@@ -113,11 +126,12 @@ const handlePostPaymentIntention = async ({
     currencyType,
     type,
     amount,
+    email,
     _id: transId,
     investment: investId,
     payment: paymentId,
-    email: user.email,
-    user: (await User.aggregate([{ $sample: { size: 1 } }]))[0]?._id
+    user: userId,
+    customer: customerId
   });
 
   await transaction.save();
@@ -125,9 +139,15 @@ const handlePostPaymentIntention = async ({
 
 export const processFiatPayment = async (req, res, next) => {
   try {
-    console.log("proces pay ");
+    console.log("process pay ");
 
-    const { transId, investId } = await validateAndSerializeReqBody(req.body);
+    req.body.email = req.body.email || req.user.email;
+
+    const { transId, investId } = await validateAndSerializeReqBody(
+      req.body,
+      req.user.id,
+      false
+    );
 
     req.query.denomination = req.query.denomination || "note";
 
@@ -140,12 +160,30 @@ export const processFiatPayment = async (req, res, next) => {
       }
     }
 
+    let updateUser = false;
+
+    const customerId =
+      req.user.ids.stripe ||
+      ((updateUser = true) &&
+        (await stripe.customers.create({
+          address: req.user.address.line1 && req.user.address,
+          email: req.user.email,
+          name: req.user.fullname,
+          payment_method: req.body.paymentMethodId,
+          phone: req.user.phone[0]
+        })).id);
+
+    req.body.metadata.user.stripeId = customerId;
+
+    req.body.metadata.user = JSON.stringify(req.body.metadata.user);
+
     let intent = await stripe.paymentIntents.create({
       amount: req.body.amount, // Amount in currency minimum e.g cent
       currency: req.body.currency,
       payment_method: req.body.paymentMethodId,
       description: req.body.description,
       receipt_email: req.body.email,
+      customer: customerId,
       automatic_payment_methods: {
         enabled: true,
         ...req.body["automatic_payment_methods"]
@@ -159,10 +197,11 @@ export const processFiatPayment = async (req, res, next) => {
       paymentId: intent.id,
       description: intent.description,
       currency: intent.currency,
+      email: req.body.email,
       type: intent.object,
       amount: intent.amount,
-      email: req.body.email,
-      user: (await User.aggregate([{ $sample: { size: 1 } }]))[0]?._id
+      userId: req.user.id,
+      customerId: customerId
     });
 
     console.log("confirming paym...");
@@ -173,10 +212,25 @@ export const processFiatPayment = async (req, res, next) => {
         await stripe.paymentIntents.confirm(intent.id, {
           return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
           receipt_email: req.body.email
-        }),
-        "stripeConfirmPaymentIntent"
+        })
       )
     });
+
+    updateUser &&
+      User.updateOne(
+        {
+          _id: req.user.id
+        },
+        {
+          [`ids.stripe`]: customerId
+        }
+      )
+        .then(data => data)
+        .catch(err =>
+          console.log(
+            `[SERVER_WARNING: process-fiat-payment]: Failed to update ids.stripe=${customerId} for user ${user.id}`
+          )
+        );
   } catch (err) {
     next(err);
   }
@@ -218,7 +272,14 @@ export const captureStipeWebhook = async (req, res, next) => {
 
 export const processCryptoPayment = async (req, res, next) => {
   try {
-    const { transId, investId } = await validateAndSerializeReqBody(req.body);
+    console.log("procesing crypto...");
+
+    req.body.email = req.body.email || req.user.id;
+
+    const { transId, investId } = await validateAndSerializeReqBody(
+      req.body,
+      req.user.id
+    );
 
     const charge = convertToCamelCase(
       await coinbaseSDK.resources.Charge.create({
@@ -238,12 +299,14 @@ export const processCryptoPayment = async (req, res, next) => {
     await handlePostPaymentIntention({
       transId,
       investId,
+      email: req.body.email,
       paymentId: charge.id,
       description: charge.description,
       currency: charge.pricing.local.currency,
       amount: charge.pricing.local.amount,
       user: req.body,
-      currencyType: "crypto"
+      currencyType: "crypto",
+      userId: req.user.id
     });
 
     res.json({

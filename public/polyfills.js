@@ -18,3 +18,5 @@ function isLocalhost(hostname = window.location.hostname) {
 window.baseUrl = isLocalhost()
   ? "http://localhost:8080"
   : "https://caltex-api.onrender.com";
+
+window.API_ENDPOINT = window.location.origin + "/api";

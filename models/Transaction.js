@@ -36,7 +36,8 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ["fiat", "crypto"],
       default: "fiat"
-    }
+    },
+    customer: String
   },
   {
     collection: "transaction",

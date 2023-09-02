@@ -1,4 +1,4 @@
-import { createLookupPipeline } from "./normailizers";
+import { createLookupPipeline } from "./normalizers";
 
 export const setFutureDate = days => {
   return new Date(new Date().getTime() + days * 86400000);

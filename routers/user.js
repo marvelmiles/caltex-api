@@ -2,7 +2,7 @@ import express from "express";
 import { verifyToken, userExist } from "../middlewares";
 import {
   getUserInvestmentsById,
-  updateUser,
+  updateUserById,
   getUserById,
   getUserTransactionsById
 } from "../controllers/user";
@@ -14,6 +14,6 @@ userRouter
   .get("/:userId", verifyToken, userExist, getUserById)
   .get("/:userId/investments", verifyToken, userExist, getUserInvestmentsById)
   .get("/:userId/transactions", verifyToken, userExist, getUserTransactionsById)
-  .put("/:userId", verifyToken, uploadFile(), updateUser);
+  .put("/:userId", verifyToken, uploadFile(), updateUserById);
 
 export default userRouter;

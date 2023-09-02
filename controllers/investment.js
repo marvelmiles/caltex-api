@@ -2,7 +2,7 @@ import Investment from "../models/Investment";
 
 export const setupUserInvestment = async (req, res, next) => {
   try {
-    req.body.user = req.user._id;
+    req.body.user = req.user.id;
 
     const investment = new Investment(req.body);
 
