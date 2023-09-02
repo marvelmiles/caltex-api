@@ -42,9 +42,9 @@ export const updateUserById = async (req, res, next) => {
     delete update.$set.address;
     delete update.$set.password;
 
-    if (req.query.addressIndex)
-      update.$set[`address${addressIndex}`] = req.body.address;
-    else update.$set.address = req.body.address;
+    for (const key in req.body.address) {
+      update[`address.${key}`] = req.body.address[key];
+    }
 
     const user = await User.findByIdAndUpdate(uid, update, { new: true });
 
