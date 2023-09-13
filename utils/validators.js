@@ -18,3 +18,23 @@ export const isTodayDate = function(v) {
     uDate.getDate() >= date.getDate()
   );
 };
+
+export const isPassword = password => {
+  if (password.length < 8) return "Weak";
+
+  const hasUpperCase = /[A-Z]/.test(password);
+  const hasLowerCase = /[a-z]/.test(password);
+  const hasNumbers = /[0-9]/.test(password);
+  const hasSymbols = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/\-|=]/.test(password);
+
+  const mixedCharactersCount = [
+    hasUpperCase,
+    hasLowerCase,
+    hasNumbers,
+    hasSymbols
+  ].filter(Boolean).length;
+
+  if (mixedCharactersCount === 4) return "Strong";
+  else if (mixedCharactersCount >= 2) return "Medium";
+  else return "Weak";
+};

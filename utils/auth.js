@@ -3,67 +3,10 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { setFutureDate } from ".";
 
-export const setSessionCookies = async (res, id, rememberMe, accessOnly) => {
-  rememberMe = rememberMe === "true";
-
-  const shortT = new Date();
-  let longT = new Date();
-
-  if (id) {
-    if (rememberMe || true) shortT.setHours(shortT.getHours() + 15);
-    else shortT.setMinutes(shortT.getMinutes() + 15);
-
-    longT = setFutureDate(rememberMe ? 28 : 5);
-  } else {
-    shortT.setFullYear(1990);
-    longT.setFullYear(1990);
-  }
-
-  res.cookie(
-    "access_token",
-    id
-      ? jwt.sign(
-          {
-            id
-          },
-          process.env.JWT_SECRET,
-          {
-            expiresIn: rememberMe ? "1h" : "15h"
-          }
-        )
-      : "",
-    {
-      httpOnly: true,
-      expires: shortT
-    }
-  );
-
-  if (!accessOnly)
-    res.cookie(
-      "refresh_token",
-      id // stringify because of socket.io
-        ? JSON.stringify({
-            jwt: jwt.sign(
-              {
-                id
-              },
-              process.env.JWT_SECRET,
-              { expiresIn: rememberMe ? "28d" : "5d" }
-            ),
-            rememberMe
-          })
-        : "",
-      {
-        httpOnly: true,
-        expires: longT
-      }
-    );
-};
-
 export const generateRandomCode = () =>
   Math.floor(100000 + Math.random() * 900000);
 
-export const generateBcryptHash = async (str, rounds = 10) => {
+export const generateBcryptHash = async (str = "", rounds = 10) => {
   return await bcrypt.hash(str + "", await bcrypt.genSalt(rounds));
 };
 
@@ -72,4 +15,40 @@ export const generateHmac = (input, secret = process.env.JWT_SECRET) => {
   const hmac = crypto.createHmac("sha256", secret);
   hmac.update(input + "");
   return hmac.digest("hex");
+};
+
+export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
+  let { duration = 1, extend, type = "h" } = time;
+  duration = withExtend ? extend : duration;
+
+  let expires = new Date();
+
+  switch (type) {
+    case "h":
+      expires.setHours(expires.getHours() + duration);
+      break;
+    case "d":
+      expires = setFutureDate(duration);
+      break;
+    case "m":
+      expires.setMinutes(expires.getMinutes() + duration);
+      break;
+  }
+
+  res.cookie(
+    name,
+    jwt.sign({ id: uid }, process.env.JWT_SECRET, {
+      expiresIn: duration + type
+    }),
+    {
+      httpOnly: true,
+      expires
+    }
+  );
+};
+
+export const deleteCookie = (name, res) => {
+  const expires = new Date();
+  expires.setFullYear(1990);
+  res.cookie(name, "", { httpOnly: true, expires });
 };

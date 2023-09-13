@@ -2,7 +2,7 @@ import Investment from "../models/Investment";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 import Transaction from "../models/Transaction";
-import { createInEqualityQuery } from "../utils/normalizers";
+import { createInEqualityQuery } from "../utils/serializers";
 import { getAll } from "../utils";
 import { v4 as uniq } from "uuid";
 
@@ -33,8 +33,6 @@ export const updateUserById = async (req, res, next) => {
     const uid = req.params.userId;
 
     if (!uid || !isObjectId(uid)) throw "Invalid user id";
-
-    console.log(uid, "uid..");
 
     const update = {
       $set: req.body,

@@ -25,7 +25,14 @@ export const sendMail = (
       pass
     }
   });
-  transporter.sendMail(mailOptions, cb);
+  transporter.sendMail(mailOptions, (err, info) => {
+    if (err)
+      console.warn(
+        `[SERVER_WARN: ${mailOptions.subject ||
+          "MAIL"}] Encountered an error sending mail to ${email} at ${new Date()}`
+      );
+    cb(err, info);
+  });
 };
 
 export const uploadFile = (config = {}) => {

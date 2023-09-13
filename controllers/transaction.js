@@ -4,10 +4,8 @@ import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
 import stripeSDK from "stripe";
 import coinbaseSDK from "coinbase-commerce-node";
-import {
-  convertToCamelCase,
-  serializePaymentObject
-} from "../utils/serializers";
+import { convertToCamelCase } from "../utils/normalizers";
+import { serializePaymentObject } from "../utils/serializers";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";

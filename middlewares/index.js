@@ -1,37 +1,39 @@
 import jwt from "jsonwebtoken";
 import { createError } from "../utils/error";
-import { TOKEN_INVALID_MSG } from "../config/constants";
+import {
+  HTTP_403_MSG,
+  HTTP_401_MSG,
+  COOKIE_REFRESH_TOKEN,
+  COOKIE_ACCESS_TOKEN
+} from "../config/constants";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 
 export const verifyToken = (req, res = {}, next) => {
-  const { applyRefresh, cookieKey = "access_token" } = res;
-  const rToken = req.cookies.refresh_token
-    ? JSON.parse(req.cookies.refresh_token)
-    : undefined;
+  const {
+    cookieKey = COOKIE_ACCESS_TOKEN,
+    hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN
+  } = res;
 
-  const token = applyRefresh ? rToken?.jwt : req.cookies[cookieKey];
+  const token = req.cookies[cookieKey];
 
-  const status = applyRefresh ? 403 : 401;
   const throwErr = next === undefined;
 
-  if (!token) {
-    const err = createError(TOKEN_INVALID_MSG, status);
+  const handleNextErr = () => {
+    const err = createError(
+      hasForbidden ? HTTP_403_MSG : HTTP_401_MSG,
+      hasForbidden ? 403 : 401
+    );
+
     if (throwErr) throw err;
     else next(err);
-    return;
-  }
+  };
+
+  if (!token) return handleNextErr();
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      err = createError(
-        applyRefresh ? HTTP_403_MSG : TOKEN_INVALID_MSG,
-        status
-      );
-      if (throwErr) throw err;
-      else next(err);
-      return;
-    }
+    if (err) return handleNextErr();
+
     req.user = req.user || user;
     req.body && delete req.body._id;
     !throwErr && next();
@@ -40,14 +42,70 @@ export const verifyToken = (req, res = {}, next) => {
 
 export const userExist = async (req, res, next) => {
   try {
-    const uid = req.params.userId || req.body.userId || req.user?.id;
+    const match = {};
 
-    if (!uid || !isObjectId(uid)) throw "Invalid user id";
+    const message = "User doesn't exist";
 
-    if (!(req.user = await User.findById(uid))) throw "User doesn't exist";
+    const email = req.body.email || req.user?.email;
+
+    const _id = req.params.userId || req.body.userId || req.user?.id;
+
+    if (_id) {
+      if (!isObjectId(_id)) throw message;
+      match._id = _id;
+    } else if (email) match.email = email;
+    else {
+      match.$or = [
+        {
+          email: email || req.body.placeholder
+        },
+        {
+          _id: _id || req.body.placeholder
+        }
+      ];
+    }
+
+    if (!(req.user = await User.findOne(match))) throw message;
 
     next();
   } catch (err) {
     next(err);
   }
+};
+
+export const errHandler = (err, req, res, next) => {
+  if (res.headersSent) {
+    console.warn(
+      "[SERVER_ERROR: HEADER SENT]",
+      req.headers.origin,
+      req.originalUrl,
+      " at ",
+      new Date()
+    );
+  } else {
+    if (req.timedout)
+      err = createError(
+        {
+          message: err.message,
+          code: err.code,
+          details: {
+            timeout: err.timeout
+          }
+        },
+        err.statusCode
+      );
+
+    err = err.statusCode
+      ? err
+      : (err.message ? (err.url = req.url || "-") : true) && createError(err);
+
+    if (err) res.status(err.statusCode).json(err);
+  }
+
+  if (req.file) deleteFile(req.file.publicUrl);
+
+  if (req.files)
+    for (const { publicUrl } of req.files) {
+      deleteFile(publicUrl);
+    }
 };

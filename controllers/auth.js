@@ -1,23 +1,74 @@
 import User from "../models/User";
 import { createError } from "../utils/error";
 import bcrypt from "bcrypt";
+import { generateBcryptHash, deleteCookie, setJWTCookie } from "../utils/auth";
 import {
-  setSessionCookies,
-  generateHmac,
-  generateBcryptHash
-} from "../utils/auth";
-import jwt from "jsonwebtoken";
-import {
-  COOKIE_VERIFICATION_TOKEN,
-  TOKEN_INVALID_MSG,
-  CLIENT_ENDPOINT
+  CLIENT_ENDPOINT,
+  HTTP_403_MSG,
+  HTTP_401_MSG,
+  COOKIE_ACC_VERIFIC,
+  COOKIE_PWD_RESET,
+  COOKIE_ACCESS_TOKEN,
+  COOKIE_REFRESH_TOKEN,
+  SESSION_COOKIE_DURATION
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
-import { generateUserToken } from "../utils/serializers";
+import { serializeUserToken } from "../utils/serializers";
+import { createSuccessBody } from "../utils/normalizers";
+
+const mailAccVerificationToken = (email, token, reject, resolve) => {
+  sendMail(
+    {
+      to: email,
+      from: "noreply@gmail.com",
+      subject: "Caltex account verification",
+      text: `
+        Welcome to caltex! 🌱 To get started on your financial
+        journey, kindly click the link below for OTP verification.
+        Your account's security and growth are our top priorities.
+        Let's build a prosperous future together! [Verification Link]
+        OTP = ${token}
+        ${CLIENT_ENDPOINT}/client-test.html
+        `
+    },
+    err => {
+      if (err) reject(err);
+      else resolve("Verification token as been sent to your mail");
+    }
+  );
+};
+
+const mailAndSerializePwdResetToken = async (user, next, res) => {
+  if (user.accountExpires) throw createError(HTTP_403_MSG, 403);
+
+  const token = await serializeUserToken(user);
+
+  await user.save();
+
+  sendMail(
+    {
+      to: user.email,
+      from: "noreply@gmail.com",
+      subject: "Caltex account password Reset",
+      text: `Your reset code is: ${token}`
+    },
+    err => {
+      if (err) {
+        return next(err);
+      } else {
+        return res.json(
+          createSuccessBody({ message: "An email has been sent to you" })
+        );
+      }
+    }
+  );
+};
 
 export const signup = async (req, res, next) => {
   try {
+    await User.deleteMany({});
+
     let user = await User.findOne({
       $or: [{ username: req.body.username }, { email: req.body.email }]
     });
@@ -27,7 +78,7 @@ export const signup = async (req, res, next) => {
 
     req.body.photoUrl = req.file?.publicUrl;
 
-    const token = generateUserToken(req.body);
+    const token = await serializeUserToken(req.body);
 
     user = await new User(req.body).save();
 
@@ -35,37 +86,21 @@ export const signup = async (req, res, next) => {
     io && io.emit("user", user);
 
     const sendBody = () =>
-      res.json({
-        success: true,
-        data: `Thank you for signing up${
-          req.body.provider
-            ? ""
-            : ". Please check your email and verify your account"
-        }!`
-      });
+      res.json(
+        createSuccessBody({
+          message: `Thank you for signing up${
+            req.body.provider
+              ? ""
+              : ". Please check your email and verify your account"
+          }!`
+        })
+      );
 
     if (user.provider) return sendBody();
 
-    sendMail(
-      {
-        to: req.body.email,
-        from: "noreply@gmail.com",
-        subject: "Caltex account verification",
-        text: `
-        Welcome to our caltex! 🌱 To get started on your financial 
-        journey, kindly click the link below for OTP verification.
-        Your account's security and growth are our top priorities. 
-        Let's build a prosperous future together! [Verification Link]
-        OTP = ${token}
-        ${CLIENT_ENDPOINT}/client-test.html
-        `
-      },
-      err => {
-        if (err) next(err);
-        else sendBody();
-        return;
-      }
-    );
+    setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
+
+    mailAccVerificationToken(user.email, token, next, sendBody);
   } catch (err) {
     next(err);
   }
@@ -73,7 +108,6 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
-    console.log("auth signin ", req.body);
     if (
       !(
         !(req.body.placeholder || req.body.email || req.body.username) ||
@@ -99,26 +133,42 @@ export const signin = async (req, res, next) => {
       default:
         if (!user) throw createError("Account is not registered");
 
-        if (!user.emailVerified)
+        if (user.accountExpires)
           throw createError("Login access denied. Account is not verified");
 
         if (!(await bcrypt.compare(req.body.password, user.password || "")))
           throw createError("Email or password is incorrect");
         break;
     }
+
     user = await User.findByIdAndUpdate(
       { _id: user.id },
       {
-        isLogin: true,
-        lastLogin: new Date()
+        isLogin: true
       },
       { new: true }
     );
-    await setSessionCookies(res, user.id, req.query.rememberMe);
-    res.json({
-      success: true,
-      data: user
-    });
+
+    setJWTCookie(
+      COOKIE_ACCESS_TOKEN,
+      user.id,
+      res,
+      SESSION_COOKIE_DURATION.accessToken
+    );
+
+    setJWTCookie(
+      COOKIE_REFRESH_TOKEN,
+      user.id,
+      res,
+      SESSION_COOKIE_DURATION.refreshToken,
+      req.query.rememberMe
+    );
+
+    res.json(
+      createSuccessBody({
+        data: user
+      })
+    );
   } catch (err) {
     next(err);
   }
@@ -126,23 +176,20 @@ export const signin = async (req, res, next) => {
 
 export const signout = async (req, res, next) => {
   try {
-    setSessionCookies(res);
-    res.json({ success: true, data: "You just got signed out!" });
-    const user = await User.findByIdAndUpdate(req.user.id, {
-      isLogin: false
+    deleteCookie(COOKIE_ACCESS_TOKEN, res);
+    deleteCookie(COOKIE_REFRESH_TOKEN, res);
+
+    res.json(createSuccessBody({ message: "You just got signed out!" }));
+
+    const user = await User.findById(req.user.id);
+
+    await user.updateOne({
+      isLogin: false,
+      settings: {
+        ...user.settings,
+        ...req.body.settings
+      }
     });
-    if (user)
-      await User.updateOne(
-        {
-          _id: req.user.id
-        },
-        {
-          settings: {
-            ...user.settings,
-            ...req.body.settings
-          }
-        }
-      );
   } catch (err) {
     next(err);
   }
@@ -150,81 +197,55 @@ export const signout = async (req, res, next) => {
 
 export const recoverPwd = async (req, res, next) => {
   try {
-    const { email } = req.body;
     const user = await User.findOne({
-      email
+      email: req.body.email,
+      accountExpires: null
     });
-    if (!user) throw createError("Account isn't registered", 400);
 
-    const resetToken = generateUserToken(user);
+    if (!user) throw createError("Account isn't registered or verified", 400);
 
-    await user.save();
+    if (req.cookies[COOKIE_PWD_RESET])
+      verifyToken(req, {
+        cookieKey: COOKIE_PWD_RESET,
+        hasForbidden: true
+      });
+    else setJWTCookie(COOKIE_PWD_RESET, user.id, res);
 
-    sendMail(
-      {
-        to: email,
-        from: "noreply@gmail.com",
-        subject: "Caltex account password Reset",
-        text: `Your reset code is: ${resetToken}`
-      },
-      err => {
-        if (err) {
-          return next(err);
-        } else {
-          return res.json({
-            success: true,
-            data: "An email has been sent to you"
-          });
-        }
-      }
-    );
+    await mailAndSerializePwdResetToken(user, next, res);
   } catch (err) {
+    if (req.cookies[COOKIE_PWD_RESET]) deleteCookie(COOKIE_PWD_RESET, res);
+
     next(err);
   }
 };
 
 export const verifyUserToken = async (req, res, next) => {
   try {
-    req.query.withCookie =
-      req.query.withCookie === undefined || req.query.withCookie;
+    if (!(req.body.token && req.body.email))
+      throw "Invalid requst body. Expect an email and a token";
 
     const user = await User.findOne({
+      accountExpires: { $ne: null },
       email: req.body.email,
-      resetToken: generateHmac(req.body.token),
-      resetDate: { $gt: Date.now() }
+      resetDate: { $gt: new Date().toISOString() }
     });
 
-    if (!user) throw TOKEN_INVALID_MSG;
+    if (!user || !(await bcrypt.compare(req.body.token, user.resetToken)))
+      throw createError(HTTP_401_MSG, 401);
 
-    user.resetToken = "";
-
-    if (req.query.withCookie)
-      res.cookie(
-        COOKIE_VERIFICATION_TOKEN,
-        jwt.sign(
-          {
-            id: user.id
-          },
-          process.env.JWT_SECRET,
-          {
-            expiresIn: "1h"
-          }
-        ),
-        {
-          httpOnly: true
-        }
-      );
-    else {
-      user.resetDate = null;
-      user.emailVerified = true;
-    }
-
-    await user.save();
-
-    res.json({
-      success: true,
-      data: "Verification code has been verified"
+    await user.updateOne({
+      accountExpires: null,
+      resetToken: "",
+      resetDate: null
     });
+
+    deleteCookie(COOKIE_ACC_VERIFIC, res);
+
+    res.json(
+      createSuccessBody({
+        message: "Verification code has been verified"
+      })
+    );
   } catch (err) {
     next(err);
   }
@@ -232,12 +253,17 @@ export const verifyUserToken = async (req, res, next) => {
 
 export const resetPwd = async (req, res, next) => {
   try {
+    if (!(req.body.email && req.body.token && req.body.password))
+      throw "Invalid body. Expect both user email, password and token";
+
     const user = await User.findOne({
+      accountExpires: null,
       email: req.body.email,
-      resetDate: { $gt: Date.now() }
+      resetDate: { $gt: new Date().toISOString() }
     });
 
-    if (!user) throw createError(TOKEN_INVALID_MSG);
+    if (!user || !(await bcrypt.compare(req.body.token, user.resetToken)))
+      throw createError(HTTP_401_MSG, 401);
 
     if (user.provider)
       throw createError(
@@ -250,15 +276,13 @@ export const resetPwd = async (req, res, next) => {
       resetToken: ""
     });
 
-    const expires = new Date();
-    expires.setFullYear(1990);
+    deleteCookie(COOKIE_PWD_RESET, res);
 
-    res.cookie(COOKIE_VERIFICATION_TOKEN, "", { httpOnly: true, expires });
-
-    res.json({
-      success: true,
-      data: "Password reset successful"
-    });
+    res.json(
+      createSuccessBody({
+        message: "Password reset successful"
+      })
+    );
   } catch (err) {
     next(err);
   }
@@ -267,20 +291,66 @@ export const resetPwd = async (req, res, next) => {
 export const refreshToken = async (req, res, next) => {
   try {
     verifyToken(req, {
-      applyRefresh: true
+      cookieKey: COOKIE_REFRESH_TOKEN
     });
-    if (req.user)
-      await setSessionCookies(
-        res,
+
+    if (req.user) {
+      const user = await User.findById(req.user.id);
+
+      if (!user || user.accountExpires) throw createError(HTTP_403_MSG, 403);
+
+      setJWTCookie(
+        COOKIE_ACCESS_TOKEN,
         req.user.id,
-        req.cookies.refresh_token.rememberMe,
-        true
+        res,
+        SESSION_COOKIE_DURATION.accessToken
       );
-    else throw createError(`Forbidden access`, 403);
-    res.json({
-      success: true,
-      data: "Token refreshed"
+    } else throw createError(HTTP_403_MSG, 403);
+
+    res.json(createSuccessBody({ message: "Token refreshed" }));
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const generateUserToken = async (req, res, next) => {
+  try {
+    const cookieKey = {
+      "account-verification": COOKIE_ACC_VERIFIC,
+      "password-reset": COOKIE_PWD_RESET
+    }[req.query.reason];
+
+    verifyToken(req, {
+      cookieKey,
+      hasForbidden: true
     });
+
+    const saveAndSerialize = async user => {
+      const token = await serializeUserToken(user);
+
+      await user.save();
+
+      return token;
+    };
+
+    const resolver = message => res.json(createSuccessBody({ message }));
+
+    switch (req.query.reason) {
+      case "account-verification":
+        if (!req.user.accountExpires) throw createError(HTTP_403_MSG, 403);
+
+        mailAccVerificationToken(
+          req.user.email,
+          await saveAndSerialize(req.user),
+          next,
+          resolver
+        );
+        break;
+      case "password-reset":
+        await mailAndSerializePwdResetToken(req.user, next, res);
+      default:
+        break;
+    }
   } catch (err) {
     next(err);
   }

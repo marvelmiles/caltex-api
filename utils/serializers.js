@@ -1,36 +1,24 @@
-import { generateRandomCode, generateHmac } from "./auth";
+import { generateRandomCode, generateBcryptHash } from "./auth";
+import User from "../models/User";
 
-export const generateUserToken = (
+export const serializeUserToken = async (
   user,
-  milliseconds = Date.now() + 3600000 // 1 hour
+  saltAddon,
+  milliseconds = Date.now() + 60000 // 60 secs
 ) => {
-  const token = generateRandomCode();
-  user.resetToken = generateHmac(token);
-  user.resetDate = milliseconds;
+  let token;
+
+  do {
+    token = generateRandomCode();
+    user.resetToken = await generateBcryptHash(token);
+    user.resetDate = milliseconds;
+  } while (
+    await User.findOne({
+      resetToken: user.resetToken
+    })
+  );
+
   return token;
-};
-
-export const convertToCamelCase = obj => {
-  if (typeof obj !== "object" || obj === null) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(item => convertToCamelCase(item));
-  }
-
-  const camelObj = {};
-
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
-        letter.toUpperCase()
-      );
-      camelObj[camelKey] = convertToCamelCase(obj[key]);
-    }
-  }
-
-  return camelObj;
 };
 
 export const serializePaymentObject = payment => {
@@ -47,3 +35,38 @@ export const createInvestmentDesc = investment =>
   `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
     investment.tradeType
   } ${investment.plan} plan investment`;
+
+export const createInEqualityQuery = (
+  str,
+  key,
+  query = {},
+  castFn = Number
+) => {
+  let index = 0;
+  const op =
+    { ">": ">", "<": "<" }[str[0]] + (str[1] === "=" ? (index = 2) && "=" : "");
+
+  str = str.slice(index);
+
+  str = castFn.name === "Date" ? new castFn(str) : castFn(str);
+
+  switch (op) {
+    case ">":
+      query[key] = { $gt: str };
+      break;
+    case ">=":
+      query[key] = { $gte: str };
+      break;
+    case "<":
+      query[key] = { $lt: str };
+      break;
+    case "<=":
+      query[key] = { $lte: str };
+      break;
+    default:
+      query[key] = str;
+      break;
+  }
+
+  return query;
+};

@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
-import { isEmail } from "../utils/validators";
-import { generateBcryptHash } from "../utils/auth";
+import { isEmail, isPassword } from "../utils/validators";
+import { generateBcryptHash, generateHmac } from "../utils/auth";
+
+const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
 const schema = new mongoose.Schema(
   {
@@ -33,9 +35,22 @@ const schema = new mongoose.Schema(
       required: "Your password is required",
       validate: {
         validator: function(v) {
-          return v.length >= 8;
+          if (v.length < 8) {
+            this.invalidate(
+              "password",
+              "Password is shorter than minimum allowed length (8)"
+            );
+            return false;
+          }
+
+          const status = isPassword(v);
+
+          if (status === "Weak")
+            return this.invalidate("passowrd", "Password strength is weak");
+
+          return true;
         },
-        message: "Password is shorter than minimum allowed length (8)"
+        message: () => undefined
       }
     },
     photoUrl: String,
@@ -49,12 +64,6 @@ const schema = new mongoose.Schema(
     resetDate: Date,
     settings: {
       type: Object
-    },
-    emailVerified: {
-      type: Boolean,
-      default: function() {
-        return !!this.provider;
-      }
     },
     address: {
       type: new mongoose.Schema(
@@ -76,7 +85,12 @@ const schema = new mongoose.Schema(
       of: String,
       default: {}
     },
-    phone: [String]
+    phone: [String],
+    accountExpires: {
+      type: Date,
+      expires,
+      default: expires
+    }
   },
   {
     collection: "user",
@@ -99,21 +113,31 @@ const schema = new mongoose.Schema(
 );
 
 schema.virtual("fullname").get(function() {
-  console.log("gotten fullname...");
   return this.firstname + " " + this.lastname;
 });
 
-schema.pre("save", async function(next) {
+const preMiddleware = async function(next) {
   try {
-    if (this.isModified("password") || this.isNew) {
-      if (this.password)
-        this.password = await generateBcryptHash(this.password);
-    }
+    const update = this.getUpdate ? this.getUpdate() : {};
+
+    if (!update.$set) update.$set = {};
+
+    if (this.password && (this.isModified("password") || this.isNew))
+      this.password = await generateBcryptHash(this.password);
+
+    if (update.isLogin) update.$set.lastLogin = new Date();
+    else if (this.isLogin && (this.isModified("isLogin") || this.isNew))
+      this.lastLogin = new Date();
+
     next();
   } catch (error) {
     return next(error);
   }
   next();
-});
+};
+
+schema.pre("findOneAndUpdate", preMiddleware);
+schema.pre("updateOne", preMiddleware);
+schema.pre("save", preMiddleware);
 
 export default mongoose.model("user", schema);

@@ -1,36 +1,24 @@
-export const createInEqualityQuery = (
-  str,
-  key,
-  query = {},
-  castFn = Number
-) => {
-  let index = 0;
-  const op =
-    { ">": ">", "<": "<" }[str[0]] + (str[1] === "=" ? (index = 2) && "=" : "");
-
-  str = str.slice(index);
-
-  str = castFn.name === "Date" ? new castFn(str) : castFn(str);
-
-  switch (op) {
-    case ">":
-      query[key] = { $gt: str };
-      break;
-    case ">=":
-      query[key] = { $gte: str };
-      break;
-    case "<":
-      query[key] = { $lt: str };
-      break;
-    case "<=":
-      query[key] = { $lte: str };
-      break;
-    default:
-      query[key] = str;
-      break;
+export const convertToCamelCase = obj => {
+  if (typeof obj !== "object" || obj === null) {
+    return obj;
   }
 
-  return query;
+  if (Array.isArray(obj)) {
+    return obj.map(item => convertToCamelCase(item));
+  }
+
+  const camelObj = {};
+
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) =>
+        letter.toUpperCase()
+      );
+      camelObj[camelKey] = convertToCamelCase(obj[key]);
+    }
+  }
+
+  return camelObj;
 };
 
 export const createLookupPipeline = ({
@@ -68,4 +56,23 @@ export const createLookupPipeline = ({
         : {}
     }
   ];
+};
+
+export const createSuccessBody = ({
+  data,
+  message = "Request was successful",
+  format = "json"
+}) => {
+  switch (format) {
+    default:
+      return {
+        data,
+        code: "REQUEST_OK",
+        success: true,
+        statusCode: 200,
+        status: 200,
+        message,
+        timestamp: new Date().toISOString()
+      };
+  }
 };

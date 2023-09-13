@@ -6,10 +6,10 @@ import {
   recoverPwd,
   verifyUserToken,
   resetPwd,
-  refreshToken
+  refreshToken,
+  generateUserToken
 } from "../controllers/auth";
-import { verifyToken } from "../middlewares";
-import { COOKIE_VERIFICATION_TOKEN } from "../config/constants";
+import { verifyToken, userExist } from "../middlewares";
 
 const authRouter = express.Router();
 
@@ -19,12 +19,8 @@ authRouter
   .patch("/signout", verifyToken, signout)
   .post("/recover-password", recoverPwd)
   .post("/verify-token", verifyUserToken)
-  .post(
-    "/reset-password",
-    (req, res, next) =>
-      verifyToken(req, { cookieKey: COOKIE_VERIFICATION_TOKEN }, next),
-    resetPwd
-  )
-  .get("/refresh-token", refreshToken);
+  .post("/reset-password", resetPwd)
+  .get("/refresh-token", refreshToken)
+  .get("/generate-new-token", userExist, generateUserToken);
 
 export default authRouter;

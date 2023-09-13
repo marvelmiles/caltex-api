@@ -13,6 +13,8 @@ import userRouter from "./routers/user";
 import transactionRouter from "./routers/transaction";
 import queryType from "query-types";
 import { isProdMode } from "./utils/validators";
+import timeout from "connect-timeout";
+import { errHandler } from "./middlewares";
 
 // CONFIGURATIONS
 
@@ -38,7 +40,8 @@ app
   .use(express.urlencoded({ extended: true }))
   .use(queryType.middleware())
   .use(cookieParser())
-  .use(express.static("public"));
+  .use(express.static("public"))
+  .use(timeout("60s"));
 
 // ROUTES
 
@@ -48,30 +51,7 @@ app
   .use("/api/users", userRouter)
   .use("/api/transactions", transactionRouter);
 
-app.use((err, req, res, next) => {
-  if (res.headersSent) {
-    console.warn(
-      "[SERVER_ERROR: HEADER SENT]",
-      req.headers.origin,
-      req.originalUrl,
-      " at ",
-      new Date()
-    );
-  } else {
-    err = err.status
-      ? err
-      : (err.message ? (err.url = req.url || "-") : true) && createError(err);
-
-    if (err) res.status(err.status).json(err);
-  }
-
-  if (req.file) deleteFile(req.file.publicUrl);
-
-  if (req.files)
-    for (const { publicUrl } of req.files) {
-      deleteFile(publicUrl);
-    }
-});
+app.use(errHandler);
 
 // MONGOOSE SETUP
 
