@@ -5,7 +5,6 @@ import { generateBcryptHash, deleteCookie, setJWTCookie } from "../utils/auth";
 import {
   CLIENT_ENDPOINT,
   HTTP_403_MSG,
-  HTTP_401_MSG,
   COOKIE_ACC_VERIFIC,
   COOKIE_PWD_RESET,
   COOKIE_ACCESS_TOKEN,
@@ -16,6 +15,7 @@ import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
 import { serializeUserToken } from "../utils/serializers";
 import { createSuccessBody } from "../utils/normalizers";
+import { validateUserToken } from "../utils/validators";
 
 const mailAccVerificationToken = (email, token, reject, resolve) => {
   sendMail(
@@ -224,12 +224,10 @@ export const verifyUserToken = async (req, res, next) => {
 
     const user = await User.findOne({
       accountExpires: { $ne: null },
-      email: req.body.email,
-      resetDate: { $gt: new Date().toISOString() }
+      email: req.body.email
     });
 
-    if (!user || !(await bcrypt.compare(req.body.token, user.resetToken)))
-      throw createError(HTTP_401_MSG, 401);
+    await validateUserToken(user, req.body.token);
 
     await user.updateOne({
       accountExpires: null,
@@ -256,12 +254,10 @@ export const resetPwd = async (req, res, next) => {
 
     const user = await User.findOne({
       accountExpires: null,
-      email: req.body.email,
-      resetDate: { $gt: new Date().toISOString() }
+      email: req.body.email
     });
 
-    if (!user || !(await bcrypt.compare(req.body.token, user.resetToken)))
-      throw createError(HTTP_401_MSG, 401);
+    await validateUserToken(user, req.body.token);
 
     if (user.provider)
       throw createError(

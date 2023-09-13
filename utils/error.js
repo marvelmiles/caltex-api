@@ -43,7 +43,7 @@ export const console500MSG = message =>
     )}] ${message.message}. URL:${message.url} at ${new Date()}. `
   );
 
-export const createError = (message, status) => {
+export const createError = (message, status, code) => {
   const err = new Error();
 
   if (message.statusCode) {
@@ -59,6 +59,7 @@ export const createError = (message, status) => {
     err.statusCode = status || (message.length ? 400 : 500);
 
     err.code =
+      code ||
       {
         401: "UNAUTHORIZED_ACCESS",
         403: "FORBIDDEN_ACCESSS",
@@ -86,7 +87,6 @@ export const createError = (message, status) => {
 
   switch (keyName) {
     case "validationerror":
-      err.code = message.name;
       err.message = getMongooseErrMsg(message);
 
       err.statusCode = status || 400;
@@ -161,5 +161,7 @@ export const createError = (message, status) => {
   err.success = false;
   err.details = message.details;
   err.timestamp = new Date().toISOString();
+  err.code = code || err.code || message.name || "ERROR";
+
   return err;
 };
