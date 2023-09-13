@@ -3,7 +3,6 @@ import User from "../models/User";
 
 export const serializeUserToken = async (
   user,
-  saltAddon,
   milliseconds = Date.now() + 60000 // 60 secs
 ) => {
   let token;
