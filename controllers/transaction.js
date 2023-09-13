@@ -1,5 +1,4 @@
 import { SERVER_DOMAIN } from "../config/constants";
-import { isObject } from "util";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
