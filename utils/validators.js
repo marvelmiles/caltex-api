@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 export const isProdMode = process.env.NODE_ENV === "production";
 
 export const isEmail = str => {

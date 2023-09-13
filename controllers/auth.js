@@ -67,8 +67,6 @@ const mailAndSerializePwdResetToken = async (user, next, res) => {
 
 export const signup = async (req, res, next) => {
   try {
-    await User.deleteMany({});
-
     let user = await User.findOne({
       $or: [{ username: req.body.username }, { email: req.body.email }]
     });
