@@ -50,6 +50,9 @@ export const userExist = async (req, res, next) => {
 
     const _id = req.params.userId || req.body.userId || req.user?.id;
 
+    if (!(_id || email))
+      throw "Invalid request. Unauthenticated user. Expect email or id in body or url";
+
     if (_id) {
       if (!isObjectId(_id)) throw message;
       match._id = _id;
