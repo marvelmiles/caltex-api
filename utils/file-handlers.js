@@ -29,7 +29,9 @@ export const sendMail = (
     if (err)
       console.warn(
         `[SERVER_WARN: ${mailOptions.subject ||
-          "MAIL"}] Encountered an error sending mail to ${email} at ${new Date()}`
+          "MAIL"}] Encountered an error sending mail to ${
+          mailOptions.to
+        } at ${new Date()}`
       );
     cb(err, info);
   });

@@ -1,4 +1,4 @@
-import { SERVER_DOMAIN } from "../config/constants";
+import { SERVER_ORIGIN } from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
@@ -207,7 +207,7 @@ export const processFiatPayment = async (req, res, next) => {
       success: true,
       data: convertToCamelCase(
         await stripe.paymentIntents.confirm(intent.id, {
-          return_url: `${SERVER_DOMAIN}/api/transactions/success.html`,
+          return_url: `${SERVER_ORIGIN}/api/transactions/success.html`,
           receipt_email: req.body.email
         })
       )

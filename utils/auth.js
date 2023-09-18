@@ -2,6 +2,9 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { setFutureDate } from ".";
+import User from "../models/User";
+import { createError } from "./error";
+import { HTTP_401_MSG } from "../config/constants";
 
 export const generateRandomCode = () =>
   Math.floor(100000 + Math.random() * 900000);
@@ -51,4 +54,17 @@ export const deleteCookie = (name, res) => {
   const expires = new Date();
   expires.setFullYear(1990);
   res.cookie(name, "", { httpOnly: true, expires });
+};
+
+export const authUser = async ({ email, password }) => {
+  if (!email && !password) throw "Invalid body. Expect email and password";
+
+  const user = await User.findOne({ email });
+
+  if (!user) throw createError(HTTP_401_MSG, 401);
+
+  if (!(await bcrypt.compare(password, user.password)))
+    throw "Invalid credentials!";
+
+  return user;
 };

@@ -44,7 +44,7 @@ export const userExist = async (req, res, next) => {
   try {
     const match = {};
 
-    const message = "User doesn't exist";
+    const message = "Account isn't registered";
 
     const email = req.body.email || req.user?.email;
 
@@ -70,9 +70,10 @@ export const userExist = async (req, res, next) => {
 
     if (!(req.user = await User.findOne(match))) throw message;
 
-    next();
+    if (next) next();
   } catch (err) {
-    next(err);
+    if (next) next(err);
+    else throw err;
   }
 };
 

@@ -1,5 +1,5 @@
 import { createLookupPipeline } from "./normalizers";
-import { SERVER_DOMAIN } from "../config/constants";
+import { SERVER_ORIGIN } from "../config/constants";
 import { createError } from "./error";
 
 export const setFutureDate = days => {

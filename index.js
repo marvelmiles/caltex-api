@@ -4,7 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import socket from "./socket";
-import { CLIENT_ENDPOINT } from "./config/constants";
+import { CLIENT_ORIGIN, SERVER_ORIGIN } from "./config/constants";
 import authRouter from "./routers/auth";
 import { createError } from "./utils/error";
 import { deleteFile } from "./utils/file-handlers";
@@ -26,9 +26,10 @@ const app = express();
 app
   .use(
     cors({
-      origin: isProdMode ? CLIENT_ENDPOINT : "*",
+      origin: CLIENT_ORIGIN,
       optionsSuccessStatus: 200,
-      credentials: true
+      credentials: true,
+      origin: [CLIENT_ORIGIN, SERVER_ORIGIN]
     })
   )
   .use(

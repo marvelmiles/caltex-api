@@ -48,9 +48,9 @@ export const validateUserToken = async (user, token) => {
 
   const time = new Date(user.resetDate);
 
-  if (time.getTime() <= new Date().getTime())
-    throw createError("Token expired", 401, "TOKEN_EXPIRED");
-
   if (!(await bcrypt.compare(token, user.resetToken)))
     throw createError(HTTP_401_MSG, 401);
+
+  if (time.getTime() <= new Date().getTime())
+    throw createError("Token expired", 401, "TOKEN_EXPIRED");
 };

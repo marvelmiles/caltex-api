@@ -1,21 +1,30 @@
 import User from "../models/User";
 import { createError } from "../utils/error";
 import bcrypt from "bcrypt";
-import { generateBcryptHash, deleteCookie, setJWTCookie } from "../utils/auth";
 import {
-  CLIENT_ENDPOINT,
+  generateBcryptHash,
+  deleteCookie,
+  setJWTCookie,
+  authUser
+} from "../utils/auth";
+import {
+  CLIENT_ORIGIN,
   HTTP_403_MSG,
   COOKIE_ACC_VERIFIC,
   COOKIE_PWD_RESET,
   COOKIE_ACCESS_TOKEN,
   COOKIE_REFRESH_TOKEN,
-  SESSION_COOKIE_DURATION
+  SESSION_COOKIE_DURATION,
+  HTTP_401_MSG,
+  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
+  HTTP_CODE_MAIL_ERROR
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
 import { serializeUserToken } from "../utils/serializers";
 import { createSuccessBody } from "../utils/normalizers";
 import { validateUserToken } from "../utils/validators";
+import { userExist } from "../middlewares";
 
 const mailAccVerificationToken = (email, token, reject, resolve) => {
   sendMail(
@@ -29,7 +38,7 @@ const mailAccVerificationToken = (email, token, reject, resolve) => {
         Your account's security and growth are our top priorities.
         Let's build a prosperous future together! [Verification Link]
         OTP = ${token}
-        ${CLIENT_ENDPOINT}/client-test.html
+        ${CLIENT_ORIGIN}/auth/token-verification/account
         `
     },
     err => {
@@ -68,11 +77,25 @@ const mailAndSerializePwdResetToken = async (user, next, res) => {
 export const signup = async (req, res, next) => {
   try {
     let user = await User.findOne({
-      $or: [{ username: req.body.username }, { email: req.body.email }]
+      email: req.body.email
     });
 
-    if (user)
-      throw createError("A user with the specified username or email exist");
+    if (!user)
+      user = await User.findOne({
+        username: req.body.username
+      });
+
+    if (user) {
+      const emailExist = user.email === req.body.email;
+
+      const nameExist = user.username === req.body.username;
+
+      throw createError(
+        `A user with the specified${emailExist ? " email" : ""}${
+          nameExist ? ` ${emailExist ? "and username" : "username"}` : ""
+        } exist!`
+      );
+    }
 
     req.body.photoUrl = req.file?.publicUrl;
 
@@ -96,9 +119,19 @@ export const signup = async (req, res, next) => {
 
     if (user.provider) return sendBody();
 
-    setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
+    const handleErr = () => {
+      next(
+        createError(
+          "Account has been created successfully! Encountered an error sending verification code to your mail.",
+          400,
+          HTTP_CODE_MAIL_ERROR
+        )
+      );
+    };
 
-    mailAccVerificationToken(user.email, token, next, sendBody);
+    // setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
+
+    mailAccVerificationToken(user.email, token, handleErr, sendBody);
   } catch (err) {
     next(err);
   }
@@ -132,7 +165,11 @@ export const signin = async (req, res, next) => {
         if (!user) throw createError("Account is not registered");
 
         if (user.accountExpires)
-          throw createError("Login access denied. Account is not verified");
+          throw createError(
+            "Login access denied. Account is not verified.",
+            400,
+            HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
+          );
 
         if (!(await bcrypt.compare(req.body.password, user.password || "")))
           throw createError("Email or password is incorrect");
@@ -159,12 +196,13 @@ export const signin = async (req, res, next) => {
       user.id,
       res,
       SESSION_COOKIE_DURATION.refreshToken,
-      req.query.rememberMe
+      req.body.rememberMe
     );
 
     res.json(
       createSuccessBody({
-        data: user
+        data: user,
+        message: "Signed in successfully"
       })
     );
   } catch (err) {
@@ -219,13 +257,24 @@ export const recoverPwd = async (req, res, next) => {
 
 export const verifyUserToken = async (req, res, next) => {
   try {
+    console.log(req.body, "toen ver");
+    const reason = req.params.reason;
+
+    if (!{ account: true }[reason])
+      throw "Invalid reason to verify account. Expect /verify-token/<account>";
+
     if (!(req.body.token && req.body.email))
-      throw "Invalid requst body. Expect an email and a token";
+      throw "Invalid request body. Expect an email and a token";
 
     const user = await User.findOne({
       accountExpires: { $ne: null },
       email: req.body.email
     });
+
+    if (!user) throw createError(HTTP_401_MSG, 403);
+
+    if (!(await bcrypt.compare(req.body.password, user.password)))
+      throw "Invalid credentials. Expect email, password and token to be valid";
 
     await validateUserToken(user, req.body.token);
 
@@ -309,15 +358,25 @@ export const refreshToken = async (req, res, next) => {
 
 export const generateUserToken = async (req, res, next) => {
   try {
-    const cookieKey = {
-      "account-verification": COOKIE_ACC_VERIFIC,
-      "password-reset": COOKIE_PWD_RESET
-    }[req.query.reason];
+    console.log("gen new toke...", req.params.reason, req.body);
 
-    verifyToken(req, {
-      cookieKey,
-      hasForbidden: true
-    });
+    const withCookies = !!Object.keys(req.cookies).length;
+
+    console.log(withCookies);
+
+    if (withCookies) {
+      const cookieKey = {
+        // "account-verification": COOKIE_ACC_VERIFIC,
+        "password-reset": COOKIE_PWD_RESET
+      }[req.query.reason];
+
+      verifyToken(req, {
+        cookieKey,
+        hasForbidden: true
+      });
+
+      await userExist(req, res);
+    } else req.user = await authUser(req.body);
 
     const saveAndSerialize = async user => {
       const token = await serializeUserToken(user);
@@ -327,11 +386,15 @@ export const generateUserToken = async (req, res, next) => {
       return token;
     };
 
-    const resolver = message => res.json(createSuccessBody({ message }));
+    const resolver = message => {
+      console.log(message, "...message");
+      res.json(createSuccessBody({ message }));
+    };
 
-    switch (req.query.reason) {
+    switch (req.params.reason) {
       case "account-verification":
-        if (!req.user.accountExpires) throw createError(HTTP_403_MSG, 403);
+        if (!req.user.accountExpires)
+          throw createError("Account has been verified!", 403);
 
         mailAccVerificationToken(
           req.user.email,

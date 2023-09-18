@@ -9,7 +9,7 @@ import {
   refreshToken,
   generateUserToken
 } from "../controllers/auth";
-import { verifyToken, userExist } from "../middlewares";
+import { verifyToken } from "../middlewares";
 
 const authRouter = express.Router();
 
@@ -18,9 +18,9 @@ authRouter
   .post("/signin", signin)
   .patch("/signout", verifyToken, signout)
   .post("/recover-password", recoverPwd)
-  .post("/verify-token", verifyUserToken)
+  .post("/verify-token/:reason", verifyUserToken)
   .post("/reset-password", resetPwd)
   .get("/refresh-token", refreshToken)
-  .get("/generate-new-token", userExist, generateUserToken);
+  .post("/generate-new-token/:reason", generateUserToken);
 
 export default authRouter;
