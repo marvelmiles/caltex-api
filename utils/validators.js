@@ -2,6 +2,9 @@ import mongoose from "mongoose";
 import { HTTP_401_MSG } from "../config/constants";
 import bcrypt from "bcrypt";
 import { createError } from "./error";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const isProdMode = process.env.NODE_ENV === "production";
 
