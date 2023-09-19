@@ -29,7 +29,18 @@ app
       origin: CLIENT_ORIGIN,
       optionsSuccessStatus: 200,
       credentials: true,
-      origin: [CLIENT_ORIGIN, SERVER_ORIGIN]
+      origin: (origin = "", callback) => {
+        const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
+
+        if (
+          origin.indexOf("localhost") > -1 ||
+          allowedOrigins.includes(origin)
+        ) {
+          callback(null, true); // Allow the request
+        } else {
+          callback(new Error("Not allowed by CORS")); // Deny the request
+        }
+      }
     })
   )
   .use(
