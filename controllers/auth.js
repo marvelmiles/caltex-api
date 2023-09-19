@@ -139,6 +139,7 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
+    console.log("signing..", req.body);
     if (
       !(
         !(req.body.placeholder || req.body.email || req.body.username) ||

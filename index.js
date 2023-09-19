@@ -30,6 +30,7 @@ app
       optionsSuccessStatus: 200,
       credentials: true,
       origin: (origin = "", callback) => {
+        console.log(origin, " rogg");
         const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
 
         if (
@@ -38,7 +39,7 @@ app
         ) {
           callback(null, true); // Allow the request
         } else {
-          callback(new Error("Not allowed by CORS")); // Deny the request
+          callback(new Error(`${origin} not allowed by CORS`)); // Deny the request
         }
       }
     })
