@@ -12,8 +12,13 @@ const schema = new mongoose.Schema(
     },
     investment: {
       type: mongoose.Types.ObjectId,
-      ref: "investment",
-      required: "Transaction investment id is required."
+      ref: "investment"
+      // required: "Transaction investment id is required."
+    },
+    paymentType: {
+      type: String,
+      enum: ["fiat", "crypto"],
+      required: "Transaction payment type is required"
     },
     description: String,
     currency: {

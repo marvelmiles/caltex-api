@@ -31,9 +31,11 @@ export const serializePaymentObject = payment => {
 };
 
 export const createInvestmentDesc = investment =>
-  `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
-    investment.tradeType
-  } ${investment.plan} plan investment`;
+  investment
+    ? `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
+        investment.tradeType
+      } ${investment.plan} plan investment`
+    : "";
 
 export const createInEqualityQuery = (
   str,
