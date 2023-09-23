@@ -1,15 +1,19 @@
 import Investment from "../models/Investment";
+import { createSuccessBody } from "../utils/normalizers";
 
 export const setupUserInvestment = async (req, res, next) => {
   try {
+    console.log(req.body);
     req.body.user = req.user.id;
 
     const investment = new Investment(req.body);
 
-    res.json({
-      success: true,
-      data: await investment.save()
-    });
+    res.json(
+      createSuccessBody({
+        message: "Investment created successfully!",
+        data: await investment.save()
+      })
+    );
   } catch (err) {
     next(err);
   }

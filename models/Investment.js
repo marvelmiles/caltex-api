@@ -1,7 +1,11 @@
 import mongoose from "mongoose";
 import { setFutureDate, getDaysDifference } from "../utils";
 import { isTodayDate } from "../utils/validators";
-import { createInvestmentDesc } from "../utils/serializers";
+import {
+  createInvestmentDesc,
+  convertExponentToLarge
+} from "../utils/serializers";
+import { convertToCamelCase } from "../utils/normalizers";
 
 const schema = new mongoose.Schema(
   {
@@ -24,6 +28,9 @@ const schema = new mongoose.Schema(
             doc.minAmount
           } and ${doc.maxAmount === Infinity ? "Unlimited" : doc.maxAmount}`;
         }
+      },
+      get(v) {
+        return Number(v) || 0;
       }
     },
     startDate: {
@@ -48,9 +55,15 @@ const schema = new mongoose.Schema(
 
           const sM = sDate.getMonth();
 
+          const uYear = uDate.getFullYear();
+
+          const sYear = sDate.getFullYear();
+
           return (
-            uDate.getFullYear() >= sDate.getFullYear() &&
-            (uM > sM || (uM === sM && uDate.getDate() - 1 >= sDate.getDate()))
+            uYear > sYear ||
+            (uYear === sYear &&
+              (uM > sM ||
+                (uM === sM && uDate.getDate() - 1 >= sDate.getDate())))
           );
         },
         message:
@@ -185,6 +198,19 @@ const schema = new mongoose.Schema(
         } else return 2.5;
       }
     },
+    roi: {
+      type: Number,
+      set(v) {
+        if (v && typeof v !== "number") v = Number(v.replaceAll(/,/g, ""));
+
+        return v;
+      },
+      get(v) {
+        if (!v && this.amount && this.roiPct)
+          v = (this.roiPct / 100) * this.amount;
+        return Number(v);
+      }
+    },
     status: {
       type: String,
       enum: ["new", "awaiting", "invested", "rejected"],
@@ -199,18 +225,18 @@ const schema = new mongoose.Schema(
       virtuals: true,
       transform(doc, ret) {
         ret.id = ret._id;
-        delete ret._id;
       }
     }
   }
 );
 
-schema.virtual("roi").get(function() {
-  if (this.amount && this.roiPct) return (this.roiPct / 100) * this.amount;
-});
-
 schema.virtual("totalAmount").get(function() {
-  if (this.roi && this.amount) return this.amount + this.roi;
+  if (this.roi && this.amount) {
+    return (this.amount + this.roi).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
 });
 
 schema.virtual("description").get(function() {

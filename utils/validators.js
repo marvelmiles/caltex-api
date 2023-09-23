@@ -19,11 +19,15 @@ export const isObjectId = id => mongoose.isValidObjectId(id);
 export const isTodayDate = function(v) {
   const uDate = new Date(v);
   const date = new Date();
-  return (
+
+  const isT =
     uDate.getFullYear() === date.getFullYear() &&
     uDate.getMonth() >= date.getMonth() &&
-    uDate.getDate() >= date.getDate()
-  );
+    uDate.getDate() >= date.getDate();
+
+  console.log(isT, v, " is to daya");
+
+  return isT;
 };
 
 export const isPassword = password => {

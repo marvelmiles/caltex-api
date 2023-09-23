@@ -30,10 +30,11 @@ app
       optionsSuccessStatus: 200,
       credentials: true,
       origin: (origin = "", callback) => {
-        console.log(origin, " rogg");
+        console.log(origin, "origin");
         const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
 
         if (
+          !origin ||
           origin.indexOf("localhost") > -1 ||
           allowedOrigins.includes(origin)
         ) {

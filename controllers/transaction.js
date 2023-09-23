@@ -4,7 +4,7 @@ import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
 import stripeSDK from "stripe";
 import coinbaseSDK from "coinbase-commerce-node";
-import { convertToCamelCase } from "../utils/normalizers";
+import { convertToCamelCase, createSuccessBody } from "../utils/normalizers";
 import { serializePaymentObject } from "../utils/serializers";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
@@ -45,7 +45,7 @@ export const validateAndSerializeReqBody = async (
 
   body.metadata = {};
 
-  let investment;
+  let investment = {};
 
   if (body.investmentId) {
     investment = await Investment.findById({
@@ -67,7 +67,7 @@ export const validateAndSerializeReqBody = async (
       throw "Invalid body.investment. Investment id, amount, tradeType, plan and duration are required";
 
     investment = body.investment;
-  } else throw "Invalid body. Investment id or investment object is required";
+  }
 
   body.amount = body.amount === undefined ? investment.amount : body.amount;
 
@@ -77,7 +77,8 @@ export const validateAndSerializeReqBody = async (
   if (body.amount < 1)
     throw `Payment process failed. Expect amount to be in the lowest denomination and must be greater than zero`;
 
-  body.description = body.description || createInvestmentDesc(investment);
+  body.description =
+    body.description || (investment.id && createInvestmentDesc(investment));
 
   body.metadata.user = {
     id: userId,
@@ -106,25 +107,15 @@ const handlePostPaymentIntention = async ({
   investId,
   transId,
   paymentId,
-  description,
-  currency,
-  currencyType,
-  type,
-  amount,
-  email,
   userId,
-  customerId
+  customerId,
+  ...rest
 }) => {
   if (investId)
     await Investment.updateOne({ _id: investId }, { status: "awaiting" });
 
   const transaction = new Transaction({
-    description,
-    currency,
-    currencyType,
-    type,
-    amount,
-    email,
+    ...rest,
     _id: transId,
     investment: investId,
     payment: paymentId,
@@ -137,7 +128,9 @@ const handlePostPaymentIntention = async ({
 
 export const processFiatPayment = async (req, res, next) => {
   try {
-    console.log("process pay ");
+    console.log("process fiat...", req.body);
+
+    const amount = req.body.amount;
 
     req.body.email = req.body.email || req.user.email;
 
@@ -146,6 +139,8 @@ export const processFiatPayment = async (req, res, next) => {
       req.user.id,
       false
     );
+
+    console.log(investId, transId, " id");
 
     req.query.denomination = req.query.denomination || "note";
 
@@ -191,6 +186,7 @@ export const processFiatPayment = async (req, res, next) => {
     await handlePostPaymentIntention({
       transId,
       investId,
+      paymentType: "fiat",
       paymentId: intent.id,
       description: intent.description,
       currency: intent.currency,
@@ -203,15 +199,17 @@ export const processFiatPayment = async (req, res, next) => {
 
     console.log("confirming paym...");
 
-    res.json({
-      success: true,
-      data: convertToCamelCase(
-        await stripe.paymentIntents.confirm(intent.id, {
-          return_url: `${SERVER_ORIGIN}/api/transactions/success.html`,
-          receipt_email: req.body.email
-        })
-      )
-    });
+    res.json(
+      createSuccessBody({
+        message: `Deposit of ${amount}.00 ${req.body.currency} was successful!`,
+        data: convertToCamelCase(
+          await stripe.paymentIntents.confirm(intent.id, {
+            return_url: `${SERVER_ORIGIN}/api/transactions/success.html`,
+            receipt_email: req.body.email
+          })
+        )
+      })
+    );
 
     updateUser &&
       User.updateOne(
@@ -229,6 +227,7 @@ export const processFiatPayment = async (req, res, next) => {
           )
         );
   } catch (err) {
+    console.log(err.message, " process fiat");
     next(err);
   }
 };
@@ -296,6 +295,7 @@ export const processCryptoPayment = async (req, res, next) => {
     await handlePostPaymentIntention({
       transId,
       investId,
+      paymentType: "crypto",
       email: req.body.email,
       paymentId: charge.id,
       description: charge.description,
@@ -306,10 +306,9 @@ export const processCryptoPayment = async (req, res, next) => {
       userId: req.user.id
     });
 
-    res.json({
-      success: true,
-      data: charge
-    });
+    res.json(
+      createSuccessBody({ data: charge, message: "Deposit successful!" })
+    );
   } catch (err) {
     next(err);
   }
