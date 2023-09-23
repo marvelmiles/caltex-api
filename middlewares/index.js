@@ -11,6 +11,8 @@ import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 
 export const verifyToken = (req, res = {}, next) => {
+  console.log(req.cookies, req.originalUrl, " verify token");
+
   const {
     cookieKey = COOKIE_ACCESS_TOKEN,
     hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN
@@ -34,7 +36,9 @@ export const verifyToken = (req, res = {}, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return handleNextErr();
-
+    
+    console.log("nexting...");
+    
     req.user = req.user || user;
     req.body && delete req.body._id;
     !throwErr && next();
