@@ -5,6 +5,7 @@ import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/serializers";
 import { getAll } from "../utils";
 import { v4 as uniq } from "uuid";
+import { createSuccessBody } from "../utils/normalizers";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -13,14 +14,17 @@ export const getUserInvestmentsById = async (req, res, next) => {
     };
 
     res.json(
-      await getAll({
-        model: Investment,
-        match,
-        lookups: [
-          {
-            from: "user"
-          }
-        ]
+      createSuccessBody({
+        message: "Request succssful",
+        data: await getAll({
+          model: Investment,
+          match,
+          lookups: [
+            {
+              from: "user"
+            }
+          ]
+        })
       })
     );
   } catch (err) {
@@ -63,10 +67,12 @@ export const updateUserById = async (req, res, next) => {
 
     if (!user) throw "User doesn't exist";
 
-    res.json({
-      success: true,
-      data: user
-    });
+    res.json(
+      createSuccessBody({
+        message: `Profile updated successfully`,
+        data: user
+      })
+    );
   } catch (err) {
     next(err);
   }
@@ -74,7 +80,9 @@ export const updateUserById = async (req, res, next) => {
 
 export const getUserById = (req, res, next) => {
   try {
-    res.json({ success: true, data: req.user });
+    res.json(
+      createSuccessBody({ message: "Request successful", data: req.user })
+    );
   } catch (err) {
     next(err);
   }
@@ -119,23 +127,26 @@ export const getUserTransactionsById = async (req, res, next) => {
       createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
 
     res.json(
-      await getAll({
-        model: Transaction,
-        match,
-        lookups: [
-          {
-            from: "investment",
-            strict: true,
-            pipeline: [
-              {
-                $match: investmentQuery
-              }
-            ]
-          },
-          {
-            from: "user"
-          }
-        ]
+      createSuccessBody({
+        message: "Request successful",
+        data: await getAll({
+          model: Transaction,
+          match,
+          lookups: [
+            {
+              from: "investment",
+              strict: true,
+              pipeline: [
+                {
+                  $match: investmentQuery
+                }
+              ]
+            },
+            {
+              from: "user"
+            }
+          ]
+        })
       })
     );
   } catch (err) {
@@ -348,10 +359,33 @@ export const verifyUserIdentity = (req, res, next) => {
         return;
     }
 
-    res.json({
-      success: true,
-      data: result
+    res.json(
+      createSuccessBody({
+        message: "Request successful",
+        data: result
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getUserTransactionMetrics = async (req, res, next) => {
+  try {
+    const transactions = await Transaction.find({
+      user: req.user.id
     });
+
+    const totalAmount = transactions.reduce(
+      (sum, transaction) => sum + (transaction.amount || 0),
+      0
+    );
+    res.json(
+      createSuccessBody({
+        message: "Request successful",
+        data: { availBalance: totalAmount }
+      })
+    );
   } catch (err) {
     next(err);
   }

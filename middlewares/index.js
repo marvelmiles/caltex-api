@@ -4,7 +4,8 @@ import {
   HTTP_403_MSG,
   HTTP_401_MSG,
   COOKIE_REFRESH_TOKEN,
-  COOKIE_ACCESS_TOKEN
+  COOKIE_ACCESS_TOKEN,
+  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
 } from "../config/constants";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
@@ -44,14 +45,18 @@ export const userExist = async (req, res, next) => {
   try {
     const match = {};
 
-    const message = "Account isn't registered";
+    const message = createError(
+      "Account isn't registered with us!",
+      403,
+      HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
+    );
 
     const email = req.body.email || req.user?.email;
 
     const _id = req.params.userId || req.body.userId || req.user?.id;
 
     if (!(_id || email))
-      throw "Invalid request. Unauthenticated user. Expect email or id in body or url";
+      throw "Invalid request. Expect email or id in body or url";
 
     if (_id) {
       if (!isObjectId(_id)) throw message;

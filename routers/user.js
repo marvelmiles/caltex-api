@@ -5,7 +5,8 @@ import {
   updateUserById,
   getUserById,
   getUserTransactionsById,
-  verifyUserIdentity
+  verifyUserIdentity,
+  getUserTransactionMetrics
 } from "../controllers/user";
 import { uploadFile } from "../utils/file-handlers";
 
@@ -16,6 +17,12 @@ userRouter
   .get("/:userId", verifyToken, userExist, getUserById)
   .get("/:userId/investments", verifyToken, userExist, getUserInvestmentsById)
   .get("/:userId/transactions", verifyToken, userExist, getUserTransactionsById)
+  .get(
+    "/:userId/transaction-metrics",
+    verifyToken,
+    userExist,
+    getUserTransactionMetrics
+  )
   .put("/:userId", verifyToken, uploadFile(), updateUserById);
 
 export default userRouter;
