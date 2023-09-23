@@ -191,7 +191,8 @@ export const signin = async (req, res, next) => {
 
     res.cookie(COOKIE_ACCESS_TOKEN, "ssss", {
       maxAge: 3600000,
-      httpOnly: true
+      httpOnly: false,
+      sameSite: "None"
     });
 
     // setJWTCookie(
