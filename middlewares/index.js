@@ -36,9 +36,9 @@ export const verifyToken = (req, res = {}, next) => {
 
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return handleNextErr();
-    
+
     console.log("nexting...");
-    
+
     req.user = req.user || user;
     req.body && delete req.body._id;
     !throwErr && next();

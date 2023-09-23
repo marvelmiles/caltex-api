@@ -44,8 +44,10 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
       expiresIn: duration + type
     }),
     {
+      expires,
       httpOnly: true,
-      expires
+      sameSite: "None",
+      secure: true
     }
   );
 };

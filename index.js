@@ -24,6 +24,7 @@ const app = express();
 // MIDDLEWARES
 
 app
+  .use(cookieParser())
   .use(
     cors({
       optionsSuccessStatus: 200,
@@ -48,7 +49,6 @@ app
   )
   .use(express.urlencoded({ extended: true }))
   .use(queryType.middleware())
-  .use(cookieParser())
   .use(express.static("public"))
   .use(timeout("60s"));
 

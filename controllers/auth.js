@@ -140,6 +140,7 @@ export const signup = async (req, res, next) => {
 export const signin = async (req, res, next) => {
   try {
     console.log("signing..", req.body);
+
     if (
       !(
         !(req.body.placeholder || req.body.email || req.body.username) ||
@@ -189,26 +190,20 @@ export const signin = async (req, res, next) => {
 
     expires.setHours(expires.getHours() + 15);
 
-    res.cookie(COOKIE_ACCESS_TOKEN, "ssss", {
-      maxAge: 3600000,
-      httpOnly: false,
-      sameSite: "None"
-    });
+    setJWTCookie(
+      COOKIE_ACCESS_TOKEN,
+      user.id,
+      res,
+      SESSION_COOKIE_DURATION.accessToken
+    );
 
-    // setJWTCookie(
-    //   COOKIE_ACCESS_TOKEN,
-    //   user.id,
-    //   res,
-    //   SESSION_COOKIE_DURATION.accessToken
-    // );
-
-    // setJWTCookie(
-    //   COOKIE_REFRESH_TOKEN,
-    //   user.id,
-    //   res,
-    //   SESSION_COOKIE_DURATION.refreshToken,
-    //   req.body.rememberMe
-    // );
+    setJWTCookie(
+      COOKIE_REFRESH_TOKEN,
+      user.id,
+      res,
+      SESSION_COOKIE_DURATION.refreshToken,
+      req.body.rememberMe
+    );
 
     res.json(
       createSuccessBody({
