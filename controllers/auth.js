@@ -185,20 +185,29 @@ export const signin = async (req, res, next) => {
       { new: true }
     );
 
-    setJWTCookie(
-      COOKIE_ACCESS_TOKEN,
-      user.id,
-      res,
-      SESSION_COOKIE_DURATION.accessToken
-    );
+    const expires = new Date();
 
-    setJWTCookie(
-      COOKIE_REFRESH_TOKEN,
-      user.id,
-      res,
-      SESSION_COOKIE_DURATION.refreshToken,
-      req.body.rememberMe
-    );
+    expires.setHours(expires.getHours() + 15);
+
+    res.cookie(COOKIE_ACCESS_TOKEN, "ssss", {
+      maxAge: 3600000,
+      httpOnly: true
+    });
+
+    // setJWTCookie(
+    //   COOKIE_ACCESS_TOKEN,
+    //   user.id,
+    //   res,
+    //   SESSION_COOKIE_DURATION.accessToken
+    // );
+
+    // setJWTCookie(
+    //   COOKIE_REFRESH_TOKEN,
+    //   user.id,
+    //   res,
+    //   SESSION_COOKIE_DURATION.refreshToken,
+    //   req.body.rememberMe
+    // );
 
     res.json(
       createSuccessBody({

@@ -26,28 +26,23 @@ const app = express();
 app
   .use(
     cors({
-      origin: CLIENT_ORIGIN,
       optionsSuccessStatus: 200,
       credentials: true,
       origin: (origin = "", callback) => {
         console.log(origin, "origin");
         const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
 
-        if (
-          !origin ||
-          origin.indexOf("localhost") > -1 ||
-          allowedOrigins.includes(origin)
-        ) {
+        if (!origin || true || allowedOrigins.includes(origin)) {
           callback(null, true); // Allow the request
         } else {
-          callback(new Error(`${origin} not allowed by CORS`)); // Deny the request
+          callback(createError(`${origin} not allowed by CORS`, 403)); // Deny the request
         }
       }
     })
   )
   .use(
     express.json({
-      limit: "200mb",
+      // limit: "200mb",
       extended: true
     })
   )
