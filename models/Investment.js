@@ -201,10 +201,7 @@ const schema = new mongoose.Schema(
     roi: {
       type: Number,
       set(v) {
-        console.log(v, typeof v, " roi b4");
-        console.log(v.replaceAll, v.replace);
-
-        if (v && typeof v !== "number") v = Number(v.replaceAll(/,/g, ""));
+        if (v && typeof v !== "number") v = Number(v.replace(/,/g, ""));
 
         console.log(v, " roi.... after ");
 
