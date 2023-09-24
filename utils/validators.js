@@ -25,7 +25,7 @@ export const isTodayDate = function(v) {
     uDate.getMonth() >= date.getMonth() &&
     uDate.getDate() >= date.getDate();
 
-  console.log(isT, v, uDate, date, " is today... startDate");
+  console.log(isT, v, uDate, date, " is today...v...vDate...date");
 
   return isT;
 };
