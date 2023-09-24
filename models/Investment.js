@@ -201,9 +201,10 @@ const schema = new mongoose.Schema(
     roi: {
       type: Number,
       set(v) {
+        console.log(v, " roi b4");
         if (v && typeof v !== "number") v = Number(v.replaceAll(/,/g, ""));
 
-        console.log(v, " roi....");
+        console.log(v, " roi.... after ");
 
         return v;
       },
@@ -243,6 +244,14 @@ schema.virtual("totalAmount").get(function() {
 
 schema.virtual("description").get(function() {
   return createInvestmentDesc(this);
+});
+
+schema.pre("save", function() {
+  console.log("pre save...");
+});
+
+schema.pre("validate", function() {
+  console.log("prev aldi...");
 });
 
 export default mongoose.model("investment", schema);
