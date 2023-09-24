@@ -3,11 +3,7 @@ import { createSuccessBody } from "../utils/normalizers";
 
 export const setupUserInvestment = async (req, res, next) => {
   try {
-    console.log(
-      req.body,
-      new Date(req.body.endDate),
-      new Date(req.body.startDate)
-    );
+    console.log(req.body);
 
     req.body.user = req.user.id;
 
