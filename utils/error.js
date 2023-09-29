@@ -14,6 +14,8 @@ export const getMongooseErrMsg = err => {
 
   for (let i = 0; i < keys.length; i++) {
     let info = obj[keys[i]];
+
+    // console.log("----", info, typeof info, "-----");
     if (info.properties) {
       const prop = info.properties;
       switch (prop.type) {
@@ -25,11 +27,11 @@ export const getMongooseErrMsg = err => {
           break;
       }
     }
-
-    if (info)
+    if (info.toLowerCase)
       msg += msg
         ? `${i === keys.length - 1 ? " and " : ", "}` + info.toLowerCase()
         : info;
+    else msg += err.message;
   }
   return msg || err.message;
 };
@@ -64,7 +66,8 @@ export const createError = (message, status, code) => {
         401: "UNAUTHORIZED_ACCESS",
         403: "FORBIDDEN_ACCESSS",
         501: "INTERNAL_SERVER_ERROR",
-        400: "BAD_REQUEST"
+        400: "BAD_REQUEST",
+        428: "PRECONDITION_REQUIRED"
       }[err.statusCode] ||
       message.code ||
       "ERROR_CODE";
@@ -127,8 +130,8 @@ export const createError = (message, status, code) => {
       break;
     default:
       const msg = message.message || message;
-      console.log(
-        "500... defualting ",
+      console.error(
+        "error 500... defualting ",
         msg,
         keyName,
         msg.indexOf("getaddrinfo")

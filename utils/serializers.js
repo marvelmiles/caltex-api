@@ -3,19 +3,24 @@ import User from "../models/User";
 
 export const serializeUserToken = async (
   user,
+  hashPrefix = "",
   milliseconds = Date.now() + 60000 // 60 secs
 ) => {
   let token;
 
   do {
     token = generateRandomCode();
-    user.resetToken = await generateBcryptHash(token);
+    user.resetToken =
+      `${hashPrefix ? `caltex_${hashPrefix}_` : ""}` +
+      (await generateBcryptHash(token));
     user.resetDate = milliseconds;
   } while (
     await User.findOne({
       resetToken: user.resetToken
     })
   );
+
+  console.log("new u token...", token);
 
   return token;
 };

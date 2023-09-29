@@ -4,7 +4,13 @@ import crypto from "crypto";
 import { setFutureDate } from ".";
 import User from "../models/User";
 import { createError } from "./error";
-import { HTTP_401_MSG } from "../config/constants";
+import {
+  HTTP_401_MSG,
+  MSG_INVALID_CREDENTIALS,
+  MSG_TOKEN_EXPIRED,
+  HTTP_CODE_TOKEN_EXPIRED
+} from "../config/constants";
+import { verifyToken, userExist } from "../middlewares";
 
 export const generateRandomCode = () =>
   Math.floor(100000 + Math.random() * 900000);
@@ -46,8 +52,8 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
     {
       expires,
       httpOnly: true,
-      sameSite: "None",
-      secure: true
+      sameSite: "Lax" // allow xSite not from clicking link (top level nav)
+      // secure: true
     }
   );
 };
@@ -58,15 +64,79 @@ export const deleteCookie = (name, res) => {
   res.cookie(name, "", { httpOnly: true, expires });
 };
 
-export const authUser = async ({ email, password }) => {
-  if (!email && !password) throw "Invalid body. Expect email and password";
+export const authUser = async ({ email, password }, strict) => {
+  if (!(email && (strict ? password : true)))
+    throw `Invalid body. Expect email${
+      strict ? " and password" : ""
+    } in request body`;
 
   const user = await User.findOne({ email });
 
-  if (!user) throw createError(HTTP_401_MSG, 401);
+  if (!user) throw createError(HTTP_401_MSG, 403);
 
-  if (!(await bcrypt.compare(password, user.password)))
-    throw "Invalid credentials!";
+  if (strict)
+    if (!(await bcrypt.compare(password, user.password)))
+      throw "Invalid credentials!";
 
   return user;
+};
+
+export const validateUserToken = async (
+  user,
+  token,
+  hashPrefix,
+  cookieValue
+) => {
+  if (!user || !user.resetToken) throw createError(HTTP_401_MSG);
+
+  const time = new Date(user.resetDate);
+
+  const err = {
+    _statusCode: 428,
+    message: "Please request a new token before proceeding"
+  };
+
+  if (cookieValue) await verifyToken(cookieValue, err);
+  else await authUser(user, hashPrefix !== "pwd_reset");
+
+  hashPrefix = hashPrefix ? `caltex_${hashPrefix}_` : "";
+
+  console.log("refix found...", user.resetToken.indexOf(hashPrefix) > -1);
+
+  let slice = false;
+
+  if (
+    user.resetToken &&
+    (hashPrefix ? (slice = user.resetToken.indexOf(hashPrefix) > -1) : true)
+  ) {
+    if (
+      !(await bcrypt.compare(
+        token,
+        slice ? user.resetToken.slice(hashPrefix.length) : user.resetToken
+      ))
+    )
+      throw createError(MSG_INVALID_CREDENTIALS);
+  } else throw createError(err.message, err._statusCode);
+
+  if (time.getTime() <= new Date().getTime())
+    throw createError(MSG_TOKEN_EXPIRED, 400, HTTP_CODE_TOKEN_EXPIRED);
+};
+
+export const validateTokenBody = req => {
+  if (!(req.body.token && req.body.email && req.body.password))
+    throw "Invalid request body. Expect an email, password and a token";
+};
+
+export const validateUserCredentials = async (
+  req,
+  cookieKey,
+  strict = true
+) => {
+  const cookieValue = req.cookies[cookieKey];
+
+  if (cookieValue) {
+    verifyToken(cookieValue, { hasForbidden: true });
+
+    await userExist(req);
+  } else req.user = await authUser(req.body, strict);
 };

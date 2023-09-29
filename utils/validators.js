@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { HTTP_401_MSG } from "../config/constants";
+import { HTTP_401_MSG, MSG_INVALID_CREDENTIALS } from "../config/constants";
 import bcrypt from "bcrypt";
 import { createError } from "./error";
 import dotenv from "dotenv";
@@ -48,16 +48,4 @@ export const isPassword = password => {
   if (mixedCharactersCount === 4) return "Strong";
   else if (mixedCharactersCount >= 2) return "Medium";
   else return "Weak";
-};
-
-export const validateUserToken = async (user, token) => {
-  if (!user || !user.resetToken) throw createError(HTTP_401_MSG, 401);
-
-  const time = new Date(user.resetDate);
-
-  if (!(await bcrypt.compare(token, user.resetToken)))
-    throw createError(HTTP_401_MSG, 401);
-
-  if (time.getTime() <= new Date().getTime())
-    throw createError("Token expired", 401, "TOKEN_EXPIRED");
 };

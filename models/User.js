@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { isEmail, isPassword } from "../utils/validators";
-import { generateBcryptHash, generateHmac } from "../utils/auth";
+import bcrypt from "bcrypt";
+import { createError } from "../utils/error";
 
 const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
@@ -35,29 +36,43 @@ const schema = new mongoose.Schema(
       required: "Your password is required",
       validate: {
         validator: function(v) {
+          console.log("runing val", v, this.invalidate);
+
           if (v.length < 8) {
             this.invalidate(
               "password",
               "Password is shorter than minimum allowed length (8)"
             );
+
             return false;
           }
 
           const status = isPassword(v);
 
-          if (status === "Weak")
-            return this.invalidate("passowrd", "Password strength is weak");
+          if (status === "Weak") {
+            this.invalidate("passowrd", "Password strength is weak");
+
+            return false;
+          }
 
           return true;
         },
         message: () => undefined
+      },
+      set(v) {
+        return bcrypt.hashSync(v, bcrypt.genSaltSync(10));
       }
     },
     photoUrl: String,
     lastLogin: Date,
     isLogin: {
       type: Boolean,
-      default: false
+      default: false,
+      set(v) {
+        if (v) this.lastLogin = new Date();
+
+        return v;
+      }
     },
     provider: String,
     resetToken: String,
@@ -115,29 +130,5 @@ const schema = new mongoose.Schema(
 schema.virtual("fullname").get(function() {
   return this.firstname + " " + this.lastname;
 });
-
-const preMiddleware = async function(next) {
-  try {
-    const update = this.getUpdate ? this.getUpdate() : {};
-
-    if (!update.$set) update.$set = {};
-
-    if (this.password && (this.isModified("password") || this.isNew))
-      this.password = await generateBcryptHash(this.password);
-
-    if (update.isLogin) update.$set.lastLogin = new Date();
-    else if (this.isLogin && (this.isModified("isLogin") || this.isNew))
-      this.lastLogin = new Date();
-
-    next();
-  } catch (error) {
-    return next(error);
-  }
-  next();
-};
-
-schema.pre("findOneAndUpdate", preMiddleware);
-schema.pre("updateOne", preMiddleware);
-schema.pre("save", preMiddleware);
 
 export default mongoose.model("user", schema);

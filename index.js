@@ -1,3 +1,6 @@
+// using schema path set for validation and updating because updateOne
+// pre middleware lacks this.invalidate and throwing error crash the server
+
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -60,8 +63,6 @@ app
   .use("/api/users", userRouter)
   .use("/api/transactions", transactionRouter);
 
-app.use(errHandler);
-
 // MONGOOSE SETUP
 
 mongoose
@@ -79,3 +80,5 @@ mongoose
       } did not connect at ${new Date()}`
     )
   );
+
+app.use(errHandler);

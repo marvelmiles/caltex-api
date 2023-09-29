@@ -8,6 +8,19 @@ export const HTTP_401_MSG = "Authorization credentials is invalid";
 
 export const HTTP_403_MSG = "Access is forbidden";
 
+export const HTTP_CODE_ACCOUNT_VERIFICATION_ERROR =
+  "ACCOUNT_VERIFICATION_ERROR";
+
+export const HTTP_CODE_MAIL_ERROR = "MAIL_ERROR";
+
+export const HTTP_CODE_TOKEN_EXPIRED = "TOKEN_EXPIRED";
+
+export const MSG_INVALID_CREDENTIALS = "Invalid credentials!";
+
+export const MSG_TOKEN_EXPIRED = "Token expired";
+
+export const MSG_USER_404 = "Account isn't registered with us!";
+
 export const MAIL_USER = "marvellousabidemi2@gmail.com";
 
 export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
@@ -24,7 +37,13 @@ export const COOKIE_ACCESS_TOKEN = "access_token";
 
 export const COOKIE_REFRESH_TOKEN = "refresh_token";
 
+export const COOKIE_TOKEN_VERIFICATION_KEY = "token_verification";
+
 export const SESSION_COOKIE_DURATION = {
+  shortLived: {
+    duration: 5,
+    type: "m"
+  },
   accessToken: {
     duration: 15,
     type: "h"
@@ -35,8 +54,3 @@ export const SESSION_COOKIE_DURATION = {
     type: "d"
   }
 };
-
-export const HTTP_CODE_ACCOUNT_VERIFICATION_ERROR =
-  "ACCOUNT_VERIFICATION_ERROR";
-
-export const HTTP_CODE_MAIL_ERROR = "MAIL_ERROR";

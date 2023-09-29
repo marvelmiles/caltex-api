@@ -5,27 +5,28 @@ import {
   HTTP_401_MSG,
   COOKIE_REFRESH_TOKEN,
   COOKIE_ACCESS_TOKEN,
-  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
+  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
+  MSG_USER_404
 } from "../config/constants";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 
 export const verifyToken = (req, res = {}, next) => {
-  console.log(req.cookies, req.originalUrl, " verify token");
+  console.log(req.cookies, req.originalUrl, " verify token middleware");
 
   const {
     cookieKey = COOKIE_ACCESS_TOKEN,
     hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN
   } = res;
 
-  const token = req.cookies[cookieKey];
+  const token = typeof req === "string" ? req : req.cookies[cookieKey];
 
   const throwErr = next === undefined;
 
   const handleNextErr = () => {
     const err = createError(
-      hasForbidden ? HTTP_403_MSG : HTTP_401_MSG,
-      hasForbidden ? 403 : 401
+      res.message || (hasForbidden ? HTTP_403_MSG : HTTP_401_MSG),
+      res._statusCode || (hasForbidden ? 403 : 401)
     );
 
     if (throwErr) throw err;
@@ -37,10 +38,13 @@ export const verifyToken = (req, res = {}, next) => {
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) return handleNextErr();
 
-    console.log("nexting...");
+    console.log("jwt nexting...");
 
-    req.user = req.user || user;
-    req.body && delete req.body._id;
+    if (req.originalUrl) {
+      req.user = req.user || user;
+      req.body && delete req.body._id;
+    }
+
     !throwErr && next();
   });
 };
@@ -50,7 +54,7 @@ export const userExist = async (req, res, next) => {
     const match = {};
 
     const message = createError(
-      "Account isn't registered with us!",
+      MSG_USER_404,
       403,
       HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
     );
@@ -112,7 +116,7 @@ export const errHandler = (err, req, res, next) => {
       ? err
       : (err.message ? (err.url = req.url || "-") : true) && createError(err);
 
-    if (err) res.status(err.statusCode).json(err);
+    if (err) res.status(err.statusCode || err.status).json(err);
   }
 
   if (req.file) deleteFile(req.file.publicUrl);

@@ -94,3 +94,14 @@ export const getAll = async ({
     data
   };
 };
+
+// using this cusotom method bcos for some reason update's middleware
+// crash server after invoking an error
+
+export const updateDoc = async (doc, updates) => {
+  for (const key in updates) {
+    doc[key] = updates[key];
+  }
+
+  return await doc.save();
+};
