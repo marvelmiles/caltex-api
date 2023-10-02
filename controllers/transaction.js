@@ -9,6 +9,7 @@ import { serializePaymentObject } from "../utils/serializers";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";
+import axios from "axios";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -277,45 +278,63 @@ export const processCryptoPayment = async (req, res, next) => {
       req.user.id
     );
 
-    const charge = convertToCamelCase(
-      await coinbaseSDK.resources.Charge.create({
-        name: "Caltex",
-        description: req.body.description,
-        local_price: {
-          amount: req.body.amount,
-          currency: req.body.currency
-        },
-        pricing_type: "fixed_price",
-        metadata: req.body.metadata
-      })
-    );
+    const charge = (await axios.post(
+      "https://coinremitter.com/api/v3/BTC/get-new-address",
+      {
+        api_key: "$2y$10$f7U8zvqE9b.KmeABFk3V4eXqsCNS8Y9gEDmsuwhpBZEkEFT0RibMa",
+        password: "12345678",
+        label: "caltex-btc-label"
+      }
+    )).data;
 
-    console.log("payemnt succesfful...", charge.id);
+    console.log(charge, "...charg...");
 
-    await handlePostPaymentIntention({
-      transId,
-      investId,
-      paymentType: "crypto",
-      email: req.body.email,
-      paymentId: charge.id,
-      description: charge.description,
-      currency: charge.pricing.local.currency,
-      amount: charge.pricing.local.amount,
-      user: req.body,
-      currencyType: "crypto",
-      userId: req.user.id
-    });
+    // const charge = response.data.address;
+
+    // const charge = convertToCamelCase(
+    //   await coinbaseSDK.resources.Charge.create({
+    //     name: "Caltex",
+    //     description: req.body.description,
+    //     local_price: {
+    //       amount: req.body.amount,
+    //       currency: req.body.currency
+    //     },
+    //     pricing_type: "fixed_price",
+    //     metadata: req.body.metadata
+    //   })
+    // );
+
+    // console.log("payemnt succesfful...", charge.id);
+
+    // await handlePostPaymentIntention({
+    //   transId,
+    //   investId,
+    //   paymentType: "crypto",
+    //   email: req.body.email,
+    //   paymentId: charge.id,
+    //   description: charge.description,
+    //   currency: charge.pricing.local.currency,
+    //   amount: charge.pricing.local.amount,
+    //   user: req.body,
+    //   currencyType: "crypto",
+    //   userId: req.user.id
+    // });
 
     res.json(
       createSuccessBody({ data: charge, message: "Deposit successful!" })
     );
   } catch (err) {
+    console.log(err.response?.data || err.message, "...transaction");
     next(err);
   }
 };
 
 export const captureCoinbaseWebhook = async (req, res, next) => {
   try {
+    console.log("coinbase.....", req.body);
+
+    return res.json({});
+
     const event = coinbaseSDK.Webhook.verifyEventBody(
       JSON.stringify(req.body),
       req.headers["x-cc-webhook-signature"],
