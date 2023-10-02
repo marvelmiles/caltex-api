@@ -278,47 +278,34 @@ export const processCryptoPayment = async (req, res, next) => {
       req.user.id
     );
 
-    const charge = (await axios.post(
-      "https://coinremitter.com/api/v3/BTC/get-new-address",
-      {
-        api_key: "$2y$10$f7U8zvqE9b.KmeABFk3V4eXqsCNS8Y9gEDmsuwhpBZEkEFT0RibMa",
-        password: "12345678",
-        label: "caltex-btc-label"
-      }
-    )).data;
+    const charge = convertToCamelCase(
+      await coinbaseSDK.resources.Charge.create({
+        name: "Caltex",
+        description: req.body.description,
+        local_price: {
+          amount: req.body.amount,
+          currency: req.body.currency
+        },
+        pricing_type: "fixed_price",
+        metadata: req.body.metadata
+      })
+    );
 
-    console.log(charge, "...charg...");
+    console.log("payemnt succesfful...", charge.id);
 
-    // const charge = response.data.address;
-
-    // const charge = convertToCamelCase(
-    //   await coinbaseSDK.resources.Charge.create({
-    //     name: "Caltex",
-    //     description: req.body.description,
-    //     local_price: {
-    //       amount: req.body.amount,
-    //       currency: req.body.currency
-    //     },
-    //     pricing_type: "fixed_price",
-    //     metadata: req.body.metadata
-    //   })
-    // );
-
-    // console.log("payemnt succesfful...", charge.id);
-
-    // await handlePostPaymentIntention({
-    //   transId,
-    //   investId,
-    //   paymentType: "crypto",
-    //   email: req.body.email,
-    //   paymentId: charge.id,
-    //   description: charge.description,
-    //   currency: charge.pricing.local.currency,
-    //   amount: charge.pricing.local.amount,
-    //   user: req.body,
-    //   currencyType: "crypto",
-    //   userId: req.user.id
-    // });
+    await handlePostPaymentIntention({
+      transId,
+      investId,
+      paymentType: "crypto",
+      email: req.body.email,
+      paymentId: charge.id,
+      description: charge.description,
+      currency: charge.pricing.local.currency,
+      amount: charge.pricing.local.amount,
+      user: req.body,
+      currencyType: "crypto",
+      userId: req.user.id
+    });
 
     res.json(
       createSuccessBody({ data: charge, message: "Deposit successful!" })
@@ -332,8 +319,6 @@ export const processCryptoPayment = async (req, res, next) => {
 export const captureCoinbaseWebhook = async (req, res, next) => {
   try {
     console.log("coinbase.....", req.body);
-
-    return res.json({});
 
     const event = coinbaseSDK.Webhook.verifyEventBody(
       JSON.stringify(req.body),
@@ -349,6 +334,13 @@ export const captureCoinbaseWebhook = async (req, res, next) => {
           return;
       }
     });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const recordCrypoPayment = (req, res, next) => {
+  try {
   } catch (err) {
     next(err);
   }

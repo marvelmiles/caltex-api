@@ -126,3 +126,34 @@ export const errHandler = (err, req, res, next) => {
       deleteFile(publicUrl);
     }
 };
+
+export const withAdminAccess = (req, res, next) => {
+  try {
+    const hasAdmin = req.query.admin || false;
+
+    if (hasAdmin && req.body.cred !== process.env.ADMIN_AUTH_KEY)
+      throw createError(
+        {
+          message: HTTP_401_MSG,
+          details: {
+            message: "Request body.cred is invalid"
+          }
+        },
+        403
+      );
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyAdminStatus = (req, res, next) => {
+  try {
+    if (!req.user.isAdmin) throw createError(HTTP_403_MSG, 403);
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};

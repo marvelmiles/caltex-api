@@ -11,6 +11,10 @@ import {
   HTTP_CODE_TOKEN_EXPIRED
 } from "../config/constants";
 import { verifyToken, userExist } from "../middlewares";
+import { v4 } from "uuid";
+
+export const generateUniqStr = () =>
+  crypto.randomBytes(16).toString("hex") + Date.now() + v4();
 
 export const generateRandomCode = () =>
   Math.floor(100000 + Math.random() * 900000);

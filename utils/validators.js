@@ -3,6 +3,7 @@ import { HTTP_401_MSG, MSG_INVALID_CREDENTIALS } from "../config/constants";
 import bcrypt from "bcrypt";
 import { createError } from "./error";
 import dotenv from "dotenv";
+import { replaceString } from "./serializers";
 
 dotenv.config();
 
@@ -38,14 +39,26 @@ export const isPassword = password => {
   const hasNumbers = /[0-9]/.test(password);
   const hasSymbols = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/\-|=]/.test(password);
 
-  const mixedCharactersCount = [
-    hasUpperCase,
-    hasLowerCase,
-    hasNumbers,
-    hasSymbols
-  ].filter(Boolean).length;
+  let msg = "";
 
-  if (mixedCharactersCount === 4) return "Strong";
-  else if (mixedCharactersCount >= 2) return "Medium";
-  else return "Weak";
+  if (!hasUpperCase) msg += "Password should contain an uppercase";
+
+  if (!hasLowerCase)
+    msg += msg.length ? ", lowercase" : "Password should contain a lowercase";
+
+  if (!hasNumbers)
+    msg += msg.length ? ", number" : "Passwrod should contain a number";
+
+  if (!hasSymbols)
+    msg += msg.length ? ", symbol" : "Password should contain a symbol";
+
+  if (msg) msg = replaceString(msg, ",", " and a");
+
+  return msg;
 };
+
+export const isObject = obj =>
+  obj &&
+  (typeof obj.toString === "function"
+    ? obj.toString() === "[object Object]"
+    : typeof obj === "object" && obj.length === undefined);

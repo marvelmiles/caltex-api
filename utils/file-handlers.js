@@ -37,7 +37,9 @@ export const sendMail = (
   });
 };
 
-export const uploadFile = (config = {}) => {
+export const uploadFile = (
+  config = { dirPath: "", type: "", single: "", defaultFieldName: "" }
+) => {
   config = {
     dirPath: "avatars",
     type: "image",

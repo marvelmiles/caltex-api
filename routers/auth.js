@@ -7,19 +7,27 @@ import {
   verifyUserToken,
   resetPwd,
   refreshToken,
-  generateUserToken
+  generateUserToken,
+  createAdmin
 } from "../controllers/auth";
+import {
+  withAdminAccess,
+  verifyToken,
+  userExist,
+  verifyAdminStatus
+} from "../middlewares";
 
 const authRouter = express.Router();
 
 authRouter
-  .post("/signup", signup)
+  .post("/signup", withAdminAccess, signup)
   .post("/signin", signin)
-  .patch("/signout", signout)
   .post("/recover-password", recoverPwd)
   .post("/verify-token/:reason", verifyUserToken)
   .post("/reset-password", resetPwd)
+  .post("/generate-new-token/:reason", generateUserToken)
+  .post("/create-admin", verifyToken, userExist, verifyAdminStatus, createAdmin)
   .get("/refresh-token", refreshToken)
-  .post("/generate-new-token/:reason", generateUserToken);
+  .patch("/signout", signout);
 
 export default authRouter;

@@ -1,12 +1,13 @@
 import express from "express";
-import { verifyToken, userExist } from "../middlewares";
+import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
 import {
   getUserInvestmentsById,
   updateUserById,
   getUserById,
   getUserTransactionsById,
   verifyUserIdentity,
-  getUserTransactionMetrics
+  getUserTransactionMetrics,
+  getAllUsers
 } from "../controllers/user";
 import { uploadFile } from "../utils/file-handlers";
 
@@ -23,6 +24,7 @@ userRouter
     userExist,
     getUserTransactionMetrics
   )
+  .get("/", verifyToken, userExist, verifyAdminStatus, getAllUsers)
   .put("/:userId", verifyToken, uploadFile(), updateUserById);
 
 export default userRouter;

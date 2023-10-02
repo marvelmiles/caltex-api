@@ -390,3 +390,27 @@ export const getUserTransactionMetrics = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getAllUsers = async (req, res, next) => {
+  try {
+    const match = {
+      _id: {
+        $ne: req.query.withUser ? undefined : req.user.id
+      }
+    };
+
+    if (req.query.admin !== undefined) match.isAdmin = req.query.admin;
+
+    res.json(
+      createSuccessBody({
+        data: await getAll({
+          match,
+          model: User,
+          query: req.query
+        })
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};

@@ -1,24 +1,40 @@
 import mongoose from "mongoose";
 import { isEmail, isPassword } from "../utils/validators";
 import bcrypt from "bcrypt";
-import { createError } from "../utils/error";
 
 const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
+const withAdminRequiredCheck = function() {
+  return !this.isAdmin;
+};
+
 const schema = new mongoose.Schema(
   {
+    isAdmin: {
+      type: Boolean,
+      default: false
+    },
+    isSuperAdmin: {
+      type: Boolean,
+      default: false
+    },
     lastname: {
       type: String,
-      required: "Your lastname is required"
+      required: [withAdminRequiredCheck, "Your lastname is required"]
     },
     firstname: {
       type: String,
-      required: "Your firstname is required"
+      required: [withAdminRequiredCheck, "Your firstname is required"]
     },
     username: {
       type: String,
       unique: true,
-      message: "Username isn't available"
+      required: [
+        function() {
+          return this.isAdmin && !this.firstname;
+        },
+        "Your username or nickname is required"
+      ]
     },
     email: {
       type: String,
@@ -34,32 +50,26 @@ const schema = new mongoose.Schema(
     password: {
       type: String,
       required: "Your password is required",
-      validate: {
-        validator: function(v) {
-          console.log("runing val", v, this.invalidate);
-
-          if (v.length < 8) {
-            this.invalidate(
-              "password",
-              "Password is shorter than minimum allowed length (8)"
-            );
-
-            return false;
-          }
-
-          const status = isPassword(v);
-
-          if (status === "Weak") {
-            this.invalidate("passowrd", "Password strength is weak");
-
-            return false;
-          }
-
-          return true;
-        },
-        message: () => undefined
-      },
       set(v) {
+        console.log("val set pwd..", v, this.invalidate);
+
+        if (v.length < 8) {
+          this.invalidate(
+            "password",
+            "Password is shorter than minimum allowed length (8)"
+          );
+
+          return v;
+        }
+
+        const msg = isPassword(v);
+
+        if (msg) {
+          this.invalidate("passowrd", msg);
+
+          return v;
+        }
+
         return bcrypt.hashSync(v, bcrypt.genSaltSync(10));
       }
     },
@@ -104,7 +114,11 @@ const schema = new mongoose.Schema(
     accountExpires: {
       type: Date,
       expires,
-      default: expires
+      default: function() {
+        if (this.isAdmin) return;
+
+        return expires;
+      }
     }
   },
   {

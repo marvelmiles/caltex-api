@@ -109,3 +109,17 @@ export const convertExponentToLarge = numIn => {
   // Rremove leading and trailing 0's and Return the long number (with sign)
   return sign + (baseLH + baseRH).replace(/^0*(\d+|\d+\.\d+?)\.?0*$/, "$1");
 };
+
+export const replaceString = (inputString, oldInput, newInput = "") => {
+  const lastIndex = inputString.lastIndexOf(oldInput);
+
+  if (lastIndex !== -1) {
+    return (
+      inputString.substring(0, lastIndex) +
+      newInput +
+      inputString.substring(lastIndex + 1)
+    );
+  }
+
+  return inputString;
+};

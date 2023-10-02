@@ -115,14 +115,17 @@ const mailVerificationToken = async (
 export const signup = async (req, res, next) => {
   try {
     console.log("signup...");
-    let user = await User.findOne({
-      email: req.body.email
-    });
 
-    if (!user)
-      user = await User.findOne({
-        username: req.body.username
-      });
+    let user = await User.findOne({
+      $or: [
+        {
+          email: req.body.email
+        },
+        {
+          username: req.body.username || ""
+        }
+      ]
+    });
 
     if (user) {
       const emailExist = user.email === req.body.email;
@@ -138,27 +141,39 @@ export const signup = async (req, res, next) => {
 
     req.body.photoUrl = req.file?.publicUrl;
 
+    req.body.isAdmin = req.query.admin;
+
+    req.body.isSuperAdmin = !!req.body.cred;
+
     user = new User(req.body);
 
     user = await user.save();
 
-    const io = req.app.get("socketIo");
-    io && io.emit("user", user);
+    if (req.query.admin)
+      res.json(
+        createSuccessBody({
+          message: req.query.successMsg || "Thank you for signing up!"
+        })
+      );
+    else {
+      const io = req.app.get("socketIo");
+      io && io.emit("user", user);
 
-    setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
+      setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
 
-    mailVerificationToken(
-      user,
-      res,
-      next,
-      COOKIE_ACC_VERIFIC,
-      "Account has been created successfully! Encountered an error sending verification code to your mail.",
-      `Thank you for signing up${
-        req.body.provider
-          ? ""
-          : ". Please check your email and verify your account"
-      }!`
-    );
+      mailVerificationToken(
+        user,
+        res,
+        next,
+        COOKIE_ACC_VERIFIC,
+        "Account has been created successfully! Encountered an error sending verification code to your mail.",
+        `Thank you for signing up${
+          req.body.provider
+            ? ""
+            : ". Please check your email and verify your account"
+        }!`
+      );
+    }
   } catch (err) {
     next(err);
   }
@@ -449,6 +464,18 @@ export const generateUserToken = async (req, res, next) => {
     }
 
     await mailVerificationToken(req.user, res, next, cookieKey);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const createAdmin = async (req, res, next) => {
+  try {
+    req.query.admin = true;
+    req.query.successMsg = `Admin ${req.body.username ||
+      req.body.firstname} as been created succcessfully!`;
+
+    signup(req, res, next);
   } catch (err) {
     next(err);
   }

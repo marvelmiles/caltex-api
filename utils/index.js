@@ -1,6 +1,7 @@
 import { createLookupPipeline } from "./normalizers";
 import { SERVER_ORIGIN } from "../config/constants";
 import { createError } from "./error";
+import { isObject } from "./validators";
 
 export const setFutureDate = days => {
   return new Date(new Date().getTime() + days * 86400000);
@@ -16,16 +17,25 @@ export const getDaysDifference = (startDate, endDate) => {
 export const getAll = async ({
   model,
   match = {},
-  lookups = [],
-  query = {}
+  query = {},
+  lookups = []
 }) => {
-  let { limit = 20 } = query;
+  let {
+    limit = 20,
+    cursor = "",
+    randomize = true,
+    asc = true,
+    withEq = false
+  } = query;
 
-  limit = Number(limit) || 20;
+  limit = limit + 1 || 20;
 
   let pipeline = [
     {
       $match: match
+    },
+    {
+      $limit: limit
     }
   ];
 
@@ -36,6 +46,31 @@ export const getAll = async ({
   const unsetProject = {
     _id: 0
   };
+
+  if (!isObject(match._id))
+    match._id = {
+      $eq: match._id
+    };
+
+  if (cursor) {
+    cursor = decodeURIComponent(cursor);
+
+    const cursorIdRules = {
+      [asc ? (withEq ? "$gte" : "$gt") : withEq ? "$lte" : "$lt"]: cursor
+    };
+
+    pipeline.splice(0, 1, {
+      $match: {
+        ...pipeline[0].$match,
+        _id: {
+          ...pipeline[0].$match._id,
+          ...cursorIdRules
+        }
+      }
+    });
+  }
+
+  if (randomize) pipeline.splice(2, 0, { $sample: { size: limit } });
 
   for (let i = 0; i < lookups.length; i++) {
     const lookup = lookups[i];
@@ -66,30 +101,22 @@ export const getAll = async ({
     },
     {
       $project: unsetProject
-    },
-    {
-      $facet: {
-        data: [{ $limit: limit }],
-        totalCount: [{ $count: "count" }]
-      }
-    },
-    { $unwind: "$totalCount" },
-    {
-      $project: {
-        data: 1,
-        totalCount: "$totalCount.count"
-      }
     }
   );
 
-  const { data, totalCount } = (await model.aggregate(pipeline))[0] || {
-    data: [],
-    totalCount: 0
-  };
+  const data = await model.aggregate(pipeline);
+
+  cursor = null;
+
+  if (data.length === limit) {
+    cursor = data[limit - 1].id;
+    data.pop();
+  }
+
   return {
-    success: true,
     paging: {
-      totalCount
+      totalCount: data.length,
+      cursor
     },
     data
   };
