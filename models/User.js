@@ -97,7 +97,7 @@ const schema = new mongoose.Schema(
           country: String,
           line1: String,
           line2: String,
-          postalCode: String,
+          zipCode: Number,
           state: String
         },
         {}

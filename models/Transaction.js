@@ -2,28 +2,38 @@ import mongoose from "mongoose";
 
 const schema = new mongoose.Schema(
   {
-    payment: {
-      type: String,
-      required: "Transaction payment id is required"
-    },
     user: {
       type: mongoose.Types.ObjectId,
-      ref: "user"
-    },
-    investment: {
-      type: mongoose.Types.ObjectId,
-      ref: "investment"
-      // required: "Transaction investment id is required."
+      ref: "user",
+      required: "Transaction user id is required"
     },
     paymentType: {
       type: String,
       enum: ["fiat", "crypto"],
-      required: "Transaction payment type is required"
+      required: "Transaction payment type is required",
+      default: "fiat"
     },
-    description: String,
     currency: {
       type: String,
-      default: "usd"
+      required: [
+        function() {
+          return this.paymentType === "crypto";
+        },
+        "Transaction currency is required."
+      ]
+    },
+    paymentProofUrl: {
+      type: String,
+      required:
+        "Payment proof is required. Upload a copy of your transaction for confirmation"
+    },
+    amount: {
+      type: Number
+    },
+    description: String,
+    investment: {
+      type: mongoose.Types.ObjectId,
+      ref: "investment"
     },
     type: {
       type: String,
@@ -32,17 +42,9 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["processing", "approved", "rejected"],
-      default: "processing"
-    },
-    amount: Number,
-    email: String,
-    currencyType: {
-      type: String,
-      enum: ["fiat", "crypto"],
-      default: "fiat"
-    },
-    customer: String
+      enum: ["awaiting", "confirmed", "rejected"],
+      default: "awaiting"
+    }
   },
   {
     collection: "transaction",

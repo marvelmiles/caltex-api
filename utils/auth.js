@@ -12,6 +12,7 @@ import {
 } from "../config/constants";
 import { verifyToken, userExist } from "../middlewares";
 import { v4 } from "uuid";
+import { isProdMode } from "./validators";
 
 export const generateUniqStr = () =>
   crypto.randomBytes(16).toString("hex") + Date.now() + v4();
@@ -56,8 +57,8 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
     {
       expires,
       httpOnly: true,
-      sameSite: "Lax" // allow xSite not from clicking link (top level nav)
-      // secure: true
+      sameSite: "Lax", // allow xSite not from clicking link (top level nav)
+      secure: isProdMode
     }
   );
 };

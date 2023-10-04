@@ -4,9 +4,11 @@ import {
   processFiatPayment,
   processCryptoPayment,
   captureCoinbaseWebhook,
-  recordCrypoPayment
+  recordCrypoPayment,
+  getAllTransactions,
+  confirmTransaction
 } from "../controllers/transaction";
-import { verifyToken, userExist } from "../middlewares";
+import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
 import { uploadFile } from "../utils/file-handlers";
 
 const transactionRouter = express.Router();
@@ -25,6 +27,14 @@ transactionRouter
       defaultFieldName: "payment-proof"
     }),
     recordCrypoPayment
+  )
+  .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
+  .patch(
+    "/:transId/confirm",
+    verifyToken,
+    userExist,
+    verifyAdminStatus,
+    confirmTransaction
   );
 
 export default transactionRouter;

@@ -6,6 +6,7 @@ import { createInEqualityQuery } from "../utils/serializers";
 import { getAll } from "../utils";
 import { v4 as uniq } from "uuid";
 import { createSuccessBody } from "../utils/normalizers";
+import mongoose from "mongoose";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -395,7 +396,9 @@ export const getAllUsers = async (req, res, next) => {
   try {
     const match = {
       _id: {
-        $ne: req.query.withUser ? undefined : req.user.id
+        $ne: req.query.withUser
+          ? undefined
+          : new mongoose.Types.ObjectId(req.user.id)
       }
     };
 

@@ -10,6 +10,7 @@ import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";
 import axios from "axios";
+import { getAll } from "../utils";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -339,9 +340,76 @@ export const captureCoinbaseWebhook = async (req, res, next) => {
   }
 };
 
-export const recordCrypoPayment = (req, res, next) => {
+export const recordCrypoPayment = async (req, res, next) => {
   try {
+    console.log("recoding trans...");
+    req.body.user = req.user.id;
+    req.body.paymentProofUrl = req.file?.publicUrl;
+
+    const trans = await new Transaction(req.body).save();
+
+    res.json(
+      createSuccessBody({
+        data: trans,
+        message: "Transaction dtails received. Please await confirmation!"
+      })
+    );
   } catch (err) {
     next(err);
   }
 };
+
+export const getAllTransactions = async (req, res, next) => {
+  try {
+    console.log(req.query, "gettting all trans");
+
+    const match = {};
+
+    if (req.query.userId)
+      match.user = new mongoose.Types.ObjectId(req.query.userId);
+
+    if (req.query.gteDate) {
+      match.createdAt = {
+        $gte: new Date(req.query.gteDate)
+      };
+    }
+
+    if (req.query.required) {
+      Object.assign(match, req.query.required);
+    }
+
+    res.json(
+      createSuccessBody({
+        data: await getAll({
+          match,
+          model: Transaction,
+          query: req.query
+        })
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const confirmTransaction = async (req, res, next) => {
+  try {
+    const trans = await Transaction.findByIdAndUpdate(
+      req.params.transId,
+      {
+        status: "confirmed"
+      },
+      { new: true }
+    );
+
+    res.json(
+      createSuccessBody({
+        data: trans
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const requestWithdraw = (req, res, next) => {};

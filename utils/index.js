@@ -44,10 +44,14 @@ export const getAll = async ({
   };
 
   const unsetProject = {
-    _id: 0
+    _id: 0,
+    password: 0,
+    resetToken: 0,
+    resetDate: 0,
+    "address._id": 0
   };
 
-  if (!isObject(match._id))
+  if (match._id && !isObject(match._id))
     match._id = {
       $eq: match._id
     };

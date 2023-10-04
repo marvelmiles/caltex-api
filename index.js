@@ -18,6 +18,7 @@ import queryType from "query-types";
 import { isProdMode } from "./utils/validators";
 import timeout from "connect-timeout";
 import { errHandler } from "./middlewares";
+import miscRouter from "./routers/misc";
 
 // CONFIGURATIONS
 
@@ -33,7 +34,7 @@ app
       optionsSuccessStatus: 200,
       credentials: true,
       origin: (origin = "", callback) => {
-        console.log(origin, "origin");
+        // console.log(origin, "origin");
         const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
 
         if (!origin || true || allowedOrigins.includes(origin)) {
@@ -61,7 +62,8 @@ app
   .use("/api/auth", authRouter)
   .use("/api/investments", investmentRouter)
   .use("/api/users", userRouter)
-  .use("/api/transactions", transactionRouter);
+  .use("/api/transactions", transactionRouter)
+  .use("/api", miscRouter);
 
 // MONGOOSE SETUP
 
