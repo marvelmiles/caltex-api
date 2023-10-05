@@ -5,7 +5,6 @@ import {
   createInvestmentDesc,
   convertExponentToLarge
 } from "../utils/serializers";
-import { convertToCamelCase } from "../utils/normalizers";
 
 const schema = new mongoose.Schema(
   {
@@ -33,6 +32,7 @@ const schema = new mongoose.Schema(
         return Number(v) || 0;
       }
     },
+
     startDate: {
       type: Date,
       required: "Investment start date is required",
@@ -44,8 +44,10 @@ const schema = new mongoose.Schema(
     },
     endDate: {
       type: Date,
-      validate: {
-        validator: function(v) {
+      validate: [
+        function(v) {
+          console.log(v, "vertyu....");
+
           if (!this.startDate) return true;
 
           const uDate = new Date(v);
@@ -66,12 +68,14 @@ const schema = new mongoose.Schema(
                 (uM === sM && uDate.getDate() - 1 >= sDate.getDate())))
           );
         },
-        message:
-          "The expected end date should be at least a day ahead of start date"
-      },
+        "The expected end date should be at least a day ahead of start date"
+      ],
       set(v) {
         if (this.startDate && v)
-          this.duration = getDaysDifference(this.startDate, new Date(v));
+          this.duration = getDaysDifference(
+            this.startDate,
+            v.toISOString ? v : new Date(Number(v) || v)
+          );
 
         return v;
       },
@@ -86,6 +90,11 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ["forex", "crypto"],
       default: "forex"
+    },
+    paymentType: {
+      type: String,
+      enum: ["fiat", "crypto"],
+      default: "fiat"
     },
     minAmount: {
       type: Number,
@@ -203,8 +212,6 @@ const schema = new mongoose.Schema(
       set(v) {
         if (v && typeof v !== "number") v = Number(v.replace(/,/g, ""));
 
-        console.log(v, " roi.... after ");
-
         return v;
       },
       get(v) {
@@ -215,8 +222,14 @@ const schema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["new", "awaiting", "invested", "rejected"],
+      enum: ["new", "invested", "rejected"],
       default: "new"
+    },
+    description: {
+      type: String,
+      default: function() {
+        return createInvestmentDesc(this);
+      }
     }
   },
   {
@@ -227,6 +240,8 @@ const schema = new mongoose.Schema(
       virtuals: true,
       transform(doc, ret) {
         ret.id = ret._id;
+
+        delete ret._id;
       }
     }
   }
@@ -239,20 +254,6 @@ schema.virtual("totalAmount").get(function() {
       maximumFractionDigits: 2
     });
   }
-});
-
-schema.virtual("description").get(function() {
-  return createInvestmentDesc(this);
-});
-
-schema.pre("save", function(next) {
-  console.log("pre save...");
-  next();
-});
-
-schema.pre("validate", function(next) {
-  console.log("prev aldi...");
-  next();
 });
 
 export default mongoose.model("investment", schema);

@@ -412,4 +412,19 @@ export const confirmTransaction = async (req, res, next) => {
   }
 };
 
-export const requestWithdraw = (req, res, next) => {};
+export const requestWithdraw = async (req, res, next) => {
+  try {
+    req.body.user = req.user.id;
+    req.body.transactionType = "withdrawal";
+
+    const trans = await new Transaction(req.body).save();
+
+    res.json(
+      createSuccessBody({
+        data: trans
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};

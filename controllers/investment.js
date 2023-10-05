@@ -12,7 +12,7 @@ export const setupUserInvestment = async (req, res, next) => {
     res.json(
       createSuccessBody({
         message: "Investment created successfully!",
-        data: await investment.save()
+        data: await (await investment.save()).populate("user")
       })
     );
   } catch (err) {

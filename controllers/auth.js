@@ -215,6 +215,8 @@ export const signin = async (req, res, next) => {
             403,
             HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
           );
+        
+        console.log("comparing...");
 
         if (!(await bcrypt.compare(req.body.password, user.password || "")))
           throw createError("Email or password is incorrect");

@@ -6,7 +6,8 @@ import {
   captureCoinbaseWebhook,
   recordCrypoPayment,
   getAllTransactions,
-  confirmTransaction
+  confirmTransaction,
+  requestWithdraw
 } from "../controllers/transaction";
 import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
 import { uploadFile } from "../utils/file-handlers";
@@ -27,6 +28,13 @@ transactionRouter
       defaultFieldName: "payment-proof"
     }),
     recordCrypoPayment
+  )
+  .post(
+    "/request-withdrawal",
+    verifyToken,
+    userExist,
+    verifyAdminStatus,
+    requestWithdraw
   )
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
   .patch(

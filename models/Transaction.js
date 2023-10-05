@@ -7,38 +7,39 @@ const schema = new mongoose.Schema(
       ref: "user",
       required: "Transaction user id is required"
     },
+
+    currency: {
+      type: String,
+      required: "Transaction currency is required."
+    },
+
     paymentType: {
       type: String,
       enum: ["fiat", "crypto"],
-      required: "Transaction payment type is required",
-      default: "fiat"
+      required:
+        "Transaction payment type is required. Expect one of <fiat|crypto>"
     },
-    currency: {
+
+    transactionType: {
+      type: String,
+      enum: ["deposit", "withdrawal"],
+      default: "deposit"
+    },
+
+    paymentProofUrl: {
       type: String,
       required: [
         function() {
-          return this.paymentType === "crypto";
+          return this.type === "deposit";
         },
-        "Transaction currency is required."
+        "Payment proof is required. Upload a copy of your transaction for confirmation"
       ]
     },
-    paymentProofUrl: {
-      type: String,
-      required:
-        "Payment proof is required. Upload a copy of your transaction for confirmation"
-    },
-    amount: {
-      type: Number
-    },
+    amount: Number,
     description: String,
     investment: {
       type: mongoose.Types.ObjectId,
       ref: "investment"
-    },
-    type: {
-      type: String,
-      enum: ["deposit", "withdrawal"],
-      default: "deposit"
     },
     status: {
       type: String,
@@ -53,6 +54,8 @@ const schema = new mongoose.Schema(
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
+
+        delete ret._id;
       }
     }
   }
