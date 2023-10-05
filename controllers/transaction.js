@@ -1,4 +1,7 @@
-import { SERVER_ORIGIN } from "../config/constants";
+import {
+  SERVER_ORIGIN,
+  HTTP_CODE_INSUFFICENT_FUNDS
+} from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
@@ -10,7 +13,8 @@ import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";
 import axios from "axios";
-import { getAll } from "../utils";
+import { getAll, getUserMetrics } from "../utils";
+import { createError } from "../utils/error";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -346,12 +350,15 @@ export const recordCrypoPayment = async (req, res, next) => {
     req.body.user = req.user.id;
     req.body.paymentProofUrl = req.file?.publicUrl;
 
-    const trans = await new Transaction(req.body).save();
+    const trans = await (await new Transaction(req.body).save()).populate(
+      "user"
+    );
 
     res.json(
       createSuccessBody({
         data: trans,
-        message: "Transaction dtails received. Please await confirmation!"
+        message:
+          "Transaction details has been received. Please await confirmation!"
       })
     );
   } catch (err) {
@@ -417,7 +424,18 @@ export const requestWithdraw = async (req, res, next) => {
     req.body.user = req.user.id;
     req.body.transactionType = "withdrawal";
 
-    const trans = await new Transaction(req.body).save();
+    const { availBalance } = await getUserMetrics(req.user.id);
+
+    if (req.body.amount > availBalance)
+      throw createError(
+        "Invalid request. Insufficient funds!",
+        400,
+        HTTP_CODE_INSUFFICENT_FUNDS
+      );
+
+    const trans = await (await new Transaction(req.body).save()).populate(
+      "user"
+    );
 
     res.json(
       createSuccessBody({

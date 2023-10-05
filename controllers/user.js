@@ -3,7 +3,7 @@ import User from "../models/User";
 import { isObjectId } from "../utils/validators";
 import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/serializers";
-import { getAll } from "../utils";
+import { getAll, getUserMetrics } from "../utils";
 import { v4 as uniq } from "uuid";
 import { createSuccessBody } from "../utils/normalizers";
 import mongoose from "mongoose";
@@ -373,18 +373,10 @@ export const verifyUserIdentity = (req, res, next) => {
 
 export const getUserTransactionMetrics = async (req, res, next) => {
   try {
-    const transactions = await Transaction.find({
-      user: req.user.id
-    });
-
-    const totalAmount = transactions.reduce(
-      (sum, transaction) => sum + (transaction.amount || 0),
-      0
-    );
     res.json(
       createSuccessBody({
         message: "Request successful",
-        data: { availBalance: totalAmount }
+        data: await getUserMetrics(req.user.id)
       })
     );
   } catch (err) {

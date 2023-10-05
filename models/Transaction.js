@@ -35,7 +35,15 @@ const schema = new mongoose.Schema(
         "Payment proof is required. Upload a copy of your transaction for confirmation"
       ]
     },
-    amount: Number,
+    amount: {
+      type: Number,
+      required: [
+        function() {
+          return !this.paymentProofUrl;
+        },
+        "Transaction amount is required"
+      ]
+    },
     description: String,
     investment: {
       type: mongoose.Types.ObjectId,

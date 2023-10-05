@@ -2,6 +2,7 @@ import { createLookupPipeline } from "./normalizers";
 import { SERVER_ORIGIN } from "../config/constants";
 import { createError } from "./error";
 import { isObject } from "./validators";
+import Transaction from "../models/Transaction";
 
 export const setFutureDate = days => {
   return new Date(new Date().getTime() + days * 86400000);
@@ -135,4 +136,18 @@ export const updateDoc = async (doc, updates) => {
   }
 
   return await doc.save();
+};
+
+export const getUserMetrics = async uid => {
+  const transactions = await Transaction.find({
+    user: uid,
+    transactionType: "deposit"
+  });
+
+  const totalAmount = transactions.reduce(
+    (sum, transaction) => sum + (transaction.amount || 0),
+    0
+  );
+
+  return { availBalance: totalAmount };
 };

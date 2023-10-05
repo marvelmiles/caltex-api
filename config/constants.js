@@ -15,6 +15,8 @@ export const HTTP_CODE_MAIL_ERROR = "MAIL_ERROR";
 
 export const HTTP_CODE_TOKEN_EXPIRED = "TOKEN_EXPIRED";
 
+export const HTTP_CODE_INSUFFICENT_FUNDS = "INSUFFICIENT_FUNDS";
+
 export const MSG_INVALID_CREDENTIALS = "Invalid credentials!";
 
 export const MSG_TOKEN_EXPIRED = "Token expired";
