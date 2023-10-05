@@ -57,7 +57,7 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
     {
       expires,
       httpOnly: true,
-      sameSite: "Lax", // allow xSite not from clicking link (top level nav)
+      sameSite: isProdMode ? "None" : "Lax", // allow xSite not from clicking link (top level nav)
       secure: isProdMode
     }
   );
