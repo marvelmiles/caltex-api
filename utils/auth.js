@@ -146,3 +146,7 @@ export const validateUserCredentials = async (
     await userExist(req);
   } else req.user = await authUser(req.body, strict);
 };
+
+// (async () => {
+//   console.log(await generateBcryptHash("@superAdmin1"));
+// })();

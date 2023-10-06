@@ -19,7 +19,11 @@ export const getAll = async ({
   model,
   match = {},
   query = {},
-  lookups = []
+  lookups = [
+    {
+      from: "user"
+    }
+  ]
 }) => {
   let {
     limit = 20,
