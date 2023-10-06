@@ -59,9 +59,15 @@ export const userExist = async (req, res, next) => {
       HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
     );
 
-    const email = req.body.email || req.user?.email;
+    const email = req.body.email || req.body.userHolder || req.user?.email;
 
-    const _id = req.params.userId || req.body.userId || req.user?.id;
+    const _id =
+      req.params.userId ||
+      req.body.userId ||
+      req.body.userHolder ||
+      req.user?.id;
+
+    console.log(_id, email, isObjectId(_id), "user ecist..is_id");
 
     if (!(_id || email))
       throw "Invalid request. Expect email or id in body or url";
@@ -69,17 +75,7 @@ export const userExist = async (req, res, next) => {
     if (_id) {
       if (!isObjectId(_id)) throw message;
       match._id = _id;
-    } else if (email) match.email = email;
-    else {
-      match.$or = [
-        {
-          email: email || req.body.placeholder
-        },
-        {
-          _id: _id || req.body.placeholder
-        }
-      ];
-    }
+    } else match.email = email;
 
     if (!(req.user = await User.findOne(match))) throw message;
 

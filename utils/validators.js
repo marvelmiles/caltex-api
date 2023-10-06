@@ -15,7 +15,7 @@ export const isEmail = str => {
   );
 };
 
-export const isObjectId = id => mongoose.isValidObjectId(id);
+export const isObjectId = id => mongoose.isObjectIdOrHexString(id);
 
 export const isTodayDate = function(v) {
   const uDate = new Date(v);
