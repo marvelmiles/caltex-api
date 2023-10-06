@@ -181,6 +181,7 @@ export const signup = async (req, res, next) => {
 
 export const signin = async (req, res, next) => {
   try {
+    console.clear();
     console.log("signing..", req.body);
 
     if (
@@ -215,7 +216,7 @@ export const signin = async (req, res, next) => {
             403,
             HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
           );
-        
+
         console.log("comparing...");
 
         if (!(await bcrypt.compare(req.body.password, user.password || "")))

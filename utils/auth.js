@@ -48,6 +48,7 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
       expires.setMinutes(expires.getMinutes() + duration);
       break;
   }
+  console.log(isProdMode, "is prod mode...");
 
   res.cookie(
     name,
