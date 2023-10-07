@@ -84,15 +84,17 @@ export const createError = (message, status, code) => {
   );
 
   const keyName =
-    message.type?.toLowerCase() ||
-    message.code?.toLowerCase() ||
-    message.name?.toLowerCase();
+    message.type?.toLowerCase?.() ||
+    message.code?.toLowerCase?.() ||
+    message.name?.toLowerCase?.();
 
   switch (keyName) {
+    case "mongoservererror":
     case "validationerror":
       err.message = getMongooseErrMsg(message);
 
       err.statusCode = status || 400;
+      err.code = { mongoservererror: "SCHEMA_ERROR" }[keyName];
       break;
     case "casterror":
       err.message = message.message

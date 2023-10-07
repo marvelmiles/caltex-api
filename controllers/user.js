@@ -1,12 +1,14 @@
 import Investment from "../models/Investment";
 import User from "../models/User";
-import { isObjectId } from "../utils/validators";
+import { isObjectId, isObject } from "../utils/validators";
 import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/serializers";
 import { getAll, getUserMetrics } from "../utils";
 import { v4 as uniq } from "uuid";
 import { createSuccessBody } from "../utils/normalizers";
 import mongoose from "mongoose";
+import { createError } from "../utils/error";
+import { HTTP_403_MSG } from "../config/constants";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -35,36 +37,47 @@ export const getUserInvestmentsById = async (req, res, next) => {
 
 export const updateUserById = async (req, res, next) => {
   try {
+    // console.log(req.body, " update user body...");
     const uid = req.params.userId;
 
     if (!uid || !isObjectId(uid)) throw "Invalid user id";
 
-    const update = {
-      $set: req.body,
-      photoUrl: req.file?.publicUrl
-    };
-
-    delete update.$set.address;
-    delete update.$set.password;
-    delete update.$set.phone;
+    if (req.file?.publicUrl) req.body.photoUrl = req.file.publicUrl;
 
     for (const key in req.body.address) {
-      update[`address.${key}`] = req.body.address[key];
+      req.body[`address.${key}`] = req.body.address[key];
     }
 
     if (req.body.phone) {
       if (Array.isArray(req.body.phone))
-        update.$addToSet = {
+        req.body.$addToSet = {
           phone: { $each: req.body.phone }
         };
       else if (typeof req.body.phone === "string")
-        update.$addToSet = {
+        req.body.$addToSet = {
           phone: req.body.phone
         };
       else throw "Invalid body.phone expect an array or string";
+
+      delete req.body.phone;
     }
 
-    const user = await User.findByIdAndUpdate(uid, update, { new: true });
+    for (const key of [
+      "resetToken",
+      "resetDate",
+      "provider",
+      "accountExpires",
+      "isAdmin",
+      "isSuperAdmin",
+      "password",
+      "lastLogin",
+      "ids",
+      "address"
+    ]) {
+      delete req.body[key];
+    }
+
+    const user = await User.findByIdAndUpdate(uid, req.body, { new: true });
 
     if (!user) throw "User doesn't exist";
 
@@ -412,11 +425,15 @@ export const getAllUsers = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
+    if (req.user.isSuperAdmin) throw createError(HTTP_403_MSG, 428);
+
     await User.deleteOne({ _id: req.user.id });
+
+    const u = req.user.username || req.user.firstname;
+
     res.json(
       createSuccessBody({
-        message: `@${req.user.username ||
-          req.user.firstname} has been deleted successfully!`
+        message: u ? `@${u} has been deleted successfully!` : undefined
       })
     );
   } catch (err) {

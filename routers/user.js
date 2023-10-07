@@ -26,7 +26,7 @@ userRouter
     getUserTransactionMetrics
   )
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllUsers)
-  .put("/:userId", verifyToken, uploadFile(), updateUserById)
-  .delete("/:userId", verifyToken, userExist, verifyAdminStatus, deleteUser);
+  .put("/:userId", verifyToken, userExist, uploadFile(), updateUserById)
+  .delete("/:userId", verifyToken, verifyAdminStatus, deleteUser);
 
 export default userRouter;

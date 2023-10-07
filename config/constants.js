@@ -11,6 +11,8 @@ export const HTTP_403_MSG = "Access is forbidden";
 export const HTTP_CODE_ACCOUNT_VERIFICATION_ERROR =
   "ACCOUNT_VERIFICATION_ERROR";
 
+export const HTTP_CODE_VALIDATION_ERROR = "ValidationError";
+
 export const HTTP_CODE_MAIL_ERROR = "MAIL_ERROR";
 
 export const HTTP_CODE_TOKEN_EXPIRED = "TOKEN_EXPIRED";

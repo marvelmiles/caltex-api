@@ -145,6 +145,8 @@ export const signup = async (req, res, next) => {
 
     req.body.isSuperAdmin = !!req.body.cred;
 
+    req.body.settings = {};
+
     user = new User(req.body);
 
     user = await user.save();
@@ -152,7 +154,8 @@ export const signup = async (req, res, next) => {
     if (req.query.admin)
       res.json(
         createSuccessBody({
-          message: req.query.successMsg || "Thank you for signing up!"
+          message: req.query.successMsg || "Thank you for signing up!",
+          data: req.query.successMsg ? user : undefined
         })
       );
     else {
@@ -276,10 +279,7 @@ export const signout = async (req, res, next) => {
 
     await user.updateOne({
       isLogin: false,
-      settings: {
-        ...user.settings,
-        ...req.body.settings
-      }
+      settings: req.body.settings
     });
   } catch (err) {
     next(err);

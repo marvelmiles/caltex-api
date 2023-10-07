@@ -31,7 +31,15 @@ export const generateHmac = (input, secret = process.env.JWT_SECRET) => {
   return hmac.digest("hex");
 };
 
+export const deleteCookie = (name, res) => {
+  const expires = new Date();
+  expires.setFullYear(1990);
+  res.cookie(name, "", { httpOnly: true, expires });
+};
+
 export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
+  deleteCookie(name, res);
+
   let { duration = 1, extend, type = "h" } = time;
   duration = withExtend ? extend : duration;
 
@@ -62,12 +70,6 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
       secure: isProdMode
     }
   );
-};
-
-export const deleteCookie = (name, res) => {
-  const expires = new Date();
-  expires.setFullYear(1990);
-  res.cookie(name, "", { httpOnly: true, expires });
 };
 
 export const authUser = async ({ email, password }, strict) => {

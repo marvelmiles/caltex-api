@@ -1,6 +1,8 @@
 import mongoose from "mongoose";
-import { isEmail, isPassword } from "../utils/validators";
+import { isEmail, isPassword, isObject } from "../utils/validators";
 import bcrypt from "bcrypt";
+import { createError } from "../utils/error";
+import { HTTP_CODE_VALIDATION_ERROR } from "../config/constants";
 
 const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
@@ -88,7 +90,21 @@ const schema = new mongoose.Schema(
     resetToken: String,
     resetDate: Date,
     settings: {
-      type: Object
+      type: Object,
+      default: {},
+      set(v) {
+        if (!isObject(v)) {
+          const err =
+            "Invalid request body. Expect user settings to be of type Object";
+
+          if (this.invalidate) throw this.invalidate("settings", err);
+          else throw createError(err, 400, HTTP_CODE_VALIDATION_ERROR);
+        }
+
+        v._id = v._id || new mongoose.Types.ObjectId();
+
+        return v;
+      }
     },
     address: {
       type: new mongoose.Schema(
