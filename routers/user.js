@@ -7,7 +7,8 @@ import {
   getUserTransactionsById,
   verifyUserIdentity,
   getUserTransactionMetrics,
-  getAllUsers
+  getAllUsers,
+  deleteUser
 } from "../controllers/user";
 import { uploadFile } from "../utils/file-handlers";
 
@@ -25,6 +26,7 @@ userRouter
     getUserTransactionMetrics
   )
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllUsers)
-  .put("/:userId", verifyToken, uploadFile(), updateUserById);
+  .put("/:userId", verifyToken, uploadFile(), updateUserById)
+  .delete("/:userId", verifyToken, userExist, verifyAdminStatus, deleteUser);
 
 export default userRouter;

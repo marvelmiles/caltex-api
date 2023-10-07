@@ -409,3 +409,17 @@ export const getAllUsers = async (req, res, next) => {
     next(err);
   }
 };
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    await User.deleteOne({ _id: req.user.id });
+    res.json(
+      createSuccessBody({
+        message: `@${req.user.username ||
+          req.user.firstname} has been deleted successfully!`
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
