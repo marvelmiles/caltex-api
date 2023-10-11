@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { isEmail, isPassword, isObject } from "../utils/validators";
 import bcrypt from "bcrypt";
 import { createError } from "../utils/error";
-import { HTTP_CODE_VALIDATION_ERROR } from "../config/constants";
+import { HTTP_CODE_VALIDATION_ERROR, SERVER_ORIGIN } from "../config/constants";
 
 const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
@@ -135,7 +135,12 @@ const schema = new mongoose.Schema(
 
         return expires;
       }
-    }
+    },
+    referrer: {
+      type: mongoose.Types.ObjectId,
+      ref: "user"
+    },
+    referralCode: mongoose.Types.ObjectId
   },
   {
     collection: "user",
@@ -159,6 +164,10 @@ const schema = new mongoose.Schema(
 
 schema.virtual("fullname").get(function() {
   return this.firstname + " " + this.lastname;
+});
+
+schema.virtual("referralLink").get(function() {
+  return `${SERVER_ORIGIN}?ref=${this.referralCode}`;
 });
 
 export default mongoose.model("user", schema);

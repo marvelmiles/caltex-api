@@ -388,8 +388,7 @@ export const getUserTransactionMetrics = async (req, res, next) => {
   try {
     res.json(
       createSuccessBody({
-        message: "Request successful",
-        data: await getUserMetrics(req.user.id)
+        data: await getUserMetrics(req.params.id)
       })
     );
   } catch (err) {

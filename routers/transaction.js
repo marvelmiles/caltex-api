@@ -29,13 +29,7 @@ transactionRouter
     }),
     recordCrypoPayment
   )
-  .post(
-    "/request-withdrawal",
-    verifyToken,
-    userExist,
-    verifyAdminStatus,
-    requestWithdraw
-  )
+  .post("/request-withdrawal", verifyToken, userExist, requestWithdraw)
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
   .patch(
     "/:transId/confirm",

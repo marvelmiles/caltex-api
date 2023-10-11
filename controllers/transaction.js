@@ -421,6 +421,8 @@ export const confirmTransaction = async (req, res, next) => {
 
 export const requestWithdraw = async (req, res, next) => {
   try {
+    console.log("requesting withdrawal...");
+    
     req.body.user = req.user.id;
     req.body.transactionType = "withdrawal";
 

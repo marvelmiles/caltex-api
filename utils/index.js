@@ -143,15 +143,57 @@ export const updateDoc = async (doc, updates) => {
 };
 
 export const getUserMetrics = async uid => {
-  const transactions = await Transaction.find({
+  console.log("getting metrics...");
+
+  const transMatch = {
     user: uid,
     transactionType: "deposit"
-  });
+  };
 
-  const totalAmount = transactions.reduce(
-    (sum, transaction) => sum + (transaction.amount || 0),
-    0
-  );
+  const pipeline = [
+    {
+      $facet: {
+        confirmedTransaction: [
+          {
+            $match: {
+              ...transMatch,
+              status: "confirmed"
+            }
+          }
+        ],
+        awaitingTransaction: [
+          {
+            $match: {
+              ...transMatch,
+              status: "awaiting"
+            }
+          }
+        ],
+        rejectedTransaction: [
+          {
+            $match: {
+              ...transMatch,
+              status: "rejected"
+            }
+          }
+        ]
+      }
+    }
+  ];
 
-  return { availBalance: totalAmount };
+  const trans = (await Transaction.aggregate(pipeline))[0];
+
+  const calcSum = (arr = []) =>
+    arr.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
+
+  const balance = {};
+
+  for (const key in trans) {
+    balance[key] = calcSum(trans[key]);
+  }
+
+  return {
+    balance,
+    availBalance: balance.confirmedTransaction
+  };
 };

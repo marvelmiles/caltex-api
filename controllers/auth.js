@@ -23,10 +23,15 @@ import {
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
-import { serializeUserToken } from "../utils/serializers";
+import {
+  serializeUserToken,
+  serializeUserRefferalCode
+} from "../utils/serializers";
 import { createSuccessBody } from "../utils/normalizers";
 import { validateUserToken } from "../utils/auth";
 import { updateDoc } from "../utils";
+import mongoose from "mongoose";
+import Transaction from "../models/Transaction";
 
 const validateAuthReason = (req, expectMsg, reasonMsg) => {
   const reason = req.params.reason;
@@ -146,6 +151,27 @@ export const signup = async (req, res, next) => {
     req.body.isSuperAdmin = !!req.body.cred;
 
     req.body.settings = {};
+
+    if (req.body.referralCode) {
+      const ref = await User.findOne({
+        referralCode: req.body.referralCode
+      });
+
+      if (ref) req.body.referrer = ref.id;
+
+      if (ref) {
+        await new Transaction({
+          user: ref.id,
+          currency: "btc",
+          paymentType: "crypto",
+          transactionType: "deposit",
+          amount: 100,
+          rewarded: true
+        }).save();
+      }
+    }
+
+    await serializeUserRefferalCode(req.body);
 
     user = new User(req.body);
 

@@ -1,5 +1,6 @@
 import { generateRandomCode, generateBcryptHash } from "./auth";
 import User from "../models/User";
+import mongoose from "mongoose";
 
 export const serializeUserToken = async (
   user,
@@ -122,4 +123,13 @@ export const replaceString = (inputString, oldInput, newInput = "") => {
   }
 
   return inputString;
+};
+
+export const serializeUserRefferalCode = async user => {
+  let code;
+  do {
+    code = new mongoose.Types.ObjectId();
+  } while (!!(await User.findById(code)));
+
+  user.referralCode = code;
 };

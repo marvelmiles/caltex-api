@@ -7,7 +7,6 @@ const schema = new mongoose.Schema(
       ref: "user",
       required: "Transaction user id is required"
     },
-
     currency: {
       type: String,
       required: "Transaction currency is required."
@@ -25,12 +24,15 @@ const schema = new mongoose.Schema(
       enum: ["deposit", "withdrawal"],
       default: "deposit"
     },
-
+    rewarded: {
+      type: Boolean,
+      default: false
+    },
     paymentProofUrl: {
       type: String,
       required: [
         function() {
-          return this.type === "deposit";
+          return this.rewarded ? false : this.type === "deposit";
         },
         "Payment proof is required. Upload a copy of your transaction for confirmation"
       ]
