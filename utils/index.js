@@ -153,7 +153,7 @@ export const getUserMetrics = async uid => {
   const pipeline = [
     {
       $facet: {
-        confirmedTransaction: [
+        confirmedTransactions: [
           {
             $match: {
               ...transMatch,
@@ -161,7 +161,7 @@ export const getUserMetrics = async uid => {
             }
           }
         ],
-        awaitingTransaction: [
+        awaitingTransactions: [
           {
             $match: {
               ...transMatch,
@@ -169,7 +169,7 @@ export const getUserMetrics = async uid => {
             }
           }
         ],
-        rejectedTransaction: [
+        rejectedTransactions: [
           {
             $match: {
               ...transMatch,
@@ -194,6 +194,6 @@ export const getUserMetrics = async uid => {
 
   return {
     balance,
-    availBalance: balance.confirmedTransaction
+    availBalance: balance.confirmedTransactions
   };
 };
