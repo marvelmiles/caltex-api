@@ -146,6 +146,8 @@ export const withAdminAccess = (req, res, next) => {
 
 export const verifyAdminStatus = async (req, res, next) => {
   try {
+    console.log("admin id ", req.user.id);
+
     if (!req.user.email) req.user = await User.findById(req.user.id);
 
     if (!req.user?.isAdmin) throw createError(HTTP_403_MSG, 403);

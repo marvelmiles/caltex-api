@@ -413,7 +413,7 @@ export const confirmTransaction = async (req, res, next) => {
 
     res.json(
       createSuccessBody({
-        data: trans
+        data: await trans.populate("user")
       })
     );
   } catch (err) {

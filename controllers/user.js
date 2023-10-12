@@ -424,11 +424,12 @@ export const getAllUsers = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
-    if (req.user.isSuperAdmin) throw createError(HTTP_403_MSG, 428);
+    if (!req.user.isSuperAdmin) throw createError(HTTP_403_MSG, 428);
 
-    await User.deleteOne({ _id: req.user.id });
+    const { username, firstname } =
+      (await User.findByIdAndDelete(req.params.userId)) || {};
 
-    const u = req.user.username || req.user.firstname;
+    const u = username || firstname;
 
     res.json(
       createSuccessBody({

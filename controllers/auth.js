@@ -499,10 +499,11 @@ export const generateUserToken = async (req, res, next) => {
 
 export const createAdmin = async (req, res, next) => {
   try {
+    console.log("creating admn...");
+
     req.query.admin = true;
     req.query.successMsg = `Admin ${req.body.username ||
       req.body.firstname} as been created succcessfully!`;
-
     signup(req, res, next);
   } catch (err) {
     next(err);
