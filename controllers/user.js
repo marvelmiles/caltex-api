@@ -44,6 +44,8 @@ export const updateUserById = async (req, res, next) => {
 
     if (req.file?.publicUrl) req.body.photoUrl = req.file.publicUrl;
 
+    console.log(req.body, "usr update...");
+
     for (const key in req.body.address) {
       req.body[`address.${key}`] = req.body.address[key];
     }
@@ -424,6 +426,8 @@ export const getAllUsers = async (req, res, next) => {
 
 export const deleteUser = async (req, res, next) => {
   try {
+    console.log("will delete ", req.params.userId);
+
     if (!req.user.isSuperAdmin) throw createError(HTTP_403_MSG, 428);
 
     const { username, firstname } =

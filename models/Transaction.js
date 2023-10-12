@@ -24,6 +24,15 @@ const schema = new mongoose.Schema(
       enum: ["deposit", "withdrawal"],
       default: "deposit"
     },
+    walletAddress: {
+      type: String,
+      required: [
+        function() {
+          return this.transactionType === "withdrawal";
+        },
+        "Transaction wallet address is required"
+      ]
+    },
     rewarded: {
       type: Boolean,
       default: false
@@ -55,6 +64,22 @@ const schema = new mongoose.Schema(
       type: String,
       enum: ["awaiting", "confirmed", "rejected"],
       default: "awaiting"
+    },
+    localPayment: {
+      type: new mongoose.Schema(
+        {
+          currency: {
+            type: String
+          }
+        },
+        {
+          toJSON: {
+            transform(doc, ret) {
+              delete ret._id;
+            }
+          }
+        }
+      )
     }
   },
   {
@@ -64,7 +89,6 @@ const schema = new mongoose.Schema(
     toJSON: {
       transform(doc, ret) {
         ret.id = ret._id;
-
         delete ret._id;
       }
     }

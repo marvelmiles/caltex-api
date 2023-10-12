@@ -10,6 +10,7 @@ import {
 } from "../config/constants";
 import User from "../models/User";
 import { isObjectId } from "../utils/validators";
+import { deleteFile } from "../utils/file-handlers";
 
 export const verifyToken = (req, res = {}, next) => {
   console.log(req.cookies, req.originalUrl, " verify token middleware");

@@ -35,6 +35,11 @@ export const search = async (req, res, next) => {
     const queryFillMatch = (queryObj = req.query, condProps = []) => {
       if (queryObj.admin !== undefined) required.isAdmin = queryObj.admin;
 
+      if (queryObj.gteDate)
+        required.createdAt = {
+          $gte: new Date(queryObj.gteDate)
+        };
+
       if (isObject(queryObj.required)) {
         for (let key in queryObj.required) {
           if (key === "_id") continue;
@@ -48,8 +53,13 @@ export const search = async (req, res, next) => {
             }
           }
 
-          required[{ admin: "isAdmin" }[key] || key] =
-            v === "search" ? search : v;
+          if (key === "gteDate")
+            required.createdAt = {
+              $gte: new Date(v)
+            };
+          else
+            required[{ admin: "isAdmin" }[key] || key] =
+              v === "search" ? search : v;
         }
       }
 
@@ -120,6 +130,8 @@ export const search = async (req, res, next) => {
       };
 
       match = isObj ? queryType.parseValue(match) : match;
+
+      console.log(match);
 
       switch (key) {
         case "users":
