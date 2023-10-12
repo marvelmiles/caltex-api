@@ -106,16 +106,19 @@ export const getUserById = (req, res, next) => {
 
 export const getUserTransactionsById = async (req, res, next) => {
   try {
+    console.log("get u trans...");
+
     let {
-      createdAt,
-      updatedAt,
-      type,
+      gteDate,
+      gteUpdatedAt,
+      transactionType,
       status,
       amount,
       plan,
       tradeType,
       roi,
-      totalAmount
+      totalAmount,
+      gteAmount
     } = req.query;
 
     const match = {
@@ -123,13 +126,24 @@ export const getUserTransactionsById = async (req, res, next) => {
       },
       investmentQuery = {};
 
-    createdAt && createInEqualityQuery(createdAt, "createdAt", match, Date);
+    if (gteDate)
+      match.createdAt = {
+        $gte: new Date(gteDate)
+      };
 
-    updatedAt && createInEqualityQuery(updatedAt, "updatedAt", match, Date);
+    if (gteUpdatedAt)
+      match.updatedAt = {
+        $gte: new Date(gteUpdatedAt)
+      };
 
-    amount && createInEqualityQuery(amount, "amount", match, Number);
+    if (amount) match.amount = amount;
 
-    type && (match.type = type);
+    if (gteAmount)
+      match.amount = {
+        $gte: gteAmount
+      };
+
+    transactionType && (match.transactionType = transactionType);
 
     status && (match.status = status);
 
@@ -142,26 +156,15 @@ export const getUserTransactionsById = async (req, res, next) => {
     totalAmount &&
       createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
 
+    console.log(match);
+
     res.json(
       createSuccessBody({
         message: "Request successful",
         data: await getAll({
           model: Transaction,
           match,
-          lookups: [
-            {
-              from: "investment",
-              strict: true,
-              pipeline: [
-                {
-                  $match: investmentQuery
-                }
-              ]
-            },
-            {
-              from: "user"
-            }
-          ]
+          query: req.query
         })
       })
     );
