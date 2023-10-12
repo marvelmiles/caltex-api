@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 export const serializeUserToken = async (
   user,
   hashPrefix = "",
-  milliseconds = Date.now() + 60000 // 60 secs
+  milliseconds = Date.now() + 300000 // 5min
 ) => {
   let token;
 
