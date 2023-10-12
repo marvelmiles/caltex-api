@@ -131,8 +131,6 @@ export const search = async (req, res, next) => {
 
       match = isObj ? queryType.parseValue(match) : match;
 
-      console.log(match);
-
       switch (key) {
         case "users":
           match = {
