@@ -439,6 +439,7 @@ export const requestWithdraw = async (req, res, next) => {
         400,
         HTTP_CODE_INSUFFICENT_FUNDS
       );
+    
 
     const trans = await (await new Transaction(req.body).save()).populate(
       "user"
