@@ -6,7 +6,7 @@ import {
   captureCoinbaseWebhook,
   recordCrypoPayment,
   getAllTransactions,
-  confirmTransaction,
+  updateTransactionStatus,
   requestWithdraw
 } from "../controllers/transaction";
 import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
@@ -32,11 +32,11 @@ transactionRouter
   .post("/request-withdrawal", verifyToken, userExist, requestWithdraw)
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
   .patch(
-    "/:transId/confirm",
+    "/:transId/:status",
     verifyToken,
     userExist,
     verifyAdminStatus,
-    confirmTransaction
+    updateTransactionStatus
   );
 
 export default transactionRouter;

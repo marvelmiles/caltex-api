@@ -65,7 +65,9 @@ const mailVerificationToken = async (
 ) => {
   console.log("mailing...");
 
-  const token = await serializeUserToken(user, hashPrefix);
+  const expires = Date.now() + 60 * 1000 * 5;
+
+  const token = await serializeUserToken(user, hashPrefix, expires);
 
   sendMail(
     {
@@ -93,7 +95,7 @@ const mailVerificationToken = async (
       if (err)
         next(errMsg ? createError(errMsg, 503, HTTP_CODE_MAIL_ERROR) : err);
       else {
-        user.resetDate = Date.now() + 60000;
+        user.resetDate = expires;
 
         user
           .save()
@@ -119,7 +121,7 @@ const mailVerificationToken = async (
 
 export const signup = async (req, res, next) => {
   try {
-    console.log("signup...");
+    console.log("signup...", req.body, req.query);
 
     let user = await User.findOne({
       $or: [
@@ -152,26 +154,26 @@ export const signup = async (req, res, next) => {
 
     req.body.settings = {};
 
+    const _referrals = [];
+
     if (req.body.referralCode) {
-      const ref = await User.findOne({
-        referralCode: req.body.referralCode
-      });
+      const { referrals, _id } =
+        (await User.findOne({
+          referralCode: req.body.referralCode
+        })) || {};
 
-      if (ref) req.body.referrer = ref.id;
+      if (referrals) {
+        _referrals.push(_id);
 
-      if (ref) {
-        await new Transaction({
-          user: ref.id,
-          currency: "btc",
-          paymentType: "crypto",
-          transactionType: "deposit",
-          amount: 100,
-          rewarded: true
-        }).save();
+        if (referrals[0]) _referrals.push(referrals[0]);
+
+        if (referrals[1]) _referrals.push(referrals[1]);
       }
     }
 
     await serializeUserRefferalCode(req.body);
+
+    req.body.referrals = _referrals;
 
     user = new User(req.body);
 

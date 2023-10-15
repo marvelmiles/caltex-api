@@ -136,10 +136,12 @@ const schema = new mongoose.Schema(
         return expires;
       }
     },
-    referrer: {
-      type: mongoose.Types.ObjectId,
-      ref: "user"
-    },
+    referrals: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "user"
+      }
+    ],
     referralCode: mongoose.Types.ObjectId
   },
   {

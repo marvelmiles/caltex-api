@@ -346,7 +346,7 @@ export const captureCoinbaseWebhook = async (req, res, next) => {
 
 export const recordCrypoPayment = async (req, res, next) => {
   try {
-    console.log("recoding trans...");
+    console.log("recoding trans...", req.body);
     req.body.user = req.user.id;
     req.body.paymentProofUrl = req.file?.publicUrl;
 
@@ -399,14 +399,17 @@ export const getAllTransactions = async (req, res, next) => {
   }
 };
 
-export const confirmTransaction = async (req, res, next) => {
+export const updateTransactionStatus = async (req, res, next) => {
   try {
-    console.log("confirming transactions...");
+    console.log("confirming transactions...", req.body);
+
+    if (req.params.status === "awaiting")
+      throw createError("Invalid request", 404);
 
     const trans = await Transaction.findByIdAndUpdate(
       req.params.transId,
       {
-        status: "confirmed"
+        status: { reject: "rejected" }[req.params.status] || req.params.status
       },
       { new: true }
     );
@@ -423,7 +426,7 @@ export const confirmTransaction = async (req, res, next) => {
 
 export const requestWithdraw = async (req, res, next) => {
   try {
-    console.log("requesting withdrawal...");
+    console.log("requesting withdrawal...", req.body);
 
     req.body.user = req.user.id;
     req.body.transactionType = "withdrawal";
@@ -450,3 +453,7 @@ export const requestWithdraw = async (req, res, next) => {
     next(err);
   }
 };
+
+// (async () => {
+//   await Transaction.updateMany({}, { status: "awaiting" });
+// })();

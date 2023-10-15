@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 export const serializeUserToken = async (
   user,
   hashPrefix = "",
-  milliseconds = Date.now() + 300000 // 5min
+  milliseconds = Date.now() + 60 * 1000 * 5 // 5min
 ) => {
   let token;
 
@@ -14,7 +14,8 @@ export const serializeUserToken = async (
     user.resetToken =
       `${hashPrefix ? `caltex_${hashPrefix}_` : ""}` +
       (await generateBcryptHash(token));
-    user.resetDate = milliseconds;
+
+    user.resetDate = new Date(milliseconds);
   } while (
     await User.findOne({
       resetToken: user.resetToken

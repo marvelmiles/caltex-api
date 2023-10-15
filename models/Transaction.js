@@ -48,14 +48,14 @@ const schema = new mongoose.Schema(
     },
     amount: {
       type: Number,
-      required: [
-        function() {
-          return !this.paymentProofUrl;
-        },
-        "Transaction amount is required"
-      ]
+      required: "Transaction amount is required"
     },
-    description: String,
+    description: {
+      type: "String",
+      default: function() {
+        return this.rewarded ? "Referral commission" : "";
+      }
+    },
     investment: {
       type: mongoose.Types.ObjectId,
       ref: "investment"
@@ -69,7 +69,9 @@ const schema = new mongoose.Schema(
       type: new mongoose.Schema(
         {
           currency: {
-            type: String
+            type: String,
+            enum: ["USD", "EUR"],
+            required: "Local payment currency is required"
           }
         },
         {
@@ -79,8 +81,10 @@ const schema = new mongoose.Schema(
             }
           }
         }
-      )
-    }
+      ),
+      required: "Transaction local payment details is required"
+    },
+    referree: mongoose.Types.ObjectId
   },
   {
     collection: "transaction",
