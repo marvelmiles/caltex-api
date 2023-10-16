@@ -28,7 +28,7 @@ export const MSG_USER_404 = "Account isn't registered with us!";
 // "caltextrader@gmail.com";
 // "marvellousabidemi2@gmail.com";
 
-export const MAIL_USER = "marvellousabidemi2@gmail.com";
+export const MAIL_USER = "caltextrader@gmail.com";
 
 export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
 

@@ -32,6 +32,9 @@ import { validateUserToken } from "../utils/auth";
 import { updateDoc } from "../utils";
 import mongoose from "mongoose";
 import Transaction from "../models/Transaction";
+import ejs from "ejs";
+import fs from "fs";
+import path from "path";
 
 const validateAuthReason = (req, expectMsg, reasonMsg) => {
   const reason = req.params.reason;
@@ -69,18 +72,25 @@ const mailVerificationToken = async (
 
   const token = await serializeUserToken(user, hashPrefix, expires);
 
+  const accVerificationTemplate = fs.readFileSync(
+    path.resolve(process.cwd(), "templates/accVerification.ejs"),
+    "utf-8"
+  );
+
   sendMail(
     {
       [COOKIE_PWD_RESET]: {
         to: user.email,
         from: "noreply@gmail.com",
         subject: "Caltex account password Reset",
+        // html: ejs.render(accVerificationTemplate, { username: "aaa" })
         text: `Your reset code is: ${token}`
       },
       [COOKIE_ACC_VERIFIC]: {
         to: user.email,
         from: "noreply@gmail.com",
         subject: "Caltex account verification",
+        // html: ejs.render(accVerificationTemplate, { username: "aaa" }),
         text: `
         Welcome to caltex! 🌱 To get started on your financial
         journey, kindly click the link below for OTP verification.
