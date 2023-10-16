@@ -339,7 +339,7 @@ export const recoverPwd = async (req, res, next) => {
 
 export const verifyUserToken = async (req, res, next) => {
   try {
-    console.log(req.body, "toen ver");
+    console.log(req.body, req.originalUrl, "toen ver");
 
     const { reason, cookieKey, cookieValue } = validateAuthReason(
       req,
@@ -511,3 +511,7 @@ export const createAdmin = async (req, res, next) => {
     next(err);
   }
 };
+
+// (async () => {
+//   await User.updateMany({}, { password: "@testUser1" });
+// })();
