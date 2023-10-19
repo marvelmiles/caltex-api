@@ -51,11 +51,11 @@ export const getUserMetrics = async uid => {
 
   balance.availableBalance = calcSum(
     trans.confirmedTransactions,
-    "availableAmount"
+    "availableBalance"
   );
 
   return {
     balance,
-    availBalance: balance.availableBalance
+    availableBalance: balance.availableBalance
   };
 };

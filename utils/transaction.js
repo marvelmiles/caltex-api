@@ -27,7 +27,7 @@ export const validateAccBalanace = async (
 ) => {
   const metrics = await getUserMetrics(uid);
 
-  if (amount > metrics.availBalance)
+  if (amount > metrics.availableBalance)
     throw createError(msg, 400, HTTP_CODE_INSUFFICENT_FUNDS);
 
   return metrics;

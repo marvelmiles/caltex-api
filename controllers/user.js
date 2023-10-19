@@ -129,6 +129,12 @@ export const getUserTransactionsById = async (req, res, next) => {
         $gte: new Date(gteDate)
       };
 
+    if (req.query.lteDate) {
+      match.createdAt = {
+        $lte: new Date(req.query.lteDate)
+      };
+    }
+
     if (gteUpdatedAt)
       match.updatedAt = {
         $gte: new Date(gteUpdatedAt)

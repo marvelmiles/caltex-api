@@ -384,6 +384,12 @@ export const getAllTransactions = async (req, res, next) => {
       };
     }
 
+    if (req.query.lteDate) {
+      match.createdAt = {
+        $lte: new Date(req.query.lteDate)
+      };
+    }
+
     if (req.query.required) {
       Object.assign(match, req.query.required);
     }
