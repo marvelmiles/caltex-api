@@ -29,8 +29,8 @@ export const getAll = async ({
   let {
     limit = 20,
     cursor = "",
-    randomize = true,
-    asc = true,
+    randomize = false,
+    asc = false,
     withEq = false
   } = query;
 
@@ -103,9 +103,15 @@ export const getAll = async ({
     }
   }
 
+  if (!cursor)
+    pipeline.splice(pipeline.length, 0, {
+      $sort: { _id: asc ? 1 : -1 }
+    });
+
   pipeline.splice(
     pipeline.length,
     0,
+
     {
       $addFields: addFields
     },
