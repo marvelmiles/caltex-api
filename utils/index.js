@@ -3,6 +3,7 @@ import { SERVER_ORIGIN } from "../config/constants";
 import { createError } from "./error";
 import { isObject } from "./validators";
 import Transaction from "../models/Transaction";
+import mongoose from "mongoose";
 
 export const setFutureDate = days => {
   return new Date(new Date().getTime() + days * 86400000);
@@ -140,60 +141,4 @@ export const updateDoc = async (doc, updates) => {
   }
 
   return await doc.save();
-};
-
-export const getUserMetrics = async uid => {
-  console.log("getting metrics...");
-
-  const transMatch = {
-    user: uid,
-    transactionType: "deposit"
-  };
-
-  const pipeline = [
-    {
-      $facet: {
-        confirmedTransactions: [
-          {
-            $match: {
-              ...transMatch,
-              status: "confirmed"
-            }
-          }
-        ],
-        awaitingTransactions: [
-          {
-            $match: {
-              ...transMatch,
-              status: "awaiting"
-            }
-          }
-        ],
-        rejectedTransactions: [
-          {
-            $match: {
-              ...transMatch,
-              status: "rejected"
-            }
-          }
-        ]
-      }
-    }
-  ];
-
-  const trans = (await Transaction.aggregate(pipeline))[0];
-
-  const calcSum = (arr = []) =>
-    arr.reduce((sum, transaction) => sum + (transaction.amount || 0), 0);
-
-  const balance = {};
-
-  for (const key in trans) {
-    balance[key] = calcSum(trans[key]);
-  }
-
-  return {
-    balance,
-    availBalance: balance.confirmedTransactions
-  };
 };

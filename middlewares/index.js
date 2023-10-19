@@ -124,20 +124,10 @@ export const errHandler = (err, req, res, next) => {
     }
 };
 
-export const withAdminAccess = (req, res, next) => {
+export const withDevAdminAccess = (req, res, next) => {
   try {
-    const hasAdmin = req.query.admin || false;
-
-    if (hasAdmin && req.body.cred !== process.env.ADMIN_AUTH_KEY)
-      throw createError(
-        {
-          message: HTTP_401_MSG,
-          details: {
-            message: "Request body.cred is invalid"
-          }
-        },
-        403
-      );
+    if (req.body.cred && req.body.cred !== process.env.ADMIN_AUTH_KEY)
+      throw createError(HTTP_403_MSG, 403);
 
     next();
   } catch (err) {
@@ -152,6 +142,46 @@ export const verifyAdminStatus = async (req, res, next) => {
     if (!req.user.email) req.user = await User.findById(req.user.id);
 
     if (!req.user?.isAdmin) throw createError(HTTP_403_MSG, 403);
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifySuperAdminStatus = async (req, res, next) => {
+  try {
+    console.log("admin id ", req.user.id);
+
+    if (!req.user.email) req.user = await User.findById(req.user.id);
+
+    if (!(req.user.isAdmin && req.user.isSuperAdmin))
+      throw createError(HTTP_403_MSG, 403);
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyUserIdMatch = (req, res, next) => {
+  try {
+    const uid = req.params.userId;
+
+    console.log(uid, req.user.id, "id match check...");
+
+    if (!uid || !isObjectId(uid)) throw "Invalid user id";
+
+    if (uid !== req.user.id)
+      throw createError(
+        {
+          message: HTTP_403_MSG,
+          details: {
+            message: "Conflict between authenticated user and request user id"
+          }
+        },
+        403
+      );
 
     next();
   } catch (err) {

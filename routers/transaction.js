@@ -7,7 +7,8 @@ import {
   recordCrypoPayment,
   getAllTransactions,
   updateTransactionStatus,
-  requestWithdraw
+  requestWithdraw,
+  getTransactionById
 } from "../controllers/transaction";
 import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
 import { uploadFile } from "../utils/file-handlers";
@@ -30,6 +31,7 @@ transactionRouter
     recordCrypoPayment
   )
   .post("/request-withdrawal", verifyToken, userExist, requestWithdraw)
+  .get("/:transId", verifyToken, userExist, getTransactionById)
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
   .patch(
     "/:transId/:status",

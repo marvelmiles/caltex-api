@@ -19,6 +19,14 @@ export const HTTP_CODE_TOKEN_EXPIRED = "TOKEN_EXPIRED";
 
 export const HTTP_CODE_INSUFFICENT_FUNDS = "INSUFFICIENT_FUNDS";
 
+export const HTTP_CODE_CREDIT_ERROR = "CREDIT_ERROR";
+
+export const HTTP_CODE_DEBIT_ERROR = "DEBIT_ERROR";
+
+export const HTTP_CODE_REWARD_ERROR = "REWARD_ERROR";
+
+export const HTTP_CODE_UNVERIFIED_EMAIL = "UNVERIFIED_EMAIL";
+
 export const MSG_INVALID_CREDENTIALS = "Invalid credentials!";
 
 export const MSG_TOKEN_EXPIRED = "Token expired";
@@ -61,3 +69,6 @@ export const SESSION_COOKIE_DURATION = {
     type: "d"
   }
 };
+
+export const MSG_INSUFFICIENT_FUND =
+  "Failed to process request. Insufficient funds!";

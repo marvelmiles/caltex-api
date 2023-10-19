@@ -36,13 +36,13 @@ export const getMongooseErrMsg = err => {
   return msg || err.message;
 };
 
-export const console500MSG = message =>
-  console.log(
-    `[SERVER_ERROR ${message.name}]: [code:${message.code}]: [type:${
+export const console500MSG = (message, name = "LOG", extraMsg = "") =>
+  console.error(
+    `[SERVER_ERROR ${message.name} ${name}]: [code:${message.code}]: [type:${
       message.type
-    }] [info:${JSON.stringify(message.errors)} ${JSON.stringify(
+    }] [errors:${JSON.stringify(message.errors)}] [details:${JSON.stringify(
       message.details
-    )}] ${message.message}. URL:${message.url} at ${new Date()}. `
+    )}] ${message.message} ${extraMsg}. URL:${message.url} at ${new Date()}. `
   );
 
 export const createError = (message, status, code) => {
@@ -67,7 +67,9 @@ export const createError = (message, status, code) => {
         403: "FORBIDDEN_ACCESSS",
         501: "INTERNAL_SERVER_ERROR",
         400: "BAD_REQUEST",
-        428: "PRECONDITION_REQUIRED"
+        428: "PRECONDITION_REQUIRED",
+        404: "NOT_FOUND",
+        409: "RESOURCE_CONFLICTED"
       }[err.statusCode] ||
       message.code ||
       "ERROR_CODE";

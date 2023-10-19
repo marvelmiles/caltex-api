@@ -1,16 +1,15 @@
-import { generateRandomCode, generateBcryptHash } from "./auth";
+import { generateUUID, generateBcryptHash } from "./auth";
 import User from "../models/User";
-import mongoose from "mongoose";
 
 export const serializeUserToken = async (
   user,
   hashPrefix = "",
-  milliseconds = Date.now() + 60 * 1000 * 5 // 5min
+  milliseconds = Date.now() + 60 * 1000 * 15 // 5min
 ) => {
   let token;
 
   do {
-    token = generateRandomCode();
+    token = generateUUID(false);
     user.resetToken =
       `${hashPrefix ? `caltex_${hashPrefix}_` : ""}` +
       (await generateBcryptHash(token));
@@ -128,9 +127,10 @@ export const replaceString = (inputString, oldInput, newInput = "") => {
 
 export const serializeUserRefferalCode = async user => {
   let code;
+
   do {
-    code = new mongoose.Types.ObjectId();
-  } while (!!(await User.findById(code)));
+    code = generateUUID();
+  } while (!!(await User.findOne({ referralCode: code })));
 
   user.referralCode = code;
 };

@@ -19,7 +19,8 @@ import {
   HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
   HTTP_CODE_MAIL_ERROR,
   MSG_USER_404,
-  COOKIE_TOKEN_VERIFICATION_KEY
+  COOKIE_TOKEN_VERIFICATION_KEY,
+  HTTP_CODE_UNVERIFIED_EMAIL
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
@@ -35,6 +36,7 @@ import Transaction from "../models/Transaction";
 import ejs from "ejs";
 import fs from "fs";
 import path from "path";
+import { isProdMode } from "../utils/validators";
 
 const validateAuthReason = (req, expectMsg, reasonMsg) => {
   const reason = req.params.reason;
@@ -72,10 +74,26 @@ const mailVerificationToken = async (
 
   const token = await serializeUserToken(user, hashPrefix, expires);
 
-  const accVerificationTemplate = fs.readFileSync(
-    path.resolve(process.cwd(), "templates/accVerification.ejs"),
+  const isPwd = hashPrefix === COOKIE_PWD_RESET;
+
+  const template = fs.readFileSync(
+    path.resolve(
+      process.cwd(),
+      `templates/${isPwd ? "pwdReset" : "accVerification"}Template.ejs`
+    ),
     "utf-8"
   );
+
+  const route = `${CLIENT_ORIGIN}/auth/token-verification`;
+
+  const props = {
+    token,
+    fullname: `${user.fullname} ${user.lastname}`,
+    primaryColor: "rgba(18, 14, 251, 1)",
+    secondaryColor: "rgba(12, 9, 175, 1)"
+  };
+
+  const searchParams = `token=${token}&email=${user.email}`;
 
   sendMail(
     {
@@ -83,22 +101,23 @@ const mailVerificationToken = async (
         to: user.email,
         from: "noreply@gmail.com",
         subject: "Caltex account password Reset",
-        // html: ejs.render(accVerificationTemplate, { username: "aaa" })
-        text: `Your reset code is: ${token}`
+        html:
+          isPwd &&
+          ejs.render(template, {
+            ...props,
+            verifyLink: `${route}/password?${searchParams}`
+          })
       },
       [COOKIE_ACC_VERIFIC]: {
         to: user.email,
         from: "noreply@gmail.com",
         subject: "Caltex account verification",
-        // html: ejs.render(accVerificationTemplate, { username: "aaa" }),
-        text: `
-        Welcome to caltex! 🌱 To get started on your financial
-        journey, kindly click the link below for OTP verification.
-        Your account's security and growth are our top priorities.
-        Let's build a prosperous future together! [Verification Link]
-        OTP = ${token}
-        ${CLIENT_ORIGIN}/auth/token-verification/account
-        `
+        html:
+          !isPwd &&
+          ejs.render(template, {
+            ...props,
+            verifyLink: `${route}/account?${searchParams}`
+          })
       }
     }[hashPrefix],
     err => {
@@ -158,13 +177,15 @@ export const signup = async (req, res, next) => {
 
     req.body.photoUrl = req.file?.publicUrl;
 
-    req.body.isAdmin = req.query.admin;
-
     req.body.isSuperAdmin = !!req.body.cred;
+
+    req.body.isAdmin = req.body.isSuperAdmin || req.body.admin;
 
     req.body.settings = {};
 
     const _referrals = [];
+
+    const isAdmin = req.body.isSuperAdmin || req.body.admin;
 
     if (req.body.referralCode) {
       const { referrals, _id } =
@@ -189,7 +210,7 @@ export const signup = async (req, res, next) => {
 
     user = await user.save();
 
-    if (req.query.admin)
+    if (isAdmin)
       res.json(
         createSuccessBody({
           message: req.query.successMsg || "Thank you for signing up!",
@@ -320,31 +341,15 @@ export const signout = async (req, res, next) => {
       settings: req.body.settings
     });
   } catch (err) {
+    console.log(err.message);
     next(err);
   }
 };
 
-export const recoverPwd = async (req, res, next) => {
-  try {
-    const user = await User.findOne({
-      email: req.body.email
-    });
-
-    if (!user) throw createError(MSG_USER_404, 403);
-
-    if (req.cookies[COOKIE_PWD_RESET])
-      verifyToken(req, {
-        cookieKey: COOKIE_PWD_RESET,
-        hasForbidden: true
-      });
-    else setJWTCookie(COOKIE_PWD_RESET, user.id, res);
-
-    await mailVerificationToken(user, res, next, COOKIE_PWD_RESET);
-  } catch (err) {
-    if (req.cookies[COOKIE_PWD_RESET]) deleteCookie(COOKIE_PWD_RESET, res);
-
-    next(err);
-  }
+export const recoverPwd = (req, res) => {
+  // using 307 indicate a temp redirect which preserve original
+  // request method
+  return res.redirect(307, "generate-new-token/password-reset");
 };
 
 export const verifyUserToken = async (req, res, next) => {
@@ -356,7 +361,7 @@ export const verifyUserToken = async (req, res, next) => {
       "/auth/verify-token/<account>"
     );
 
-    !cookieValue && validateTokenBody(req);
+    !cookieValue && validateTokenBody(req, false);
 
     const query = {
       email: req.body.email
@@ -372,7 +377,7 @@ export const verifyUserToken = async (req, res, next) => {
 
     const user = await User.findOne(query);
 
-    console.log("user...", !!user);
+    console.log("verification has user...", !!user);
 
     if (!user) throw createError(HTTP_401_MSG, 403);
 
@@ -389,10 +394,11 @@ export const verifyUserToken = async (req, res, next) => {
     switch (reason) {
       case "account":
         update.accountExpires = null;
+
         break;
       case "password-reset":
         setJWTCookie(
-          COOKIE_TOKEN_VERIFICATION_KEY,
+          COOKIE_PWD_RESET,
           user.id,
           res,
           SESSION_COOKIE_DURATION.shortLived
@@ -403,8 +409,6 @@ export const verifyUserToken = async (req, res, next) => {
     }
 
     await user.updateOne(update);
-
-    deleteCookie(cookieKey, res);
 
     res.json(
       createSuccessBody({
@@ -420,9 +424,16 @@ export const resetPwd = async (req, res, next) => {
   try {
     const cookieValue = req.cookies[COOKIE_PWD_RESET];
 
-    console.log("reset-pwd... body...cookieVal...", req.body, !!cookieValue);
+    console.log(
+      "reset-pwd... body...cookieVal...",
+      req.body,
+      !!cookieValue,
+      req.cookies
+    );
 
-    !cookieValue && validateTokenBody(req);
+    if (cookieValue) req.body.token = "000000";
+
+    validateTokenBody(req);
 
     await validateUserCredentials(req, COOKIE_PWD_RESET, false);
 
@@ -431,7 +442,7 @@ export const resetPwd = async (req, res, next) => {
         `Failed to reset password. Account is registered under a third party provider`
       );
 
-    if (!req.cookies[COOKIE_TOKEN_VERIFICATION_KEY])
+    if (!cookieValue)
       await validateUserToken(
         req.user,
         req.body.token,
@@ -446,7 +457,6 @@ export const resetPwd = async (req, res, next) => {
     });
 
     deleteCookie(COOKIE_PWD_RESET, res);
-    deleteCookie(COOKIE_TOKEN_VERIFICATION_KEY, res);
 
     res.json(
       createSuccessBody({
@@ -501,6 +511,14 @@ export const generateUserToken = async (req, res, next) => {
         if (!req.user.accountExpires)
           throw createError("Account has been verified!", 403);
         break;
+      case "password-reset":
+        if (req.user.accountExpires)
+          throw createError(
+            "Unable to process or generate verification token for an unverified account!",
+            428,
+            HTTP_CODE_UNVERIFIED_EMAIL
+          );
+        break;
     }
 
     await mailVerificationToken(req.user, res, next, cookieKey);
@@ -513,7 +531,7 @@ export const createAdmin = async (req, res, next) => {
   try {
     console.log("creating admn...");
 
-    req.query.admin = true;
+    req.body.admin = true;
     req.query.successMsg = `Admin ${req.body.username ||
       req.body.firstname} as been created succcessfully!`;
     signup(req, res, next);
@@ -521,7 +539,3 @@ export const createAdmin = async (req, res, next) => {
     next(err);
   }
 };
-
-// (async () => {
-//   await User.updateMany({}, { password: "@testUser1" });
-// })();

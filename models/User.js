@@ -91,7 +91,9 @@ const schema = new mongoose.Schema(
     resetDate: Date,
     settings: {
       type: Object,
-      default: {},
+      default: {
+        _id: new mongoose.Types.ObjectId()
+      },
       set(v) {
         if (!isObject(v)) {
           const err =
@@ -100,8 +102,6 @@ const schema = new mongoose.Schema(
           if (this.invalidate) throw this.invalidate("settings", err);
           else throw createError(err, 400, HTTP_CODE_VALIDATION_ERROR);
         }
-
-        v._id = v._id || new mongoose.Types.ObjectId();
 
         return v;
       }
@@ -142,7 +142,7 @@ const schema = new mongoose.Schema(
         ref: "user"
       }
     ],
-    referralCode: mongoose.Types.ObjectId
+    referralCode: String
   },
   {
     collection: "user",
@@ -157,8 +157,7 @@ const schema = new mongoose.Schema(
         delete ret.resetToken;
         delete ret.resetDate;
         delete ret.address._id;
-
-        if (ret.settings) delete ret.settings._id;
+        delete ret.settings._id;
       }
     }
   }

@@ -31,7 +31,7 @@ export const createLookupPipeline = ({
 }) => {
   from = lookup.from || from;
   localField = localField || from;
-  lookupAs = lookupAs || from;
+  lookupAs = lookupAs || localField;
 
   return [
     {
@@ -45,7 +45,8 @@ export const createLookupPipeline = ({
     },
     {
       $addFields: {
-        [lookupAs]: { $arrayElemAt: [`$${lookupAs}`, 0] }
+        [lookupAs]: { $arrayElemAt: [`$${lookupAs}`, 0] },
+        id: "$_id"
       }
     },
     {

@@ -11,22 +11,28 @@ import {
   createAdmin
 } from "../controllers/auth";
 import {
-  withAdminAccess,
+  withDevAdminAccess,
   verifyToken,
   userExist,
-  verifyAdminStatus
+  verifySuperAdminStatus
 } from "../middlewares";
 
 const authRouter = express.Router();
 
 authRouter
-  .post("/signup", withAdminAccess, signup)
+  .post("/signup", withDevAdminAccess, signup)
   .post("/signin", signin)
   .post("/recover-password", recoverPwd)
   .post("/verify-token/:reason", verifyUserToken)
   .post("/reset-password", resetPwd)
   .post("/generate-new-token/:reason", generateUserToken)
-  .post("/create-admin", verifyToken, userExist, verifyAdminStatus, createAdmin)
+  .post(
+    "/create-admin",
+    verifyToken,
+    userExist,
+    verifySuperAdminStatus,
+    createAdmin
+  )
   .get("/refresh-token", refreshToken)
   .patch("/signout", signout);
 

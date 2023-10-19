@@ -23,6 +23,7 @@ import miscRouter from "./routers/misc";
 // CONFIGURATIONS
 
 dotenv.config();
+
 const app = express();
 
 // MIDDLEWARES

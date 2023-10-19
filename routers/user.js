@@ -1,5 +1,10 @@
 import express from "express";
-import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
+import {
+  verifyToken,
+  userExist,
+  verifyAdminStatus,
+  verifyUserIdMatch
+} from "../middlewares";
 import {
   getUserInvestmentsById,
   updateUserById,
@@ -22,11 +27,12 @@ userRouter
   .get(
     "/:userId/transaction-metrics",
     verifyToken,
+    verifyUserIdMatch,
     userExist,
     getUserTransactionMetrics
   )
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllUsers)
-  .put("/:userId", verifyToken, userExist, uploadFile(), updateUserById)
+  .put("/:userId", verifyToken, verifyUserIdMatch, uploadFile(), updateUserById)
   .delete("/:userId", verifyToken, verifyAdminStatus, deleteUser);
 
 export default userRouter;

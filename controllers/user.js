@@ -1,9 +1,9 @@
 import Investment from "../models/Investment";
 import User from "../models/User";
-import { isObjectId, isObject } from "../utils/validators";
 import Transaction from "../models/Transaction";
 import { createInEqualityQuery } from "../utils/serializers";
-import { getAll, getUserMetrics } from "../utils";
+import { getAll } from "../utils";
+import { getUserMetrics } from "../utils/user";
 import { v4 as uniq } from "uuid";
 import { createSuccessBody } from "../utils/normalizers";
 import mongoose from "mongoose";
@@ -39,8 +39,6 @@ export const updateUserById = async (req, res, next) => {
   try {
     // console.log(req.body, " update user body...");
     const uid = req.params.userId;
-
-    if (!uid || !isObjectId(uid)) throw "Invalid user id";
 
     if (req.file?.publicUrl) req.body.photoUrl = req.file.publicUrl;
 
@@ -115,7 +113,7 @@ export const getUserTransactionsById = async (req, res, next) => {
       status,
       amount,
       plan,
-      tradeType,
+      paymentType,
       roi,
       totalAmount,
       gteAmount
@@ -145,18 +143,18 @@ export const getUserTransactionsById = async (req, res, next) => {
 
     transactionType && (match.transactionType = transactionType);
 
+    paymentType && (match.paymentType = paymentType);
+
     status && (match.status = status);
 
     plan && (investmentQuery.plan = plan);
-
-    tradeType && (investmentQuery.tradeType = tradeType);
 
     roi && createInEqualityQuery(roi, "roi", investmentQuery);
 
     totalAmount &&
       createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
 
-    console.log(match);
+    console.log(match, paymentType);
 
     res.json(
       createSuccessBody({
@@ -393,7 +391,7 @@ export const getUserTransactionMetrics = async (req, res, next) => {
   try {
     res.json(
       createSuccessBody({
-        data: await getUserMetrics(req.params.id)
+        data: await getUserMetrics(req.params.userId)
       })
     );
   } catch (err) {

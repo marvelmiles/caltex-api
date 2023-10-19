@@ -1,5 +1,7 @@
 import {
   SERVER_ORIGIN,
+  HTTP_403_MSG,
+  MSG_INSUFFICIENT_FUND,
   HTTP_CODE_INSUFFICENT_FUNDS
 } from "../config/constants";
 import Investment from "../models/Investment";
@@ -12,9 +14,9 @@ import { serializePaymentObject } from "../utils/serializers";
 import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";
-import axios from "axios";
-import { getAll, getUserMetrics } from "../utils";
+import { getAll } from "../utils";
 import { createError } from "../utils/error";
+import { validateAccBalanace, debitUserAcc } from "../utils/transaction";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -347,6 +349,7 @@ export const captureCoinbaseWebhook = async (req, res, next) => {
 export const recordCrypoPayment = async (req, res, next) => {
   try {
     console.log("recoding trans...", req.body);
+
     req.body.user = req.user.id;
     req.body.paymentProofUrl = req.file?.publicUrl;
 
@@ -385,12 +388,23 @@ export const getAllTransactions = async (req, res, next) => {
       Object.assign(match, req.query.required);
     }
 
+    console.log("all trans...", match);
+
     res.json(
       createSuccessBody({
         data: await getAll({
           match,
           model: Transaction,
-          query: req.query
+          query: req.query,
+          lookups: [
+            {
+              from: "user"
+            },
+            {
+              from: "user",
+              localField: "markedBy"
+            }
+          ]
         })
       })
     );
@@ -404,19 +418,44 @@ export const updateTransactionStatus = async (req, res, next) => {
     console.log("confirming transactions...", req.body);
 
     if (req.params.status === "awaiting")
-      throw createError("Invalid request", 404);
+      throw createError("Invalid request!", 404);
 
-    const trans = await Transaction.findByIdAndUpdate(
-      req.params.transId,
-      {
-        status: { reject: "rejected" }[req.params.status] || req.params.status
-      },
-      { new: true }
-    );
+    let trans = await Transaction.findById(req.params.transId);
+
+    if (!trans)
+      throw createError("Invalid request. Transaction not found", 404);
+
+    if (trans.status !== "awaiting")
+      throw createError(
+        {
+          message: `Transaction has been ${trans.status} by ${
+            req.user.id === trans.markedBy.toString()
+              ? "you"
+              : "admin " + req.user.username
+          }!`,
+          details: {
+            message: HTTP_403_MSG
+          }
+        },
+        409
+      );
+
+    const status = req.params.status.toLowerCase();
+
+    if (status === "confirm" && !trans.isDeposit)
+      await debitUserAcc(trans.user, trans.amount, trans._id);
+
+    await trans.updateOne({
+      markedBy: req.user.id,
+      markedAt: new Date(),
+      status: status + "ed"
+    });
+
+    trans = await Transaction.findById(trans._id);
 
     res.json(
       createSuccessBody({
-        data: await trans.populate("user")
+        data: trans ? await trans.populate("user markedBy") : trans
       })
     );
   } catch (err) {
@@ -431,18 +470,10 @@ export const requestWithdraw = async (req, res, next) => {
     req.body.user = req.user.id;
     req.body.transactionType = "withdrawal";
 
-    const { availBalance } = await getUserMetrics(req.user.id);
-
-    if (req.body.amount > availBalance)
-      throw createError(
-        "Invalid request. Insufficient funds!",
-        400,
-        HTTP_CODE_INSUFFICENT_FUNDS
-      );
-    
+    await validateAccBalanace(req.user.id, req.body.amount);
 
     const trans = await (await new Transaction(req.body).save()).populate(
-      "user"
+      "user markedBy"
     );
 
     res.json(
@@ -455,6 +486,29 @@ export const requestWithdraw = async (req, res, next) => {
   }
 };
 
+export const getTransactionById = async (req, res, next) => {
+  try {
+    res.json(
+      createSuccessBody({
+        data: await Transaction.findById(req.params.transId).populate(
+          "user markedBy"
+        )
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 // (async () => {
-//   await Transaction.updateMany({}, { status: "awaiting" });
+//   try {
+//     const trans = await Transaction.find({});
+
+//     for (const t of trans) {
+//       if (t.status !== "awaiting")
+//         await t.updateOne({
+//           metadata: {}
+//         });
+//     }
+//   } catch (err) {}
 // })();

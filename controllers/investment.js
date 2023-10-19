@@ -1,10 +1,25 @@
 import Investment from "../models/Investment";
 import { createSuccessBody } from "../utils/normalizers";
-import Transaction from "../models/Transaction";
+import {
+  validateAccBalanace,
+  debitUserAcc,
+  rewardReferrals
+} from "../utils/transaction";
+import { console500MSG } from "../utils/error";
+import {
+  HTTP_CODE_DEBIT_ERROR,
+  HTTP_CODE_REWARD_ERROR
+} from "../config/constants";
 
 export const setupUserInvestment = async (req, res, next) => {
   try {
     console.log(req.body);
+
+    await validateAccBalanace(
+      req.user.id,
+      req.body.amount,
+      "You don't have sufficient funds to invest with us!"
+    );
 
     req.body.user = req.user.id;
 
@@ -17,50 +32,25 @@ export const setupUserInvestment = async (req, res, next) => {
       })
     );
 
-    const refs = req.user.referrals;
+    let crediting = false;
 
-    for (let i = 0; i < refs.length; i++) {
-      const uid = refs[i];
+    try {
+      await debitUserAcc(
+        investment.user,
+        investment.amount,
+        undefined,
+        investment._id
+      );
 
-      const pctDefault = {
-        starterforex: { 0: 10, 1: 7, 2: 3 }[i],
-        professionalforex: { 0: 15, 1: 10, 2: 7 }[i],
-        masterforex: { 0: 20, 1: 15, 2: 10 }[i],
-        startercrypto: { 0: 5, 1: 5, 2: 5 }[i],
-        professionalcrypto: { 0: 10, 1: 10, 2: 10 }[i],
-        mastercrypto: { 0: 15, 1: 15, 2: 15 }[i]
-      }[investment.plan + investment.tradeType];
+      crediting = true;
 
-      const { pct = pctDefault, amount } = req.query.reward || {};
-
-      try {
-        if (
-          !!(await Transaction.findOne({
-            user: uid,
-            referree: investment.user.id
-          }))
-        )
-          continue;
-
-        await new Transaction({
-          rewarded: true,
-          user: uid,
-          currency: "USD",
-          amount: amount || (pct / 100) * investment.amount + investment.amount,
-          paymentType: "fiat",
-          status: "confirmed",
-          localPayment: {
-            currency: "USD"
-          },
-          referree: investment.user.id
-        }).save();
-      } catch (err) {
-        console.log(
-          `[SERVER_ERROR COMMISION_REWARD]: failed to reward ${uid} from ${
-            investment.user.id
-          }. [msg: ${err.message}] at ${new Date()}`
-        );
-      }
+      // reward referral
+      await rewardReferrals(investment, req);
+    } catch (err) {
+      console500MSG(
+        err,
+        crediting ? HTTP_CODE_REWARD_ERROR : HTTP_CODE_DEBIT_ERROR
+      );
     }
   } catch (err) {
     next(err);
@@ -69,14 +59,13 @@ export const setupUserInvestment = async (req, res, next) => {
 
 export const getInvestmentById = async (req, res, next) => {
   try {
-    const id = req.params.investmentId.toLowerCase();
-
-    if (id === "invest") return next();
-
-    res.json({
-      success: true,
-      data: await Investment.findById(id).populate("user")
-    });
+    res.json(
+      createSuccessBody({
+        data: await Investment.findById(req.params.investmentId).populate(
+          "user"
+        )
+      })
+    );
   } catch (err) {
     next(err);
   }
