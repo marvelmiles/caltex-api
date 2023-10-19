@@ -504,7 +504,7 @@ export const generateUserToken = async (req, res, next) => {
       `/auth/generate-new-token/${allowedReason}`
     );
 
-    await validateUserCredentials(req, cookieKey, reason !== "password-reset");
+    await validateUserCredentials(req, cookieKey, false);
 
     switch (reason) {
       case "account":

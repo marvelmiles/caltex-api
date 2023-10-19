@@ -134,3 +134,14 @@ export const serializeUserRefferalCode = async user => {
 
   user.referralCode = code;
 };
+
+// (async () => {
+//   const user = await User.findById("652fdddec324492baa72f5e0");
+//   await serializeUserToken(user, "acc_verification");
+
+//   await user.save();
+
+//   await user.updateOne({
+//     accountExpires: new Date(Date.now() + 60 * 1000 * 35)
+//   });
+// })();
