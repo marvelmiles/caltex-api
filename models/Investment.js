@@ -5,6 +5,7 @@ import {
   createInvestmentDesc,
   convertExponentToLarge
 } from "../utils/serializers";
+import { formatToDecimalPlace } from "../utils/normalizers";
 
 const schema = new mongoose.Schema(
   {
@@ -198,13 +199,22 @@ const schema = new mongoose.Schema(
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
-              return 4.0;
-            case "professional":
-              return 3.5;
-            default:
               return 3.0;
+            case "professional":
+              return 2.5;
+            default:
+              return 2.0;
           }
-        } else return 2.5;
+        } else if (this.tradeType === "forex") {
+          switch (this.plan) {
+            case "master":
+              return 2.0;
+            case "professional":
+              return 1.5;
+            default:
+              return 1.0;
+          }
+        }
       }
     },
     roi: {
@@ -215,8 +225,8 @@ const schema = new mongoose.Schema(
         return v;
       },
       get(v) {
-        if (!v && this.amount && this.roiPct)
-          v = (this.roiPct / 100) * this.amount;
+        if (!v && this.amount && this.roiPct && this.duration)
+          v = (this.roiPct / 100) * this.amount * this.duration;
         return Number(v);
       }
     },
@@ -249,10 +259,7 @@ const schema = new mongoose.Schema(
 
 schema.virtual("totalAmount").get(function() {
   if (this.roi && this.amount) {
-    return (this.amount + this.roi).toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    return formatToDecimalPlace(this.amount + this.roi, true);
   }
 });
 
