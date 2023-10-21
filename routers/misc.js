@@ -7,7 +7,7 @@ import ejs from "ejs";
 const miscRouter = express.Router();
 
 miscRouter.get("/search", search).get("/template", (req, res) => {
-  const isPwd = true;
+  const isPwd = false;
 
   const temp = path.resolve(
     process.cwd(),
