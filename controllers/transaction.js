@@ -1,9 +1,4 @@
-import {
-  SERVER_ORIGIN,
-  HTTP_403_MSG,
-  MSG_INSUFFICIENT_FUND,
-  HTTP_CODE_INSUFFICENT_FUNDS
-} from "../config/constants";
+import { SERVER_ORIGIN, HTTP_403_MSG } from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";

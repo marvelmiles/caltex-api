@@ -10,7 +10,12 @@ import {
   requestWithdraw,
   getTransactionById
 } from "../controllers/transaction";
-import { verifyToken, userExist, verifyAdminStatus } from "../middlewares";
+import {
+  verifyToken,
+  userExist,
+  verifyAdminStatus,
+  verifyKyc
+} from "../middlewares";
 import { uploadFile } from "../utils/file-handlers";
 
 const transactionRouter = express.Router();
@@ -30,7 +35,13 @@ transactionRouter
     }),
     recordCrypoPayment
   )
-  .post("/request-withdrawal", verifyToken, userExist, requestWithdraw)
+  .post(
+    "/request-withdrawal",
+    verifyToken,
+    userExist,
+    verifyKyc,
+    requestWithdraw
+  )
   .get("/:transId", verifyToken, userExist, getTransactionById)
   .get("/", verifyToken, userExist, verifyAdminStatus, getAllTransactions)
   .patch(

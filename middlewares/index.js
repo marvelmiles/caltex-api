@@ -6,7 +6,8 @@ import {
   COOKIE_REFRESH_TOKEN,
   COOKIE_ACCESS_TOKEN,
   HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
-  MSG_USER_404
+  MSG_USER_404,
+  HTTP_CODE_UNVERIFIED_KYC
 } from "../config/constants";
 import User from "../models/User";
 import { isObjectId, isObject } from "../utils/validators";
@@ -190,6 +191,21 @@ export const verifyUserIdMatch = (req, res, next) => {
           }
         },
         403
+      );
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const verifyKyc = (req, res, next) => {
+  try {
+    if (!(Object.keys(req.user.kycDocs).length || Object.keys(req.user.kycIds)))
+      throw createError(
+        "Invalid request. Your need to complete your profile verification.",
+        400,
+        HTTP_CODE_UNVERIFIED_KYC
       );
 
     next();
