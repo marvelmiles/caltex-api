@@ -537,3 +537,13 @@ export const updateUserKycStatus = async (req, res, next) => {
     next(err);
   }
 };
+
+// (async () => {
+//   await User.updateMany(
+//     {},
+//     {
+//       kycDocs: { _id: new mongoose.Types.ObjectId() },
+//       kycIds: { _id: new mongoose.Types.ObjectId() }
+//     }
+//   );
+// })();

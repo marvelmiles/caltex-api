@@ -136,12 +136,12 @@ export const serializeUserRefferalCode = async user => {
 };
 
 // (async () => {
-//   const user = await User.findById("652fdddec324492baa72f5e0");
-//   await serializeUserToken(user, "acc_verification");
+//   const users = await User.find({});
 
-//   await user.save();
-
-//   await user.updateOne({
-//     accountExpires: new Date(Date.now() + 60 * 1000 * 35)
-//   });
+//   for (const u of users) {
+//     await u.updateOne({
+//       referralCode: u.referralCode || (await serializeUserRefferalCode()),
+//       referrals: []
+//     });
+//   }
 // })();

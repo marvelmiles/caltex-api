@@ -511,10 +511,11 @@ export const getTransactionById = async (req, res, next) => {
 //     const trans = await Transaction.find({});
 
 //     for (const t of trans) {
-//       if (t.status !== "awaiting")
-//         await t.updateOne({
-//           metadata: {}
-//         });
+//       await t.updateOne({
+//         metadata: {
+//           _id: new mongoose.Types.ObjectId()
+//         }
+//       });
 //     }
 //   } catch (err) {}
 // })();
