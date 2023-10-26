@@ -240,6 +240,10 @@ const schema = new mongoose.Schema(
       default: function() {
         return createInvestmentDesc(this);
       }
+    },
+    matured: {
+      type: Boolean,
+      default: false
     }
   },
   {

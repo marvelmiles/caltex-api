@@ -70,3 +70,7 @@ export const getInvestmentById = async (req, res, next) => {
     next(err);
   }
 };
+
+// (async () => {
+//   await Investment.updateMany({}, { matured: false });
+// })();
