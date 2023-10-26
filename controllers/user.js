@@ -55,10 +55,10 @@ export const updateUserById = async (req, res, next) => {
     for (const key in req.body.docs) {
       if (key === "avatar") continue;
 
-      req.body[`kycDocs.${key}`] = {
-        file: req.body.docs[key],
-        status: "awaiting"
-      };
+      const [parent, child] = key.split("-");
+
+      req.body[`kycDocs.${parent}.${child}`] = req.body.docs[key];
+      req.body[`kycDocs.${parent}.status`] = "awaiting";
     }
 
     delete req.body.kycIds;
