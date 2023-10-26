@@ -261,6 +261,10 @@ const schema = new mongoose.Schema(
   }
 );
 
+schema.index({
+  endDate: 1
+});
+
 schema.virtual("totalAmount").get(function() {
   if (this.roi && this.amount) {
     return formatToDecimalPlace(this.amount + this.roi, true);

@@ -8,6 +8,8 @@ export default (app, port = process.env.PORT) => {
 
     cron.schedule("0 0 * * *", function() {
       (async () => {
+        // await Investment.updateMany({}, { matured: false });
+
         const today = new Date();
 
         today.setHours(0);
