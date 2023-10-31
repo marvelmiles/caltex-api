@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      * {
+        font-family: "Roboto", sans-serif;
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+      }
+
+      .container {
+        margin: 0px;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        background-color: #eee;
+      }
+
+      .flex-x {
+        display: flex;
+        flex-direction: row;
+      }
+
+      .flex-sb {
+        justify-content: space-between;
+      }
+
+      .col-6 {
+        width: 48%;
+      }
+
+      .form-page {
+        display: none;
+        width: 35%;
+      }
+
+      .card {
+        /* background-color: rgb(56, 24, 199); */
+        background-color: #fff;
+        border-radius: 6px;
+        padding: 20px;
+        box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-container {
+        margin-top: 20px;
+      }
+
+      .form-group {
+        margin-top: 10px;
+        margin-bottom: 10px;
+      }
+
+      .input-label {
+        margin-right: 10px;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      .input {
+        width: 100%;
+        /* padding: 10px 0 10px 5px; */
+        font-size: 1.2em;
+        border: none;
+        border-bottom: solid 2px #ccc;
+        outline: none;
+        height: 45px;
+        display: inline-block;
+      }
+
+      input {
+        height: 50px !important;
+      }
+
+      .btn {
+        width: 100%;
+        padding-top: 15px;
+        padding-bottom: 15px;
+        background-color: rgb(29, 9, 119);
+        border: none;
+        border-radius: 4px;
+        color: #fff;
+        margin-top: 20px;
+        transition: 0.5s;
+        cursor: pointer;
+      }
+
+      .back-control {
+        background-color: #ccc;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+      }
+
+      .btn:hover {
+        background-color: rgb(21, 6, 85);
+      }
+
+      .logo-container {
+        height: auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: row;
+        margin-bottom: 20px;
+      }
+
+      .logo-container img {
+        width: 50px;
+        height: auto;
+        margin-right: 10px;
+      }
+
+      .cardinal-container {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: white;
+        left: 0;
+        top: 0;
+        z-index: 10;
+      }
+
+      .form-page.show {
+        display: block;
+      }
+
+      .form-page.cardinal {
+        min-height: 350px;
+      }
+
+      .showNotification {
+        /* height: 50px; */
+      }
+
+      .alertSuccess {
+        width: 300px;
+        overflow: hidden;
+        background: #5fdc91;
+        margin: 0 auto;
+        transition: all 0.4s ease-in-out;
+        margin-top: 15px;
+        font-size: 20px;
+        margin-bottom: 20px;
+      }
+
+      .alertError {
+        color: "#ff0000" !important;
+      }
+    </style>
+  </head>
+  <body>
+    HTML CSS JS Result Skip Results Iframe
+
+    <div class="container">
+      <div class="alertSuccess" id="response">
+        <p id="response-code" style="padding: 0px 10px"></p>
+        <p id="response-message" style="padding: 0px 10px"></p>
+      </div>
+
+      <!-- First page -->
+      <div class="form-page card-details show">
+        <div class="card">
+          <div class="flex-x flex-sb">
+            <div class="col col-6">
+              <h3>Pay with Card</h3>
+            </div>
+            <div class="logo-container">
+              <div class="image">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/618px-Mastercard-logo.svg.png"
+                />
+              </div>
+              <div class="image">
+                <img
+                  src="data:image/png;base64,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"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="form-group">
+              <div class="input-label">Card number</div>
+              <div class="input" id="cardNumber-container"></div>
+            </div>
+          </div>
+
+          <div class="flex-x flex-sb">
+            <div class="col-6 form-group">
+              <div class="input-label">Expiry</div>
+              <div class="input" id="expirationDate-container"></div>
+            </div>
+
+            <div class="col-6 form-group">
+              <div class="input-label">CVV</div>
+              <div class="input" id="cvv-container"></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" id="pay-button">
+          Pay &#8358; <span id="amount"></span>
+        </button>
+      </div>
+
+      <!-- Second page -->
+      <div class="form-page pin">
+        <div class="card">
+          <span class="back-control" id="pin-back-button">
+            <label>Back</label>
+          </span>
+
+          <div class="form-control" style="margin-top: 20px">
+            <div class="input-label">Please provide your PIN</div>
+            <div id="pin-container" class="input"></div>
+          </div>
+          <div class="button-container">
+            <button id="continue-button" class="btn">Continue</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Third page -->
+      <div class="form-page otp">
+        <div class="card">
+          <span class="back-control" id="otp-back-button">
+            <label>Back</label>
+          </span>
+
+          <div class="form-control" style="margin-top: 20px">
+            <label>Please input the OTP sent to your mobile number</label>
+            <div id="otp-container" class="input"></div>
+          </div>
+          <div class="button-container">
+            <button id="validate-button" class="btn">Validate</button>
+          </div>
+        </div>
+      </div>
+      <div class="form-page cardinal">
+        <div class="cardinal-container"></div>
+      </div>
+    </div>
+
+    <script defer src="https://hostedfields.interswitchng.com/sdk.js"></script>
+    <script defer src="payment.js"></script>
+  </body>
+</html>
