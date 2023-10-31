@@ -6,19 +6,17 @@ export default (app, port = process.env.PORT) => {
   app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 
-    cron.schedule("0 0 * * *", function() {
+    cron.schedule("* * * * *", function() {
       (async () => {
         const today = new Date();
 
-        today.setHours(0);
-        today.setMinutes(0);
-        today.setSeconds(0);
-        today.setMilliseconds(0);
+        // before the end of today
+        today.setHours(23, 59, 59, 999);
 
         const invs = await Investment.find({
           endDate: {
-            $gte: today,
-            $lte: new Date()
+            $gte: new Date(),
+            $lte: today
           },
           matured: false
         });

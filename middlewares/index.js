@@ -13,11 +13,13 @@ import User from "../models/User";
 import { isObjectId, isObject } from "../utils/validators";
 import { deleteFirebaseFile } from "../utils/file-handlers";
 
+const select = "-kycDocs._id -kycIds._id";
+
 export const verifyToken = (req, res = {}, next) => {
   console.log(
     !!req.cookies.access_token,
     req.originalUrl,
-    req.headers.authorization.slice(7).length,
+    req.headers.authorization?.slice?.(7).length,
     "token...url...auth, verify token middleware"
   );
 
@@ -89,7 +91,7 @@ export const userExist = async (req, res, next) => {
       match._id = _id;
     } else match.email = email;
 
-    if (!(req.user = await User.findOne(match))) throw message;
+    if (!(req.user = await User.findOne(match).select(select))) throw message;
 
     if (next) next();
   } catch (err) {
@@ -159,7 +161,8 @@ export const verifyAdminStatus = async (req, res, next) => {
   try {
     console.log("admin id ", req.user.id);
 
-    if (!req.user.email) req.user = await User.findById(req.user.id);
+    if (!req.user.email)
+      req.user = await User.findById(req.user.id).select(select);
 
     if (!req.user?.isAdmin) throw createError(HTTP_403_MSG, 403);
 
@@ -173,7 +176,8 @@ export const verifySuperAdminStatus = async (req, res, next) => {
   try {
     console.log("admin id ", req.user.id);
 
-    if (!req.user.email) req.user = await User.findById(req.user.id);
+    if (!req.user.email)
+      req.user = await User.findById(req.user.id).select(select);
 
     if (!(req.user.isAdmin && req.user.isSuperAdmin))
       throw createError(HTTP_403_MSG, 403);
@@ -211,9 +215,12 @@ export const verifyUserIdMatch = (req, res, next) => {
 
 export const verifyKyc = (req, res, next) => {
   try {
-    console.log(req.user.kycDocs, req.user.kycIds, " kyc... ");
-
-    if (!(Object.keys(req.user.kycDocs).length || Object.keys(req.user.kycIds)))
+    if (
+      !(
+        Object.keys(req.user.kycDocs).length ||
+        Object.keys(req.user.kycIds).length
+      )
+    )
       throw createError(
         "Invalid request. Your need to complete your profile verification.",
         400,
