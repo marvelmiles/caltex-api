@@ -17,7 +17,6 @@ import queryType from "query-types";
 import { isProdMode } from "./utils/validators";
 import timeout from "connect-timeout";
 import { errHandler } from "./middlewares";
-
 import miscRouter from "./routers/misc";
 
 // CONFIGURATIONS
