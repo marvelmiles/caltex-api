@@ -17,7 +17,8 @@ export const verifyToken = (req, res = {}, next) => {
   console.log(
     !!req.cookies.access_token,
     req.originalUrl,
-    "token...url, verify token middleware"
+    req.headers.authorization.slice(7).length,
+    "token...url...auth, verify token middleware"
   );
 
   const {
@@ -25,7 +26,12 @@ export const verifyToken = (req, res = {}, next) => {
     hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN
   } = res;
 
-  const token = typeof req === "string" ? req : req.cookies[cookieKey];
+  const token =
+    typeof req === "string"
+      ? req
+      : req.headers.authorization
+      ? req.headers.authorization.slice(7)
+      : req.cookies[cookieKey];
 
   const throwErr = next === undefined;
 
@@ -205,6 +211,8 @@ export const verifyUserIdMatch = (req, res, next) => {
 
 export const verifyKyc = (req, res, next) => {
   try {
+    console.log(req.user.kycDocs, req.user.kycIds, " kyc... ");
+
     if (!(Object.keys(req.user.kycDocs).length || Object.keys(req.user.kycIds)))
       throw createError(
         "Invalid request. Your need to complete your profile verification.",

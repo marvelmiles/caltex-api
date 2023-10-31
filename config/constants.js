@@ -80,5 +80,5 @@ export const MSG_INSUFFICIENT_FUND =
 export const cookieConfig = {
   httpOnly: true,
   sameSite: "Lax", // allow xSite not from clicking link (top level nav)
-  secure: true
+  secure: isProdMode
 };
