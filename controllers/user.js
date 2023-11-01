@@ -180,8 +180,6 @@ export const getUserTransactionsById = async (req, res, next) => {
     totalAmount &&
       createInEqualityQuery(totalAmount, "totalAmount", investmentQuery);
 
-    console.log(match, paymentType);
-
     res.json(
       createSuccessBody({
         message: "Request successful",

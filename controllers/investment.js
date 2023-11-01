@@ -13,6 +13,8 @@ import {
 
 export const setupUserInvestment = async (req, res, next) => {
   try {
+    console.log(req.body);
+
     await validateAccBalanace(
       req.user.id,
       req.body.amount,

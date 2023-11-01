@@ -226,7 +226,7 @@ const schema = new mongoose.Schema(
       },
       get(v) {
         if (!v && this.amount && this.roiPct && this.duration)
-          v = (this.roiPct / 100) * this.amount * this.duration;
+          v = (this.roiPct / 100) * this.duration;
         return Number(v);
       }
     },
