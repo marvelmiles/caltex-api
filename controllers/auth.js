@@ -306,7 +306,8 @@ export const signin = async (req, res, next) => {
               COOKIE_ACCESS_TOKEN,
               user.id,
               res,
-              SESSION_COOKIE_DURATION.accessToken
+              SESSION_COOKIE_DURATION.accessToken,
+              req.body.rememberMe
             ),
             refreshToken: setJWTCookie(
               COOKIE_REFRESH_TOKEN,

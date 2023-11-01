@@ -64,8 +64,9 @@ export const SESSION_COOKIE_DURATION = {
     type: "m"
   },
   accessToken: {
-    duration: 15,
-    type: "h"
+    duration: 5,
+    extend: 28,
+    type: "d"
   },
   refreshToken: {
     extend: 28,
