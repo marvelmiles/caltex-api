@@ -45,32 +45,32 @@ const schema = new mongoose.Schema(
     },
     endDate: {
       type: Date,
-      validate: [
-        function(v) {
-          console.log(v, "vertyu....");
+      // validate: [
+      //   function(v) {
+      //     console.log(v, "vertyu....");
 
-          if (!this.startDate) return true;
+      //     if (!this.startDate) return true;
 
-          const uDate = new Date(v);
-          const sDate = new Date(this.startDate);
+      //     const uDate = new Date(v);
+      //     const sDate = new Date(this.startDate);
 
-          const uM = uDate.getMonth();
+      //     const uM = uDate.getMonth();
 
-          const sM = sDate.getMonth();
+      //     const sM = sDate.getMonth();
 
-          const uYear = uDate.getFullYear();
+      //     const uYear = uDate.getFullYear();
 
-          const sYear = sDate.getFullYear();
+      //     const sYear = sDate.getFullYear();
 
-          return (
-            uYear > sYear ||
-            (uYear === sYear &&
-              (uM > sM ||
-                (uM === sM && uDate.getDate() - 1 >= sDate.getDate())))
-          );
-        },
-        "The expected end date should be at least a day ahead of start date"
-      ],
+      //     return (
+      //       uYear > sYear ||
+      //       (uYear === sYear &&
+      //         (uM > sM ||
+      //           (uM === sM && uDate.getDate() - 1 >= sDate.getDate())))
+      //     );
+      //   },
+      //   "The expected end date should be at least a day ahead of start date"
+      // ],
       set(v) {
         if (this.startDate && v)
           this.duration = getDaysDifference(
