@@ -68,10 +68,13 @@ app
 // MONGOOSE SETUP
 
 mongoose
-  .connect(process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"], {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
+  .connect(
+    process.env[isProdMode || true ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"],
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    }
+  )
   .then(() => {
     socket(app);
   })

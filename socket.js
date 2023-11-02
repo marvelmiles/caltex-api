@@ -35,8 +35,8 @@ export default (app, port = process.env.PORT) => {
             amount: inv.amount + inv.roi,
             description: `Automatic deposit of ${
               inv.roiPct
-            }% return on investment for ${inv.description ||
-              ` ${inv.amount} investment`}`
+            }% return on investment for ${inv.description?.toLowerCase?.() ||
+              " an investment "}`
           }).save();
         }
       })();
