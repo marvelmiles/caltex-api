@@ -1,7 +1,4 @@
 import mongoose from "mongoose";
-import { HTTP_401_MSG, MSG_INVALID_CREDENTIALS } from "../config/constants";
-import bcrypt from "bcrypt";
-import { createError } from "./error";
 import dotenv from "dotenv";
 import { replaceString } from "./serializers";
 

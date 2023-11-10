@@ -25,7 +25,7 @@ export const deleteFirebaseFile = async filePath => {
 };
 
 export const sendMail = (
-  mailOptions,
+  mailOptions = {},
   cb,
   service = "Gmail",
   user = MAIL_USER,
@@ -38,6 +38,9 @@ export const sendMail = (
       pass
     }
   });
+
+  mailOptions.from = mailOptions.from || user;
+
   transporter.sendMail(mailOptions, (err, info) => {
     if (err)
       console.warn(

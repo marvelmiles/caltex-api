@@ -31,7 +31,7 @@ export const HTTP_CODE_UNVERIFIED_KYC = "UNVERIFIED_KYC";
 
 export const HTTP_MULTER_NAME_ERROR = "LIMIT_UNEXPECTED_FILE";
 
-export const MSG_INVALID_CREDENTIALS = "Invalid credentials!";
+export const MSG_INVALID_VERIFICATION_TOKEN = "Invalid verification token!";
 
 export const MSG_TOKEN_EXPIRED = "Token expired";
 

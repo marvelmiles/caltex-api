@@ -5,7 +5,7 @@ import User from "../models/User";
 import { createError } from "./error";
 import {
   HTTP_401_MSG,
-  MSG_INVALID_CREDENTIALS,
+  MSG_INVALID_VERIFICATION_TOKEN,
   MSG_TOKEN_EXPIRED,
   HTTP_CODE_TOKEN_EXPIRED,
   cookieConfig
@@ -64,29 +64,7 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
   return token;
 };
 
-export const authUser = async ({ email, password }, strict) => {
-  if (!(email && (strict ? password : true)))
-    throw `Invalid body. Expect email${
-      strict ? " and password" : ""
-    } in request body`;
-
-  const user = await User.findOne({ email });
-
-  if (!user) throw createError(HTTP_401_MSG, 403);
-
-  if (strict)
-    if (!(await bcrypt.compare(password, user.password)))
-      throw "Invalid credentials!";
-
-  return user;
-};
-
-export const validateUserToken = async (
-  user,
-  token,
-  hashPrefix,
-  cookieValue
-) => {
+export const validateUserToken = async (user, token, hashPrefix) => {
   if (!user || !user.resetToken) throw createError(HTTP_401_MSG);
 
   const time = new Date(user.resetDate);
@@ -96,17 +74,7 @@ export const validateUserToken = async (
     message: "Please request a new token before proceeding"
   };
 
-  if (cookieValue) await verifyToken(cookieValue, err);
-  else await authUser(user, false);
-
   hashPrefix = hashPrefix ? `caltex_${hashPrefix}_` : "";
-
-  console.log(
-    "prefix found...cookieval...cookiename...",
-    user.resetToken.indexOf(hashPrefix) > -1,
-    cookieValue,
-    hashPrefix
-  );
 
   let slice = false;
 
@@ -121,34 +89,31 @@ export const validateUserToken = async (
           ""
       ))
     )
-      throw createError(MSG_INVALID_CREDENTIALS);
+      throw createError(MSG_INVALID_VERIFICATION_TOKEN);
   } else throw createError(err.message, err._statusCode);
 
   if (time.getTime() <= new Date().getTime())
     throw createError(MSG_TOKEN_EXPIRED, 400, HTTP_CODE_TOKEN_EXPIRED);
 };
 
-export const validateTokenBody = (req, withPwd = true) => {
-  if (
-    !(req.body.token && req.body.email && (withPwd ? req.body.password : true))
-  )
-    throw `Invalid request body. Expect an email${
-      withPwd ? ", password" : ""
-    } and a token`;
+export const validateTokenBody = req => {
+  if (!(req.body.token && req.body.userId))
+    throw `Invalid request body. Expect a user id and a token`;
 };
 
-export const validateUserCredentials = async (
-  req,
-  cookieKey,
-  strict = true
-) => {
+export const validateUserCredentials = async (req, cookieKey, userMatch) => {
   const cookieValue = req.cookies[cookieKey];
+
+  const config = {
+    message: HTTP_401_MSG,
+    code: 403,
+    match: userMatch
+  };
 
   if (cookieValue) {
     verifyToken(cookieValue, { hasForbidden: true });
-
-    await userExist(req);
-  } else req.user = await authUser(req.body, strict);
+    await userExist(req, config);
+  } else await userExist(req, config);
 };
 
 // (async () => {

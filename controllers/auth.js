@@ -18,8 +18,6 @@ import {
   HTTP_401_MSG,
   HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
   HTTP_CODE_MAIL_ERROR,
-  MSG_USER_404,
-  COOKIE_TOKEN_VERIFICATION_KEY,
   HTTP_CODE_UNVERIFIED_EMAIL
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
@@ -63,90 +61,84 @@ const validateAuthReason = (req, expectMsg, reasonMsg) => {
 const mailVerificationToken = async (
   user,
   res,
-  next,
   hashPrefix,
   errMsg,
   successMsg = "Verification token as been sent to your mail!"
-) => {
-  console.log("mailing...");
+) =>
+  new Promise((resolve, reject) => {
+    console.log("mailing....");
 
-  const expires = Date.now() + 60 * 1000 * 5;
+    const expires = Date.now() + 60 * 1000 * 15;
 
-  const token = await serializeUserToken(user, hashPrefix, expires);
+    serializeUserToken(user, hashPrefix, expires)
+      .then(token => {
+        const isPwd = hashPrefix === COOKIE_PWD_RESET;
 
-  const isPwd = hashPrefix === COOKIE_PWD_RESET;
+        const template = fs.readFileSync(
+          path.resolve(
+            process.cwd(),
+            `templates/${isPwd ? "pwdReset" : "accVerification"}Template.ejs`
+          ),
+          "utf-8"
+        );
 
-  const template = fs.readFileSync(
-    path.resolve(
-      process.cwd(),
-      `templates/${isPwd ? "pwdReset" : "accVerification"}Template.ejs`
-    ),
-    "utf-8"
-  );
+        const route = `${CLIENT_ORIGIN}/auth/token-verification`;
 
-  const route = `${CLIENT_ORIGIN}/auth/token-verification`;
+        const postRoute = `${user.id}`;
 
-  const props = {
-    token,
-    fullname: `${user.fullname} ${user.lastname}`,
-    primaryColor: "rgba(18, 14, 251, 1)",
-    secondaryColor: "rgba(12, 9, 175, 1)"
-  };
+        const props = {
+          token,
+          fullname: `${user.fullname} ${user.lastname}`,
+          primaryColor: "rgba(18, 14, 251, 1)",
+          secondaryColor: "rgba(12, 9, 175, 1)",
+          verifyLink: isPwd
+            ? `${route}/password/${postRoute}`
+            : `${route}/account/${postRoute}`
+        };
 
-  const searchParams = `token=${token}&email=${user.email}`;
+        const mailStr = ejs.render(template, props);
 
-  sendMail(
-    {
-      [COOKIE_PWD_RESET]: {
-        to: user.email,
-        from: "noreply@gmail.com",
-        subject: "Caltex account password Reset",
-        html:
-          isPwd &&
-          ejs.render(template, {
-            ...props,
-            verifyLink: `${route}/password?${searchParams}`
-          })
-      },
-      [COOKIE_ACC_VERIFIC]: {
-        to: user.email,
-        from: "noreply@gmail.com",
-        subject: "Caltex account verification",
-        html:
-          !isPwd &&
-          ejs.render(template, {
-            ...props,
-            verifyLink: `${route}/account?${searchParams}`
-          })
-      }
-    }[hashPrefix],
-    err => {
-      if (err)
-        next(errMsg ? createError(errMsg, 503, HTTP_CODE_MAIL_ERROR) : err);
-      else {
-        user.resetDate = expires;
+        const mailOptions = {
+          to: user.email,
+          subject: isPwd
+            ? "Caltex account password Reset"
+            : "Caltex account verification",
+          html: mailStr,
+          text: mailStr
+        };
 
-        user
-          .save()
-          .then(_ => {
-            res.json(
-              createSuccessBody({
-                message: successMsg
-              })
+        sendMail(mailOptions, err => {
+          if (err)
+            reject(
+              errMsg ? createError(errMsg, 503, HTTP_CODE_MAIL_ERROR) : err
             );
-          })
-          .catch(_ =>
-            next(
-              createError(
-                "Something went wrong! Failed to generate token.",
-                500
-              )
-            )
-          );
-      }
-    }
-  );
-};
+          else {
+            user.resetDate = expires;
+
+            user
+              .save()
+              .then(_ => {
+                res.json(
+                  createSuccessBody({
+                    message: successMsg
+                  })
+                );
+
+                resolve(successMsg);
+              })
+              .catch(_ =>
+                reject(
+                  createError(
+                    "Something went wrong! Failed to save token.",
+                    500
+                  )
+                )
+              );
+          }
+        });
+      })
+      .catch(err => reject(err));
+  });
 
 export const signup = async (req, res, next) => {
   try {
@@ -221,12 +213,9 @@ export const signup = async (req, res, next) => {
       const io = req.app.get("socketIo");
       io && io.emit("user", user);
 
-      setJWTCookie(COOKIE_ACC_VERIFIC, user.id, res);
-
-      mailVerificationToken(
+      await mailVerificationToken(
         user,
         res,
-        next,
         COOKIE_ACC_VERIFIC,
         "Account has been created successfully! Encountered an error sending verification code to your mail.",
         `Thank you for signing up${
@@ -257,7 +246,7 @@ export const signin = async (req, res, next) => {
       $or: [
         { email: req.body.placeholder || req.body.email },
         {
-          username: req.body.placeholder || req.body.username
+          username: req.body.placeholder || req.body.username || ""
         }
       ]
     };
@@ -270,13 +259,6 @@ export const signin = async (req, res, next) => {
         break;
       default:
         if (!user) throw createError("Account is not registered");
-
-        if (user.accountExpires)
-          throw createError(
-            "Login access denied. Account is not verified.",
-            403,
-            HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
-          );
 
         console.log("comparing...");
 
@@ -350,15 +332,21 @@ export const signout = async (req, res, next) => {
   }
 };
 
-export const recoverPwd = (req, res) => {
+export const recoverPwd = (req, res, next) => {
   // using 307 indicate a temp redirect which preserve original
   // request method
-  return res.redirect(307, "generate-new-token/password-reset");
+  try {
+    if (!req.body.email) throw "Invalid body. Expect body.email";
+
+    return res.redirect(307, "generate-new-token/password-reset");
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const verifyUserToken = async (req, res, next) => {
   try {
-    console.log(req.body, req.originalUrl, "toen ver");
+    console.log(req.body, req.originalUrl, !!req.cookies, "toen ver..");
 
     const { reason, cookieKey, cookieValue } = validateAuthReason(
       req,
@@ -367,28 +355,23 @@ export const verifyUserToken = async (req, res, next) => {
 
     !cookieValue && validateTokenBody(req, false);
 
-    const query = {
-      email: req.body.email
-    };
+    console.log(
+      "verification has user...cookie...cookVal...",
+      !!req.user,
+      !!req.cookies,
+      !!cookieValue
+    );
 
-    switch (reason) {
-      case "account":
-        query.accountExpires = { $ne: null };
-        break;
-      default:
-        break;
-    }
+    await validateUserCredentials(
+      req,
+      cookieKey,
+      reason === "account" ? { accountExpires: { $ne: null } } : undefined
+    );
 
-    const user = await User.findOne(query);
+    req.body.resetToken = req.user.resetToken;
+    req.body.resetDate = req.user.resetDate;
 
-    console.log("verification has user...", !!user);
-
-    if (!user) throw createError(HTTP_401_MSG, 403);
-
-    req.body.resetToken = user.resetToken;
-    req.body.resetDate = user.resetDate;
-
-    await validateUserToken(req.body, req.body.token, cookieKey, cookieValue);
+    await validateUserToken(req.user, req.body.token, cookieKey);
 
     const update = {
       resetToken: "",
@@ -403,16 +386,16 @@ export const verifyUserToken = async (req, res, next) => {
       case "password-reset":
         setJWTCookie(
           COOKIE_PWD_RESET,
-          user.id,
+          req.user.id,
           res,
-          SESSION_COOKIE_DURATION.shortLived
+          SESSION_COOKIE_DURATION.accessToken
         );
         break;
       default:
         break;
     }
 
-    await user.updateOne(update);
+    await req.user.updateOne(update);
 
     res.json(
       createSuccessBody({
@@ -420,6 +403,7 @@ export const verifyUserToken = async (req, res, next) => {
       })
     );
   } catch (err) {
+    console.log(err.message, "...");
     next(err);
   }
 };
@@ -435,11 +419,9 @@ export const resetPwd = async (req, res, next) => {
       req.cookies
     );
 
-    if (cookieValue) req.body.token = "000000";
+    !cookieValue && validateTokenBody(req);
 
-    validateTokenBody(req);
-
-    await validateUserCredentials(req, COOKIE_PWD_RESET, false);
+    await validateUserCredentials(req, COOKIE_PWD_RESET);
 
     if (req.user.provider)
       throw createError(
@@ -447,12 +429,7 @@ export const resetPwd = async (req, res, next) => {
       );
 
     if (!cookieValue)
-      await validateUserToken(
-        req.user,
-        req.body.token,
-        COOKIE_PWD_RESET,
-        cookieValue
-      );
+      await validateUserToken(req.user, req.body.token, COOKIE_PWD_RESET);
 
     await updateDoc(req.user, {
       password: req.body.password,
@@ -508,7 +485,7 @@ export const generateUserToken = async (req, res, next) => {
       `/auth/generate-new-token/${allowedReason}`
     );
 
-    await validateUserCredentials(req, cookieKey, false);
+    await validateUserCredentials(req, cookieKey);
 
     switch (reason) {
       case "account":
@@ -525,7 +502,7 @@ export const generateUserToken = async (req, res, next) => {
         break;
     }
 
-    await mailVerificationToken(req.user, res, next, cookieKey);
+    await mailVerificationToken(req.user, res, cookieKey);
   } catch (err) {
     next(err);
   }

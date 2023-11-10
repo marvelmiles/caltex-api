@@ -4,7 +4,7 @@ import User from "../models/User";
 export const serializeUserToken = async (
   user,
   hashPrefix = "",
-  milliseconds = Date.now() + 60 * 1000 * 15 // 5min
+  milliseconds = Date.now() + 60 * 1000 * 15
 ) => {
   let token;
 
