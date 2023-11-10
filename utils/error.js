@@ -48,7 +48,7 @@ export const console500MSG = (message, name = "LOG", extraMsg = "") =>
   );
 
 export const createError = (message, status, code) => {
-  const err = {};
+  const err = new Error();
 
   if (message.statusCode) {
     console500MSG(message);
