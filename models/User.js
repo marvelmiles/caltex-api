@@ -4,8 +4,6 @@ import bcrypt from "bcrypt";
 import { createError } from "../utils/error";
 import { HTTP_CODE_VALIDATION_ERROR, SERVER_ORIGIN } from "../config/constants";
 
-const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
-
 const withAdminRequiredCheck = function() {
   return !this.isAdmin;
 };
@@ -133,7 +131,7 @@ const schema = new mongoose.Schema(
       default: function() {
         if (this.isAdmin) return;
 
-        return expires;
+        return Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d;
       }
     },
     referrals: [
