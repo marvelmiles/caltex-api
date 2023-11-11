@@ -34,7 +34,11 @@ export const getAll = async ({
     withEq = false
   } = query;
 
-  limit = limit === Infinity ? Infinity : limit + 1;
+  // MAX_SAFE_INTEGER IS to large and might impact performance
+  // temp fix -> better to conditionally push limit
+
+  limit =
+    limit === Infinity ? Number.MAX_SAFE_INTEGER : (Number(limit) || 30) + 1;
 
   let pipeline = [
     {
