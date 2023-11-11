@@ -27,14 +27,14 @@ export const getAll = async ({
   ]
 }) => {
   let {
-    limit = 20,
+    limit = Infinity,
     cursor = "",
     randomize = false,
     asc = false,
     withEq = false
   } = query;
 
-  limit = limit + 1 || 20;
+  limit = limit === Infinity ? Infinity : limit + 1;
 
   let pipeline = [
     {

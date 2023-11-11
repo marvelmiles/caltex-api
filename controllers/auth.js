@@ -40,8 +40,8 @@ const validateAuthReason = (req, expectMsg, reasonMsg) => {
 
   if (!{ account: true, "password-reset": true }[reason])
     throw `Invalid request reason ${reasonMsg ||
-      ({ "password-reset": "password reset" }[reason] ||
-        reason)}. Expect ${expectMsg}`;
+    ({ "password-reset": "password reset" }[reason] ||
+      reason)}. Expect ${expectMsg}`;
 
   const cookieKey = {
     account: COOKIE_ACC_VERIFIC,
@@ -161,12 +161,12 @@ export const signup = async (req, res, next) => {
 
       throw createError(
         `A user with the specified${emailExist ? " email" : ""}${
-          nameExist ? ` ${emailExist ? "and username" : "username"}` : ""
+        nameExist ? ` ${emailExist ? "and username" : "username"}` : ""
         } exist!`
       );
     }
 
-    req.body.photoUrl = req.file?.publicUrl;
+    req.body.photoUrl = req.file ?.publicUrl;
 
     req.body.isSuperAdmin = !!req.body.cred;
 
@@ -218,9 +218,9 @@ export const signup = async (req, res, next) => {
         COOKIE_ACC_VERIFIC,
         "Account has been created successfully! Encountered an error sending verification code to your mail.",
         `Thank you for signing up${
-          req.body.provider
-            ? ""
-            : ". Please check your email and verify your account"
+        req.body.provider
+          ? ""
+          : ". Please check your email and verify your account"
         }!`
       );
     }
@@ -380,6 +380,7 @@ export const verifyUserToken = async (req, res, next) => {
     switch (reason) {
       case "account":
         update.accountExpires = null;
+        update.verifiedAt = new Date()
 
         break;
       case "password-reset":

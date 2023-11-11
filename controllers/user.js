@@ -43,7 +43,7 @@ export const updateUserById = async (req, res, next) => {
   try {
     const uid = req.params.userId;
 
-    if (req.file?.publicUrl) req.body.photoUrl = req.file.publicUrl;
+    if (req.file ?.publicUrl) req.body.photoUrl = req.file.publicUrl;
 
     for (const key in req.body.kycIds) {
       req.body[`kycIds.${key}`] = {
@@ -140,8 +140,8 @@ export const getUserTransactionsById = async (req, res, next) => {
     } = req.query;
 
     const match = {
-        user: req.user._id
-      },
+      user: req.user._id
+    },
       investmentQuery = {};
 
     if (gteDate)

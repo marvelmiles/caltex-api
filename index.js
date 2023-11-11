@@ -78,7 +78,7 @@ mongoose
   .catch(err =>
     console.log(
       `[SERVER_ERROR: DB_CONNECT_ERR] ${
-        err.message
+      err.message
       } did not connect at ${new Date()}`
     )
   );
