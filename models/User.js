@@ -130,7 +130,6 @@ const schema = new mongoose.Schema(
     verifiedAt: Date,
     accountExpires: {
       type: Date,
-      expires,
       default: function() {
         if (this.isAdmin) return;
 
@@ -184,6 +183,13 @@ schema.virtual("fullname").get(function() {
 
 schema.virtual("referralLink").get(function() {
   return `${SERVER_ORIGIN}?ref=${this.referralCode}`;
+});
+
+schema.virtual("expired").get(function() {
+  return !!(
+    this.accountExpires &&
+    new Date().getTime() >= new Date(this.accountExpires).getTime()
+  );
 });
 
 export default mongoose.model("user", schema);

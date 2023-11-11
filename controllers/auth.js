@@ -17,7 +17,9 @@ import {
   SESSION_COOKIE_DURATION,
   HTTP_401_MSG,
   HTTP_CODE_MAIL_ERROR,
-  HTTP_CODE_UNVERIFIED_EMAIL
+  HTTP_CODE_UNVERIFIED_EMAIL,
+  MSG_ACCOUNT_DISABLED,
+  HTTP_CODE_ACCOUNT_DISABLED
 } from "../config/constants";
 import { sendMail } from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
@@ -259,12 +261,13 @@ export const signin = async (req, res, next) => {
       default:
         if (!user) throw createError("Account is not registered");
 
-        console.log("comparing...");
-
         if (!(await bcrypt.compare(req.body.password, user.password || "")))
           throw createError("Email or password is incorrect");
         break;
     }
+
+    if (user.accountExpires && user.expired)
+      throw createError(MSG_ACCOUNT_DISABLED, 403, HTTP_CODE_ACCOUNT_DISABLED);
 
     user = await User.findByIdAndUpdate(
       { _id: user.id },
@@ -273,10 +276,6 @@ export const signin = async (req, res, next) => {
       },
       { new: true }
     );
-
-    const expires = new Date();
-
-    expires.setHours(expires.getHours() + 15);
 
     res.json(
       createSuccessBody({

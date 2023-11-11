@@ -29,6 +29,8 @@ export const HTTP_CODE_UNVERIFIED_EMAIL = "UNVERIFIED_EMAIL";
 
 export const HTTP_CODE_UNVERIFIED_KYC = "UNVERIFIED_KYC";
 
+export const HTTP_CODE_ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
+
 export const HTTP_MULTER_NAME_ERROR = "LIMIT_UNEXPECTED_FILE";
 
 export const MSG_INVALID_VERIFICATION_TOKEN = "Invalid verification token!";
@@ -37,10 +39,9 @@ export const MSG_TOKEN_EXPIRED = "Token expired";
 
 export const MSG_USER_404 = "Account isn't registered with us!";
 
-// "caltextrader@gmail.com";
-// "marvellousabidemi2@gmail.com";
-
 export const MAIL_USER = "caltextrader@gmail.com";
+
+export const MSG_ACCOUNT_DISABLED = `Your account as been disabled. To verify your account, you can send us a message at ${MAIL_USER}.`;
 
 export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
 
