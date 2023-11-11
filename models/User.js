@@ -6,7 +6,7 @@ import { HTTP_CODE_VALIDATION_ERROR, SERVER_ORIGIN } from "../config/constants";
 
 const expires = Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d
 
-const withAdminRequiredCheck = function () {
+const withAdminRequiredCheck = function() {
   return !this.isAdmin;
 };
 
@@ -32,7 +32,7 @@ const schema = new mongoose.Schema(
       type: String,
       unique: true,
       required: [
-        function () {
+        function() {
           return this.isAdmin && !this.firstname;
         },
         "Your username or nickname is required"
@@ -43,7 +43,7 @@ const schema = new mongoose.Schema(
       required: "Your email is required",
       unique: true,
       validate: {
-        validator: function (v) {
+        validator: function(v) {
           return isEmail(v);
         },
         message: "Your email address is invalid"
@@ -131,11 +131,7 @@ const schema = new mongoose.Schema(
     accountExpires: {
       type: Date,
       expires,
-      set(v) {
-        if (v === null) this.verifiedAt = new Date();
-        return v;
-      },
-      default: function () {
+      default: function() {
         if (this.isAdmin) return;
 
         return expires;
@@ -182,11 +178,11 @@ const schema = new mongoose.Schema(
   }
 );
 
-schema.virtual("fullname").get(function () {
+schema.virtual("fullname").get(function() {
   return this.firstname + " " + this.lastname;
 });
 
-schema.virtual("referralLink").get(function () {
+schema.virtual("referralLink").get(function() {
   return `${SERVER_ORIGIN}?ref=${this.referralCode}`;
 });
 
