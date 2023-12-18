@@ -6,7 +6,7 @@ export default (app, port = process.env.PORT) => {
   app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 
-    cron.schedule("0 0 * * *", function() {
+    const creditFxn = function() {
       (async () => {
         const today = new Date();
 
@@ -40,6 +40,11 @@ export default (app, port = process.env.PORT) => {
           }).save();
         }
       })();
-    });
+    }
+
+    creditFxn();
+    
+    cron.schedule("0 0 * * *",  creditFxn);
+    
   });
 };
