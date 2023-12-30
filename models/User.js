@@ -167,9 +167,10 @@ const schema = new mongoose.Schema(
         delete ret.resetToken;
         delete ret.resetDate;
         delete ret.address._id;
-        // delete ret.settings._id;
         delete ret.kycIds._id;
         delete ret.kycDocs._id;
+
+        if (ret.settings) delete ret.settings._id;
       },
     },
   }
