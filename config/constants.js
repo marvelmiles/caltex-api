@@ -1,7 +1,7 @@
 import { isProdMode } from "../utils/validators";
 
 export const CLIENT_ORIGIN = isProdMode
-  ? "https://www.app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"
+  ? "https://app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"
   : "http://localhost:3000";
 
 export const HTTP_401_MSG = "Authorization credentials is invalid";
