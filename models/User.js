@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 import { createError } from "../utils/error";
 import { HTTP_CODE_VALIDATION_ERROR, SERVER_ORIGIN } from "../config/constants";
 
-const withAdminRequiredCheck = function() {
+const withAdminRequiredCheck = function () {
   return !this.isAdmin;
 };
 
@@ -12,40 +12,40 @@ const schema = new mongoose.Schema(
   {
     isAdmin: {
       type: Boolean,
-      default: false
+      default: false,
     },
     isSuperAdmin: {
       type: Boolean,
-      default: false
+      default: false,
     },
     lastname: {
       type: String,
-      required: [withAdminRequiredCheck, "Your lastname is required"]
+      required: [withAdminRequiredCheck, "Your lastname is required"],
     },
     firstname: {
       type: String,
-      required: [withAdminRequiredCheck, "Your firstname is required"]
+      required: [withAdminRequiredCheck, "Your firstname is required"],
     },
     username: {
       type: String,
       unique: true,
       required: [
-        function() {
+        function () {
           return this.isAdmin && !this.firstname;
         },
-        "Your username or nickname is required"
-      ]
+        "Your username or nickname is required",
+      ],
     },
     email: {
       type: String,
       required: "Your email is required",
       unique: true,
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           return isEmail(v);
         },
-        message: "Your email address is invalid"
-      }
+        message: "Your email address is invalid",
+      },
     },
     password: {
       type: String,
@@ -71,7 +71,7 @@ const schema = new mongoose.Schema(
         }
 
         return bcrypt.hashSync(v, bcrypt.genSaltSync(10));
-      }
+      },
     },
     photoUrl: String,
     lastLogin: Date,
@@ -82,7 +82,7 @@ const schema = new mongoose.Schema(
         if (v) this.lastLogin = new Date();
 
         return v;
-      }
+      },
     },
     provider: String,
     resetToken: String,
@@ -90,7 +90,7 @@ const schema = new mongoose.Schema(
     settings: {
       type: Object,
       default: {
-        _id: new mongoose.Types.ObjectId()
+        _id: new mongoose.Types.ObjectId(),
       },
       set(v) {
         if (!isObject(v)) {
@@ -102,7 +102,7 @@ const schema = new mongoose.Schema(
         }
 
         return v;
-      }
+      },
     },
     address: {
       type: new mongoose.Schema(
@@ -112,47 +112,47 @@ const schema = new mongoose.Schema(
           line1: String,
           line2: String,
           zipCode: Number,
-          state: String
+          state: String,
         },
         {}
       ),
-      default: {}
+      default: {},
     },
     country: String,
     ids: {
       type: Map,
       of: String,
-      default: {}
+      default: {},
     },
     phone: [String],
     verifiedAt: Date,
     accountExpires: {
       type: Date,
-      default: function() {
+      default: function () {
         if (this.isAdmin) return;
 
         return Date.now() + 7 * 24 * 60 * 60 * 1000; // after 7d;
-      }
+      },
     },
     referrals: [
       {
         type: mongoose.Types.ObjectId,
-        ref: "user"
-      }
+        ref: "user",
+      },
     ],
     referralCode: String,
     kycDocs: {
       type: Object,
       default: {
-        _id: new mongoose.Types.ObjectId()
-      }
+        _id: new mongoose.Types.ObjectId(),
+      },
     },
     kycIds: {
       type: Object,
       default: {
-        _id: new mongoose.Types.ObjectId()
-      }
-    }
+        _id: new mongoose.Types.ObjectId(),
+      },
+    },
   },
   {
     collection: "user",
@@ -167,23 +167,23 @@ const schema = new mongoose.Schema(
         delete ret.resetToken;
         delete ret.resetDate;
         delete ret.address._id;
-        delete ret.settings._id;
+        // delete ret.settings._id;
         delete ret.kycIds._id;
         delete ret.kycDocs._id;
-      }
-    }
+      },
+    },
   }
 );
 
-schema.virtual("fullname").get(function() {
+schema.virtual("fullname").get(function () {
   return this.firstname + " " + this.lastname;
 });
 
-schema.virtual("referralLink").get(function() {
+schema.virtual("referralLink").get(function () {
   return `${SERVER_ORIGIN}?ref=${this.referralCode}`;
 });
 
-schema.virtual("expired").get(function() {
+schema.virtual("expired").get(function () {
   return !!(
     this.accountExpires &&
     new Date().getTime() >= new Date(this.accountExpires).getTime()
