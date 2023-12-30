@@ -1,4 +1,8 @@
-import { SERVER_ORIGIN, HTTP_403_MSG } from "../config/constants";
+import {
+  SERVER_ORIGIN,
+  HTTP_403_MSG,
+  HTTP_CODE_TRANSACTION_ALERT,
+} from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
 import mongoose from "mongoose";
@@ -10,8 +14,14 @@ import { handlePaymentWebhook } from "../hooks/payment-webhook";
 import { createInvestmentDesc } from "../utils/serializers";
 import User from "../models/User";
 import { getAll } from "../utils";
-import { createError } from "../utils/error";
-import { validateAccBalanace, debitUserAcc } from "../utils/transaction";
+import { console500MSG, createError } from "../utils/error";
+import {
+  validateAccBalanace,
+  debitUserAcc,
+  getCurrencySymbol,
+} from "../utils/transaction";
+import { sendNotificationMail } from "../utils/file-handlers";
+import { getUserMetrics } from "../utils/user";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
 
@@ -21,7 +31,7 @@ export const updatePaymentIntent = async (intent, data) => {
   if (typeof intent === "string") {
     intent = await stripe.paymentIntents.retrieve(intent);
     const obj = serializePaymentObject({
-      metadata: intent.metadata
+      metadata: intent.metadata,
     });
 
     Object.assign(obj.metadata.investment, data.metadata.investment);
@@ -35,7 +45,7 @@ export const updatePaymentIntent = async (intent, data) => {
   intent.metadata.investment = JSON.stringify(intent.metadata.investment);
 
   await stripe.paymentIntents.update(intent.id, {
-    metadata: intent.metadata
+    metadata: intent.metadata,
   });
 };
 
@@ -53,7 +63,7 @@ export const validateAndSerializeReqBody = async (
   if (body.investmentId) {
     investment = await Investment.findById({
       user: userId,
-      _id: body.investmentId
+      _id: body.investmentId,
     });
     if (!investment)
       throw "Ivalid body.investmentId. You can't make payment without creating an investment plan";
@@ -85,7 +95,7 @@ export const validateAndSerializeReqBody = async (
 
   body.metadata.user = {
     id: userId,
-    email: body.email
+    email: body.email,
   };
 
   stringifyAll && (body.metadata.user = JSON.stringify(body.metadata.user));
@@ -93,16 +103,16 @@ export const validateAndSerializeReqBody = async (
   const transId = new mongoose.Types.ObjectId();
 
   body.metadata.transaction = JSON.stringify({
-    id: transId
+    id: transId,
   });
 
   body.metadata.investment = JSON.stringify({
-    id: investment.id
+    id: investment.id,
   });
 
   return {
     transId,
-    investId: investment.id
+    investId: investment.id,
   };
 };
 
@@ -123,7 +133,7 @@ const handlePostPaymentIntention = async ({
     investment: investId,
     payment: paymentId,
     user: userId,
-    customer: customerId
+    customer: customerId,
   });
 
   await transaction.save();
@@ -160,13 +170,15 @@ export const processFiatPayment = async (req, res, next) => {
     const customerId =
       req.user.ids.stripe ||
       ((updateUser = true) &&
-        (await stripe.customers.create({
-          address: req.user.address.line1 && req.user.address,
-          email: req.user.email,
-          name: req.user.fullname,
-          payment_method: req.body.paymentMethodId,
-          phone: req.user.phone[0]
-        })).id);
+        (
+          await stripe.customers.create({
+            address: req.user.address.line1 && req.user.address,
+            email: req.user.email,
+            name: req.user.fullname,
+            payment_method: req.body.paymentMethodId,
+            phone: req.user.phone[0],
+          })
+        ).id);
 
     req.body.metadata.user.stripeId = customerId;
 
@@ -181,9 +193,9 @@ export const processFiatPayment = async (req, res, next) => {
       customer: customerId,
       automatic_payment_methods: {
         enabled: true,
-        ...req.body["automatic_payment_methods"]
+        ...req.body["automatic_payment_methods"],
       },
-      metadata: req.body.metadata
+      metadata: req.body.metadata,
     });
 
     await handlePostPaymentIntention({
@@ -197,7 +209,7 @@ export const processFiatPayment = async (req, res, next) => {
       type: intent.object,
       amount: intent.amount,
       userId: req.user.id,
-      customerId: customerId
+      customerId: customerId,
     });
 
     console.log("confirming paym...");
@@ -208,23 +220,23 @@ export const processFiatPayment = async (req, res, next) => {
         data: convertToCamelCase(
           await stripe.paymentIntents.confirm(intent.id, {
             return_url: `${SERVER_ORIGIN}/api/transactions/success.html`,
-            receipt_email: req.body.email
+            receipt_email: req.body.email,
           })
-        )
+        ),
       })
     );
 
     updateUser &&
       User.updateOne(
         {
-          _id: req.user.id
+          _id: req.user.id,
         },
         {
-          [`ids.stripe`]: customerId
+          [`ids.stripe`]: customerId,
         }
       )
-        .then(data => data)
-        .catch(err =>
+        .then((data) => data)
+        .catch((err) =>
           console.log(
             `[SERVER_WARNING: process-fiat-payment]: Failed to update ids.stripe=${customerId} for user ${user.id}`
           )
@@ -239,12 +251,12 @@ export const captureStipeWebhook = async (req, res, next) => {
   try {
     const payload = JSON.stringify({
       id: req.body.id,
-      object: req.body.object
+      object: req.body.object,
     });
 
     const header = stripe.webhooks.generateTestHeaderString({
       payload,
-      secret: process.env.STRIPE_WEBHOOK_SECRET
+      secret: process.env.STRIPE_WEBHOOK_SECRET,
     });
 
     // event is rep as req.body
@@ -256,7 +268,7 @@ export const captureStipeWebhook = async (req, res, next) => {
 
     const intent = req.body.data.object;
 
-    handlePaymentWebhook(req.body, res, async reason => {
+    handlePaymentWebhook(req.body, res, async (reason) => {
       switch (reason) {
         case "get-payment-object":
           return await stripe.paymentIntents.retrieve(intent.payment_intent);
@@ -286,10 +298,10 @@ export const processCryptoPayment = async (req, res, next) => {
         description: req.body.description,
         local_price: {
           amount: req.body.amount,
-          currency: req.body.currency
+          currency: req.body.currency,
         },
         pricing_type: "fixed_price",
-        metadata: req.body.metadata
+        metadata: req.body.metadata,
       })
     );
 
@@ -306,7 +318,7 @@ export const processCryptoPayment = async (req, res, next) => {
       amount: charge.pricing.local.amount,
       user: req.body,
       currencyType: "crypto",
-      userId: req.user.id
+      userId: req.user.id,
     });
 
     res.json(
@@ -328,7 +340,7 @@ export const captureCoinbaseWebhook = async (req, res, next) => {
       process.env.COINBASE_WEBHOOK_SECRET
     );
 
-    await handlePaymentWebhook(event, res, reason => {
+    await handlePaymentWebhook(event, res, (reason) => {
       switch (reason) {
         case "get-payment-object":
           return event.data;
@@ -348,15 +360,15 @@ export const recordCrypoPayment = async (req, res, next) => {
     req.body.user = req.user.id;
     req.body.paymentProofUrl = req.file?.publicUrl;
 
-    const trans = await (await new Transaction(req.body).save()).populate(
-      "user"
-    );
+    const trans = await (
+      await new Transaction(req.body).save()
+    ).populate("user");
 
     res.json(
       createSuccessBody({
         data: trans,
         message:
-          "Transaction details has been received. Please await confirmation!"
+          "Transaction details has been received. Please await confirmation!",
       })
     );
   } catch (err) {
@@ -375,13 +387,13 @@ export const getAllTransactions = async (req, res, next) => {
 
     if (req.query.gteDate) {
       match.createdAt = {
-        $gte: new Date(req.query.gteDate)
+        $gte: new Date(req.query.gteDate),
       };
     }
 
     if (req.query.lteDate) {
       match.createdAt = {
-        $lte: new Date(req.query.lteDate)
+        $lte: new Date(req.query.lteDate),
       };
     }
 
@@ -399,14 +411,14 @@ export const getAllTransactions = async (req, res, next) => {
           query: req.query,
           lookups: [
             {
-              from: "user"
+              from: "user",
             },
             {
               from: "user",
-              localField: "markedBy"
-            }
-          ]
-        })
+              localField: "markedBy",
+            },
+          ],
+        }),
       })
     );
   } catch (err) {
@@ -435,8 +447,8 @@ export const updateTransactionStatus = async (req, res, next) => {
               : "admin " + req.user.username
           }!`,
           details: {
-            message: HTTP_403_MSG
-          }
+            message: HTTP_403_MSG,
+          },
         },
         409
       );
@@ -449,16 +461,52 @@ export const updateTransactionStatus = async (req, res, next) => {
     await trans.updateOne({
       markedBy: req.user.id,
       markedAt: new Date(),
-      status: status + "ed"
+      status: status + "ed",
     });
 
     trans = await Transaction.findById(trans._id);
 
+    trans ? await trans.populate("user markedBy") : trans;
+
     res.json(
       createSuccessBody({
-        data: trans ? await trans.populate("user markedBy") : trans
+        data: trans,
       })
     );
+
+    if (trans) {
+      const mailUser = (metrics = {}) =>
+        sendNotificationMail(trans.user.email, {
+          mailOpts: {
+            subject: `Caltex Transaction Alert`,
+          },
+          tempOpts: {
+            fullname: trans.user.fullname,
+            text: `We ${
+              status === "confirm" ? "are pleased" : "regret"
+            } to inform you that your ${
+              trans.transactionType
+            } request of ${getCurrencySymbol(trans.currency)}${
+              trans.amount
+            } at ${new Date(trans.createdAt).toLocaleDateString()} has been ${
+              status + "ed"
+            }. \n Available Balance: $${
+              metrics.availableBalance
+            }. Transaction Details: ${
+              trans.description || "Caltex transaction sym-link."
+            }`,
+          },
+        });
+
+      getUserMetrics(trans.user.id)
+        .then((metrics) => {
+          mailUser(metrics);
+        })
+        .catch((err) => {
+          console500MSG(err, HTTP_CODE_TRANSACTION_ALERT);
+          mailUser();
+        });
+    }
   } catch (err) {
     next(err);
   }
@@ -473,13 +521,13 @@ export const requestWithdraw = async (req, res, next) => {
 
     await validateAccBalanace(req.user.id, req.body.amount);
 
-    const trans = await (await new Transaction(req.body).save()).populate(
-      "user markedBy"
-    );
+    const trans = await (
+      await new Transaction(req.body).save()
+    ).populate("user markedBy");
 
     res.json(
       createSuccessBody({
-        data: trans
+        data: trans,
       })
     );
   } catch (err) {
@@ -493,7 +541,7 @@ export const getTransactionById = async (req, res, next) => {
       createSuccessBody({
         data: await Transaction.findById(req.params.transId).populate(
           "user markedBy"
-        )
+        ),
       })
     );
   } catch (err) {

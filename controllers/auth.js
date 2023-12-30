@@ -5,7 +5,7 @@ import {
   deleteCookie,
   setJWTCookie,
   validateTokenBody,
-  validateUserCredentials
+  validateUserCredentials,
 } from "../utils/auth";
 import {
   CLIENT_ORIGIN,
@@ -19,35 +19,33 @@ import {
   HTTP_CODE_MAIL_ERROR,
   HTTP_CODE_UNVERIFIED_EMAIL,
   MSG_ACCOUNT_DISABLED,
-  HTTP_CODE_ACCOUNT_DISABLED
+  HTTP_CODE_ACCOUNT_DISABLED,
 } from "../config/constants";
-import { sendMail } from "../utils/file-handlers";
+import {
+  readTemplateFile,
+  sendMail,
+  sendNotificationMail,
+} from "../utils/file-handlers";
 import { verifyToken } from "../middlewares";
 import {
   serializeUserToken,
-  serializeUserRefferalCode
+  serializeUserRefferalCode,
 } from "../utils/serializers";
 import { createSuccessBody } from "../utils/normalizers";
 import { validateUserToken } from "../utils/auth";
 import { updateDoc } from "../utils";
-import mongoose from "mongoose";
-import Transaction from "../models/Transaction";
-import ejs from "ejs";
-import fs from "fs";
-import path from "path";
-import { isProdMode } from "../utils/validators";
 
 const validateAuthReason = (req, expectMsg, reasonMsg) => {
   const reason = req.params.reason;
 
   if (!{ account: true, "password-reset": true }[reason])
-    throw `Invalid request reason ${reasonMsg ||
-      ({ "password-reset": "password reset" }[reason] ||
-        reason)}. Expect ${expectMsg}`;
+    throw `Invalid request reason ${
+      reasonMsg || { "password-reset": "password reset" }[reason] || reason
+    }. Expect ${expectMsg}`;
 
   const cookieKey = {
     account: COOKIE_ACC_VERIFIC,
-    "password-reset": COOKIE_PWD_RESET
+    "password-reset": COOKIE_PWD_RESET,
   }[reason];
 
   console.log("validte auth reason cookieVal", !!req.cookies[cookieKey]);
@@ -55,7 +53,7 @@ const validateAuthReason = (req, expectMsg, reasonMsg) => {
   return {
     reason,
     cookieKey,
-    cookieValue: req.cookies[cookieKey]
+    cookieValue: req.cookies[cookieKey],
   };
 };
 
@@ -72,32 +70,23 @@ const mailVerificationToken = async (
     const expires = Date.now() + 60 * 1000 * 15;
 
     serializeUserToken(user, hashPrefix, expires)
-      .then(token => {
+      .then((token) => {
         const isPwd = hashPrefix === COOKIE_PWD_RESET;
-
-        const template = fs.readFileSync(
-          path.resolve(
-            process.cwd(),
-            `templates/${isPwd ? "pwdReset" : "accVerification"}Template.ejs`
-          ),
-          "utf-8"
-        );
 
         const route = `${CLIENT_ORIGIN}/auth/token-verification`;
 
         const postRoute = `${user.id}`;
 
-        const props = {
-          token,
-          fullname: `${user.fullname} ${user.lastname}`,
-          primaryColor: "rgba(18, 14, 251, 1)",
-          secondaryColor: "rgba(12, 9, 175, 1)",
-          verifyLink: isPwd
-            ? `${route}/password/${postRoute}`
-            : `${route}/account/${postRoute}`
-        };
-
-        const mailStr = ejs.render(template, props);
+        const mailStr = readTemplateFile(
+          isPwd ? "pwdReset" : "accVerification",
+          {
+            token,
+            fullname: user.fullname,
+            verifyLink: isPwd
+              ? `${route}/password/${postRoute}`
+              : `${route}/account/${postRoute}`,
+          }
+        );
 
         const mailOptions = {
           to: user.email,
@@ -105,10 +94,10 @@ const mailVerificationToken = async (
             ? "Caltex account password Reset"
             : "Caltex account verification",
           html: mailStr,
-          text: mailStr
+          text: mailStr,
         };
 
-        sendMail(mailOptions, err => {
+        sendMail(mailOptions, (err) => {
           if (err)
             reject(
               errMsg ? createError(errMsg, 503, HTTP_CODE_MAIL_ERROR) : err
@@ -118,16 +107,16 @@ const mailVerificationToken = async (
 
             user
               .save()
-              .then(_ => {
+              .then((_) => {
                 res.json(
                   createSuccessBody({
-                    message: successMsg
+                    message: successMsg,
                   })
                 );
 
                 resolve(successMsg);
               })
-              .catch(_ =>
+              .catch((_) =>
                 reject(
                   createError(
                     "Something went wrong! Failed to save token.",
@@ -138,7 +127,7 @@ const mailVerificationToken = async (
           }
         });
       })
-      .catch(err => reject(err));
+      .catch((err) => reject(err));
   });
 
 export const signup = async (req, res, next) => {
@@ -148,12 +137,12 @@ export const signup = async (req, res, next) => {
     let user = await User.findOne({
       $or: [
         {
-          email: req.body.email
+          email: req.body.email,
         },
         {
-          username: req.body.username || ""
-        }
-      ]
+          username: req.body.username || "",
+        },
+      ],
     });
 
     if (user) {
@@ -183,7 +172,7 @@ export const signup = async (req, res, next) => {
     if (req.body.referralCode) {
       const { referrals, _id } =
         (await User.findOne({
-          referralCode: req.body.referralCode
+          referralCode: req.body.referralCode,
         })) || {};
 
       if (referrals) {
@@ -207,7 +196,7 @@ export const signup = async (req, res, next) => {
       res.json(
         createSuccessBody({
           message: req.query.successMsg || "Thank you for signing up!",
-          data: req.query.successMsg ? user : undefined
+          data: req.query.successMsg ? user : undefined,
         })
       );
     else {
@@ -247,9 +236,9 @@ export const signin = async (req, res, next) => {
       $or: [
         { email: req.body.placeholder || req.body.email },
         {
-          username: req.body.placeholder || req.body.username || ""
-        }
-      ]
+          username: req.body.placeholder || req.body.username || "",
+        },
+      ],
     };
 
     let user = await User.findOne(query);
@@ -272,7 +261,7 @@ export const signin = async (req, res, next) => {
     user = await User.findByIdAndUpdate(
       { _id: user.id },
       {
-        isLogin: true
+        isLogin: true,
       },
       { new: true }
     );
@@ -295,10 +284,10 @@ export const signin = async (req, res, next) => {
               res,
               SESSION_COOKIE_DURATION.refreshToken,
               req.body.rememberMe
-            )
-          }
+            ),
+          },
         },
-        message: "Signed in successfully"
+        message: "Signed in successfully",
       })
     );
   } catch (err) {
@@ -322,7 +311,7 @@ export const signout = async (req, res, next) => {
     user &&
       (await user.updateOne({
         isLogin: false,
-        settings: req.body.settings
+        settings: req.body.settings,
       }));
   } catch (err) {
     console.log(err.message);
@@ -373,7 +362,7 @@ export const verifyUserToken = async (req, res, next) => {
 
     const update = {
       resetToken: "",
-      resetDate: null
+      resetDate: null,
     };
 
     switch (reason) {
@@ -397,9 +386,20 @@ export const verifyUserToken = async (req, res, next) => {
 
     res.json(
       createSuccessBody({
-        message: "Verification code has been verified"
+        message: "Verification code has been verified",
       })
     );
+
+    if (reason === "account")
+      sendNotificationMail(req.user.email, {
+        mailOpts: {
+          subject: "Caltex Account Verification",
+        },
+        tempOpts: {
+          fullname: req.user.fullname,
+          text: "We are pleased to confirm that your account has been successfully verified.",
+        },
+      });
   } catch (err) {
     console.log(err.message, "...");
     next(err);
@@ -432,14 +432,14 @@ export const resetPwd = async (req, res, next) => {
     await updateDoc(req.user, {
       password: req.body.password,
       resetDate: null,
-      resetToken: ""
+      resetToken: "",
     });
 
     deleteCookie(COOKIE_PWD_RESET, res);
 
     res.json(
       createSuccessBody({
-        message: "Password reset successful"
+        message: "Password reset successful",
       })
     );
   } catch (err) {
@@ -450,7 +450,7 @@ export const resetPwd = async (req, res, next) => {
 export const refreshToken = async (req, res, next) => {
   try {
     verifyToken(req, {
-      cookieKey: COOKIE_REFRESH_TOKEN
+      cookieKey: COOKIE_REFRESH_TOKEN,
     });
 
     if (req.user) {
@@ -511,8 +511,9 @@ export const createAdmin = async (req, res, next) => {
     console.log("creating admn...");
 
     req.body.admin = true;
-    req.query.successMsg = `Admin ${req.body.username ||
-      req.body.firstname} as been created succcessfully!`;
+    req.query.successMsg = `Admin ${
+      req.body.username || req.body.firstname
+    } as been created succcessfully!`;
     signup(req, res, next);
   } catch (err) {
     next(err);

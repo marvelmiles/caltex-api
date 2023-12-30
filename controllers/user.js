@@ -11,13 +11,14 @@ import { createError } from "../utils/error";
 import {
   HTTP_403_MSG,
   MSG_USER_404,
-  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
+  HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
 } from "../config/constants";
+import { sendNotificationMail } from "../utils/file-handlers";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
     const match = {
-      user: req.user._id
+      user: req.user._id,
     };
 
     res.json(
@@ -28,10 +29,10 @@ export const getUserInvestmentsById = async (req, res, next) => {
           match,
           lookups: [
             {
-              from: "user"
-            }
-          ]
-        })
+              from: "user",
+            },
+          ],
+        }),
       })
     );
   } catch (err) {
@@ -43,12 +44,12 @@ export const updateUserById = async (req, res, next) => {
   try {
     const uid = req.params.userId;
 
-    if (req.file ?.publicUrl) req.body.photoUrl = req.file.publicUrl;
+    if (req.file?.publicUrl) req.body.photoUrl = req.file.publicUrl;
 
     for (const key in req.body.kycIds) {
       req.body[`kycIds.${key}`] = {
         id: req.body.kycIds[key],
-        status: "awaiting"
+        status: "awaiting",
       };
     }
 
@@ -71,11 +72,11 @@ export const updateUserById = async (req, res, next) => {
     if (req.body.phone) {
       if (Array.isArray(req.body.phone))
         req.body.$addToSet = {
-          phone: { $each: req.body.phone }
+          phone: { $each: req.body.phone },
         };
       else if (typeof req.body.phone === "string")
         req.body.$addToSet = {
-          phone: req.body.phone
+          phone: req.body.phone,
         };
       else throw "Invalid body.phone expect an array or string";
 
@@ -92,7 +93,7 @@ export const updateUserById = async (req, res, next) => {
       "password",
       "lastLogin",
       "ids",
-      "address"
+      "address",
     ]) {
       delete req.body[key];
     }
@@ -104,7 +105,7 @@ export const updateUserById = async (req, res, next) => {
     res.json(
       createSuccessBody({
         message: `Profile updated successfully`,
-        data: user
+        data: user,
       })
     );
   } catch (err) {
@@ -136,35 +137,35 @@ export const getUserTransactionsById = async (req, res, next) => {
       paymentType,
       roi,
       totalAmount,
-      gteAmount
+      gteAmount,
     } = req.query;
 
     const match = {
-      user: req.user._id
-    },
+        user: req.user._id,
+      },
       investmentQuery = {};
 
     if (gteDate)
       match.createdAt = {
-        $gte: new Date(gteDate)
+        $gte: new Date(gteDate),
       };
 
     if (req.query.lteDate) {
       match.createdAt = {
-        $lte: new Date(req.query.lteDate)
+        $lte: new Date(req.query.lteDate),
       };
     }
 
     if (gteUpdatedAt)
       match.updatedAt = {
-        $gte: new Date(gteUpdatedAt)
+        $gte: new Date(gteUpdatedAt),
       };
 
     if (amount) match.amount = amount;
 
     if (gteAmount)
       match.amount = {
-        $gte: gteAmount
+        $gte: gteAmount,
       };
 
     transactionType && (match.transactionType = transactionType);
@@ -186,8 +187,8 @@ export const getUserTransactionsById = async (req, res, next) => {
         data: await getAll({
           model: Transaction,
           match,
-          query: req.query
-        })
+          query: req.query,
+        }),
       })
     );
   } catch (err) {
@@ -209,7 +210,7 @@ export const verifyUserIdentity = (req, res, next) => {
       "B987-654-321-098",
       "C567-890-123-456",
       "D321-098-765-432",
-      "E678-901-234-567"
+      "E678-901-234-567",
     ];
 
     const passportNumbers = [
@@ -217,7 +218,7 @@ export const verifyUserIdentity = (req, res, next) => {
       "CD987654",
       "EF567890",
       "GH123456",
-      "IJ987654"
+      "IJ987654",
     ];
 
     const nationalIDNumbers = [
@@ -225,14 +226,14 @@ export const verifyUserIdentity = (req, res, next) => {
       "987654321",
       "567890123",
       "321098765",
-      "678901234"
+      "678901234",
     ];
 
     const mockVerification = () => {
       const isVerified = Math.random() > 0.5; // Mock result (true or false)
 
       function camelToSnake(str) {
-        return str.replace(/[A-Z]/g, match => `_${match.toLowerCase()}`);
+        return str.replace(/[A-Z]/g, (match) => `_${match.toLowerCase()}`);
       }
 
       const generateRandomLoc = () => {
@@ -245,7 +246,7 @@ export const verifyUserIdentity = (req, res, next) => {
             "Maple Ln",
             "Cedar Dr",
             "Pine Rd",
-            "River View Rd"
+            "River View Rd",
           ];
 
           const cities = [
@@ -258,7 +259,7 @@ export const verifyUserIdentity = (req, res, next) => {
             "San Antonio",
             "San Diego",
             "Dallas",
-            "San Jose"
+            "San Jose",
           ];
 
           const states = [
@@ -311,7 +312,7 @@ export const verifyUserIdentity = (req, res, next) => {
             "Washington",
             "West Virginia",
             "Wisconsin",
-            "Wyoming"
+            "Wyoming",
           ];
 
           // Generate random elements for the address
@@ -323,12 +324,13 @@ export const verifyUserIdentity = (req, res, next) => {
 
           // Construct the random address
           const address = {
-            street: `${Math.floor(Math.random() * 2000) +
-              1} ${randomStreetName}`,
+            street: `${
+              Math.floor(Math.random() * 2000) + 1
+            } ${randomStreetName}`,
             city: randomCity,
             state: randomState,
             zip: randomZIPCode,
-            country: "United States"
+            country: "United States",
           };
 
           return address;
@@ -356,7 +358,7 @@ export const verifyUserIdentity = (req, res, next) => {
         return {
           latitude,
           longitude,
-          address: getRandomAddressInUSA()
+          address: getRandomAddressInUSA(),
         };
       };
 
@@ -370,7 +372,7 @@ export const verifyUserIdentity = (req, res, next) => {
         documentType: camelToSnake(documentType),
         documentNumber: documentNumber,
         verificationResult: isVerified,
-        location: generateRandomLoc()
+        location: generateRandomLoc(),
       };
 
       return response;
@@ -403,7 +405,7 @@ export const verifyUserIdentity = (req, res, next) => {
     res.json(
       createSuccessBody({
         message: "Request successful",
-        data: result
+        data: result,
       })
     );
   } catch (err) {
@@ -415,7 +417,7 @@ export const getUserTransactionMetrics = async (req, res, next) => {
   try {
     res.json(
       createSuccessBody({
-        data: await getUserMetrics(req.params.userId)
+        data: await getUserMetrics(req.params.userId),
       })
     );
   } catch (err) {
@@ -429,8 +431,8 @@ export const getAllUsers = async (req, res, next) => {
       _id: {
         $ne: req.query.withUser
           ? undefined
-          : new mongoose.Types.ObjectId(req.user.id)
-      }
+          : new mongoose.Types.ObjectId(req.user.id),
+      },
     };
 
     if (req.query.admin !== undefined) match.isAdmin = req.query.admin;
@@ -440,8 +442,8 @@ export const getAllUsers = async (req, res, next) => {
         data: await getAll({
           match,
           model: User,
-          query: req.query
-        })
+          query: req.query,
+        }),
       })
     );
   } catch (err) {
@@ -462,7 +464,7 @@ export const deleteUser = async (req, res, next) => {
 
     res.json(
       createSuccessBody({
-        message: u ? `@${u} has been deleted successfully!` : undefined
+        message: u ? `@${u} has been deleted successfully!` : undefined,
       })
     );
   } catch (err) {
@@ -498,7 +500,7 @@ export const updateUserKycStatus = async (req, res, next) => {
 
     const kyc = req.body.kyc.split(" ");
 
-    const updateStatus = pathName => {
+    const updateStatus = (pathName) => {
       for (const key of kyc) {
         const path = user[pathName];
 
@@ -527,10 +529,23 @@ export const updateUserKycStatus = async (req, res, next) => {
 
     await user.updateOne({
       kycDocs: user.kycDocs,
-      kycIds: user.kycIds
+      kycIds: user.kycIds,
     });
 
     res.json(createSuccessBody());
+
+    sendNotificationMail(user.email, {
+      mailOpts: {
+        subject: "Caltex KYC Verfification",
+      },
+      tempOpts: {
+        fullname: user.fullname,
+        text:
+          reason === "confirm"
+            ? "We are pleased to inform you that your Know Your Customer (KYC) process has been approved at this time."
+            : "We regret to inform you that your Know Your Customer (KYC) process has not been approved at this time.",
+      },
+    });
   } catch (err) {
     next(err);
   }

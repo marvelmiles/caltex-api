@@ -42,13 +42,13 @@ app
         } else {
           callback(createError(`${origin} not allowed by CORS`, 403)); // Deny the request
         }
-      }
+      },
     })
   )
   .use(
     express.json({
       limit: "200mb",
-      extended: true
+      extended: true,
     })
   )
   .use(express.urlencoded({ extended: true }))
@@ -70,15 +70,15 @@ app
 mongoose
   .connect(process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"], {
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   })
   .then(() => {
     socket(app);
   })
-  .catch(err =>
+  .catch((err) =>
     console.log(
       `[SERVER_ERROR: DB_CONNECT_ERR] ${
-      err.message
+        err.message
       } did not connect at ${new Date()}`
     )
   );

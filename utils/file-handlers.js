@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 import {
   MAIL_USER,
   FIREBASE_BUCKET_NAME,
-  HTTP_MULTER_NAME_ERROR
+  HTTP_MULTER_NAME_ERROR,
 } from "../config/constants";
 import multer from "multer";
 import { v4 as uniq } from "uuid";
@@ -10,15 +10,14 @@ import { storage } from "../config/firebase";
 import { createError, console500MSG } from "./error";
 import path from "path";
 import { isObject } from "./validators";
+import fs from "fs";
+import ejs from "ejs";
 
-export const deleteFirebaseFile = async filePath => {
+export const deleteFirebaseFile = async (filePath) => {
   try {
     if (!filePath) return;
     filePath = decodeURIComponent(path.basename(filePath));
-    storage
-      .bucket(FIREBASE_BUCKET_NAME)
-      .file(filePath)
-      .delete();
+    storage.bucket(FIREBASE_BUCKET_NAME).file(filePath).delete();
   } catch (err) {
     console500MSG(err);
   }
@@ -35,8 +34,8 @@ export const sendMail = (
     service,
     auth: {
       user,
-      pass
-    }
+      pass,
+    },
   });
 
   mailOptions.from = mailOptions.from || user;
@@ -44,12 +43,13 @@ export const sendMail = (
   transporter.sendMail(mailOptions, (err, info) => {
     if (err)
       console.warn(
-        `[SERVER_WARN: ${mailOptions.subject ||
-          "MAIL"}] Encountered an error sending mail to ${
+        `[SERVER_WARN: ${
+          mailOptions.subject || "MAIL"
+        }] Encountered an error sending mail to ${
           mailOptions.to
         } at ${new Date()}`
       );
-    cb(err, info);
+    cb && cb(err, info);
   });
 };
 
@@ -61,7 +61,7 @@ export const uploadFile = (config = {}) => {
     defaultFieldName: "avatar",
     bodySet: "",
     required: true,
-    ...config
+    ...config,
   };
 
   return [
@@ -69,7 +69,7 @@ export const uploadFile = (config = {}) => {
       req.skipMulterUpload = false;
 
       const _multer = multer({
-        storage: new multer.memoryStorage()
+        storage: new multer.memoryStorage(),
       });
 
       const f = config.fields || req.query.fields;
@@ -95,7 +95,7 @@ export const uploadFile = (config = {}) => {
             maxUpload
           );
 
-      return cb(req, res, function(err) {
+      return cb(req, res, function (err) {
         if (err) {
           if (!config.required && err.code === HTTP_MULTER_NAME_ERROR) {
             req.skipMulterUpload = true;
@@ -141,7 +141,7 @@ export const uploadFile = (config = {}) => {
                       errs.length > 1 ? "Batch" : "File"
                     } upload failed`,
                     details: errs,
-                    status: 409
+                    status: 409,
                   };
                   console500MSG(err);
                   throw err;
@@ -160,7 +160,7 @@ export const uploadFile = (config = {}) => {
           }
         })();
       });
-    }
+    },
   ];
 };
 
@@ -175,10 +175,12 @@ export const uploadToFirebase = (file, config) =>
       );
 
     const filename =
-      `${config.dirPath ? config.dirPath + "/" : ""}caltex-${(file.fieldname ||
-        config.defaultFieldName ||
-        config.dirPath ||
-        config.type) + "-"}` +
+      `${config.dirPath ? config.dirPath + "/" : ""}caltex-${
+        (file.fieldname ||
+          config.defaultFieldName ||
+          config.dirPath ||
+          config.type) + "-"
+      }` +
       uniq() +
       path.extname(file.originalname);
 
@@ -187,13 +189,13 @@ export const uploadToFirebase = (file, config) =>
 
     const streamConfig = {
       metadata: {
-        contentType: file.mimetype
-      }
+        contentType: file.mimetype,
+      },
     };
 
     const outstream = fileRef.createWriteStream(streamConfig);
 
-    const handleError = err => reject(err);
+    const handleError = (err) => reject(err);
 
     const handleSuccess = () => {
       file.filename = filename;
@@ -212,3 +214,40 @@ export const uploadToFirebase = (file, config) =>
     outstream.write(file.buffer);
     outstream.end();
   });
+
+export const readTemplateFile = (templateName, tempOpts = {}) => {
+  const template = fs.readFileSync(
+    path.resolve(process.cwd(), `templates/${templateName}Template.ejs`),
+    "utf-8"
+  );
+
+  const props = {
+    primaryColor: "rgba(18, 14, 251, 1)",
+    secondaryColor: "rgba(12, 9, 175, 1)",
+    fullname: "valued user",
+    ...tempOpts,
+  };
+
+  return ejs.render(template, props);
+};
+
+export const sendNotificationMail = (
+  to,
+  opts = {
+    mailOpts: {},
+    tempOpts: {},
+  }
+) => {
+  const mailStr = readTemplateFile(
+    opts.templateName || "notification",
+    opts.tempOpts
+  );
+
+  sendMail({
+    to,
+    subject: opts.mailOpts?.subject || `Caltex Notification Service`,
+    html: mailStr,
+    text: mailStr,
+    ...opts.mailOpts,
+  });
+};

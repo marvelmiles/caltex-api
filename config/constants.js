@@ -29,6 +29,8 @@ export const HTTP_CODE_UNVERIFIED_EMAIL = "UNVERIFIED_EMAIL";
 
 export const HTTP_CODE_UNVERIFIED_KYC = "UNVERIFIED_KYC";
 
+export const HTTP_CODE_TRANSACTION_ALERT = "TRANSACTIN_ALERT";
+
 export const HTTP_CODE_ACCOUNT_DISABLED = "ACCOUNT_DISABLED";
 
 export const HTTP_MULTER_NAME_ERROR = "LIMIT_UNEXPECTED_FILE";
@@ -62,18 +64,18 @@ export const COOKIE_TOKEN_VERIFICATION_KEY = "token_verification";
 export const SESSION_COOKIE_DURATION = {
   shortLived: {
     duration: 5,
-    type: "m"
+    type: "m",
   },
   accessToken: {
     duration: 5,
     extend: 28,
-    type: "d"
+    type: "d",
   },
   refreshToken: {
     extend: 28,
     duration: 5,
-    type: "d"
-  }
+    type: "d",
+  },
 };
 
 export const MSG_INSUFFICIENT_FUND =
@@ -82,5 +84,5 @@ export const MSG_INSUFFICIENT_FUND =
 export const cookieConfig = {
   httpOnly: true,
   sameSite: "Lax", // allow xSite not from clicking link (top level nav)
-  secure: isProdMode
+  secure: isProdMode,
 };
