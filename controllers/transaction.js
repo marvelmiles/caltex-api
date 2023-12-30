@@ -489,12 +489,14 @@ export const updateTransactionStatus = async (req, res, next) => {
             } request of ${getCurrencySymbol(trans.currency)}${
               trans.amount
             } at ${new Date(trans.createdAt).toLocaleDateString()} has been ${
-              status + "ed"
+              status === "confirm"
+                ? `${status}ed. Funds will be refunded within 5 working days`
+                : status + "ed"
             }. \n Available Balance: $${
               metrics.availableBalance
             }. Transaction Details: ${
               trans.description || "Caltex transaction sym-link."
-            }`,
+            }.`,
           },
         });
 

@@ -142,5 +142,5 @@ export const rewardReferrals = async (investment, req) => {
 };
 
 export const getCurrencySymbol = (currency = "USD") => {
-  return { usd: "$", euro: "€", eur: "€" }[currency.toLowerCase()];
+  return { usd: "$", euro: "€", eur: "€" }[currency.toLowerCase()] || "$";
 };
