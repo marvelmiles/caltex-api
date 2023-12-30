@@ -107,10 +107,11 @@ const mailVerificationToken = async (
 
             user
               .save()
-              .then((_) => {
+              .then((user) => {
                 res.json(
                   createSuccessBody({
                     message: successMsg,
+                    data: isPwd ? undefined : user,
                   })
                 );
 
