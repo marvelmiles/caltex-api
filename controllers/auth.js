@@ -1,5 +1,5 @@
 import User from "../models/User";
-import { createError } from "../utils/error";
+import { console500MSG, createError } from "../utils/error";
 import bcrypt from "bcrypt";
 import {
   deleteCookie,
@@ -118,14 +118,16 @@ const mailVerificationToken = async (
 
                 resolve(successMsg);
               })
-              .catch((_) =>
+              .catch((err) => {
+                console500MSG(err, "SIGNUP_ERROR");
+
                 reject(
                   createError(
                     "Something went wrong! Failed to save token.",
                     500
                   )
-                )
-              );
+                );
+              });
           }
         });
       })
