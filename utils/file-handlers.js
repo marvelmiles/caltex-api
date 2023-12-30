@@ -228,9 +228,7 @@ export const readTemplateFile = (templateName, tempOpts = {}) => {
     ...tempOpts,
   };
 
-  const str = ejs.render(template, props);
-
-  console.log("read temp...");
+  return ejs.render(template, props);
 };
 
 export const sendNotificationMail = (

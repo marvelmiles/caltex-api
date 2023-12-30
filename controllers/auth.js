@@ -67,7 +67,7 @@ const mailVerificationToken = async (
   new Promise((resolve, reject) => {
     console.log("mailing....");
 
-    const expires = Date.now() + 60 * 1000 * 15;
+    const expires = Date.now() + 60 * 1000 * 25;
 
     serializeUserToken(user, hashPrefix, expires)
       .then((token) => {

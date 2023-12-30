@@ -4,7 +4,7 @@ import User from "../models/User";
 export const serializeUserToken = async (
   user,
   hashPrefix = "",
-  milliseconds = Date.now() + 60 * 1000 * 15
+  milliseconds = Date.now() + 60 * 1000 * 25
 ) => {
   let token;
 
@@ -17,7 +17,7 @@ export const serializeUserToken = async (
     user.resetDate = new Date(milliseconds);
   } while (
     await User.findOne({
-      resetToken: user.resetToken
+      resetToken: user.resetToken,
     })
   );
 
@@ -26,7 +26,7 @@ export const serializeUserToken = async (
   return token;
 };
 
-export const serializePaymentObject = payment => {
+export const serializePaymentObject = (payment) => {
   payment.metadata.investment &&
     (payment.metadata.investment = JSON.parse(payment.metadata.investment));
 
@@ -36,7 +36,7 @@ export const serializePaymentObject = payment => {
   return payment;
 };
 
-export const createInvestmentDesc = investment =>
+export const createInvestmentDesc = (investment) =>
   investment
     ? `Caltex ${investment.duration} day${investment.duration > 1 ? "s" : ""} ${
         investment.tradeType
@@ -78,7 +78,7 @@ export const createInEqualityQuery = (
   return query;
 };
 
-export const convertExponentToLarge = numIn => {
+export const convertExponentToLarge = (numIn) => {
   // code by Mohsen Alyafei satckoverflow
   // https://stackoverflow.com/questions/18719775/parsing-and-converting-exponential-values-to-decimal-in-javascript
 
@@ -125,7 +125,7 @@ export const replaceString = (inputString, oldInput, newInput = "") => {
   return inputString;
 };
 
-export const serializeUserRefferalCode = async user => {
+export const serializeUserRefferalCode = async (user) => {
   let code;
 
   do {
