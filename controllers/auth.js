@@ -196,7 +196,7 @@ export const signup = async (req, res, next) => {
       res.json(
         createSuccessBody({
           message: req.query.successMsg || "Thank you for signing up!",
-          data: req.query.successMsg ? user : undefined,
+          data: user,
         })
       );
     else {
