@@ -544,7 +544,7 @@ export const updateUserKycStatus = async (req, res, next) => {
         text:
           reason === "confirm"
             ? "We are pleased to inform you that your Know Your Customer (KYC) process has been approved at this time."
-            : "We regret to inform you that your Know Your Customer (KYC) process has not been approved at this time.",
+            : "We regret to inform you that your Know Your Customer (KYC) process has not been approved at this time. Please upload your kyc document or id again.",
       },
     });
   } catch (err) {
