@@ -8,7 +8,7 @@ import {
   MSG_INVALID_VERIFICATION_TOKEN,
   MSG_TOKEN_EXPIRED,
   HTTP_CODE_TOKEN_EXPIRED,
-  cookieConfig
+  cookieConfig,
 } from "../config/constants";
 import { verifyToken, userExist } from "../middlewares";
 import ShortUniqId from "short-unique-id";
@@ -53,12 +53,12 @@ export const setJWTCookie = (name, uid, res, time = {}, withExtend) => {
   }
 
   const token = jwt.sign({ id: uid }, process.env.JWT_SECRET, {
-    expiresIn: duration + type
+    expiresIn: duration + type,
   });
 
   res.cookie(name, token, {
     ...cookieConfig,
-    expires
+    expires,
   });
 
   return token;
@@ -71,7 +71,7 @@ export const validateUserToken = async (user, token, hashPrefix) => {
 
   const err = {
     _statusCode: 428,
-    message: "Please request a new token before proceeding"
+    message: "Please request a new token before proceeding",
   };
 
   hashPrefix = hashPrefix ? `caltex_${hashPrefix}_` : "";
@@ -96,7 +96,7 @@ export const validateUserToken = async (user, token, hashPrefix) => {
     throw createError(MSG_TOKEN_EXPIRED, 400, HTTP_CODE_TOKEN_EXPIRED);
 };
 
-export const validateTokenBody = req => {
+export const validateTokenBody = (req) => {
   if (!(req.body.token && req.body.userId))
     throw `Invalid request body. Expect a user id and a token`;
 };
@@ -107,7 +107,7 @@ export const validateUserCredentials = async (req, cookieKey, userMatch) => {
   const config = {
     message: HTTP_401_MSG,
     code: 403,
-    match: userMatch
+    match: userMatch,
   };
 
   if (cookieValue) {
