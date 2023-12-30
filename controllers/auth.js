@@ -98,8 +98,6 @@ const mailVerificationToken = async (
         };
 
         sendMail(mailOptions, (err) => {
-          console.log("with mail... has err", err?.message || !!err);
-
           if (err)
             reject(
               errMsg ? createError(errMsg, 503, HTTP_CODE_MAIL_ERROR) : err
