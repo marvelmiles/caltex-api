@@ -539,6 +539,7 @@ export const updateUserKycStatus = async (req, res, next) => {
         subject: "Caltex KYC Verfification",
       },
       tempOpts: {
+        heading: "KYC Verification",
         fullname: user.fullname,
         text:
           reason === "confirm"

@@ -481,6 +481,7 @@ export const updateTransactionStatus = async (req, res, next) => {
             subject: `Caltex Transaction Alert`,
           },
           tempOpts: {
+            heading: "Transaction Alert",
             fullname: trans.user.fullname,
             text: `We ${
               status === "confirm" ? "are pleased" : "regret"

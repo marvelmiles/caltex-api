@@ -225,6 +225,7 @@ export const readTemplateFile = (templateName, tempOpts = {}) => {
     primaryColor: "rgba(18, 14, 251, 1)",
     secondaryColor: "rgba(12, 9, 175, 1)",
     fullname: "valued user",
+    heading: "Caltex Alert",
     ...tempOpts,
   };
 

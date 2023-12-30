@@ -398,6 +398,7 @@ export const verifyUserToken = async (req, res, next) => {
           subject: "Caltex Account Verification",
         },
         tempOpts: {
+          heading: "Account verification",
           fullname: req.user.fullname,
           text: "We are pleased to confirm that your account has been successfully verified.",
         },
