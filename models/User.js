@@ -171,6 +171,7 @@ const schema = new mongoose.Schema(
         delete ret.kycDocs._id;
 
         if (ret.settings) delete ret.settings._id;
+        else ret.settings = {};
       },
     },
   }
