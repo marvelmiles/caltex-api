@@ -86,3 +86,26 @@ export const cookieConfig = {
   sameSite: "Lax", // allow xSite not from clicking link (top level nav)
   secure: isProdMode,
 };
+
+export const MAIL_TYPE = {
+  trans: "TRANS",
+  withdraw: "WITHDRAW",
+  kyc: "KYC",
+};
+
+export const MAIL_CONFIG = {
+  supportMail: MAIL_USER,
+  TRANS: {
+    subject: "Caltex Transaction Alert",
+    heading: "Transaction Alert",
+    subText: "Caltex transaction sym-link.",
+  },
+  WITHDRAW: {
+    subject: "Caltex Withdrawal Notification",
+    heading: "Withdrawal Notification",
+  },
+  KYC: {
+    subject: "Caltex KYC Notification",
+    heading: "KYC Notification",
+  },
+};

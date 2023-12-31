@@ -12,8 +12,10 @@ import {
   HTTP_403_MSG,
   MSG_USER_404,
   HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
+  MAIL_TYPE,
+  MAIL_CONFIG,
 } from "../config/constants";
-import { sendNotificationMail } from "../utils/file-handlers";
+import { sendAdminMail, sendNotificationMail } from "../utils/file-handlers";
 
 export const getUserInvestmentsById = async (req, res, next) => {
   try {
@@ -108,6 +110,8 @@ export const updateUserById = async (req, res, next) => {
         data: user,
       })
     );
+
+    sendAdminMail(MAIL_TYPE.kyc, user);
   } catch (err) {
     next(err);
   }
@@ -536,15 +540,15 @@ export const updateUserKycStatus = async (req, res, next) => {
 
     sendNotificationMail(user.email, {
       mailOpts: {
-        subject: "Caltex KYC Verfification",
+        subject: MAIL_CONFIG.KYC.subject,
       },
       tempOpts: {
-        heading: "KYC Verification",
+        heading: MAIL_CONFIG.KYC.heading,
         fullname: user.fullname,
         text:
           reason === "confirm"
-            ? "We are pleased to inform you that your Know Your Customer (KYC) process has been approved at this time."
-            : "We regret to inform you that your Know Your Customer (KYC) process has not been approved at this time. Please upload your kyc document or id again.",
+            ? "Congratulations, your KYC (know your customers) has been confirmed. Your account is now limitless both on deposit and withdrawal. Thanks."
+            : "We regret to inform you that your KYC (Know Your Customer) has been rejected. Please upload a new KYC document or id again.",
       },
     });
   } catch (err) {

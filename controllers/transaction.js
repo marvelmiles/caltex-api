@@ -2,6 +2,8 @@ import {
   SERVER_ORIGIN,
   HTTP_403_MSG,
   HTTP_CODE_TRANSACTION_ALERT,
+  MAIL_CONFIG,
+  MAIL_TYPE,
 } from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
@@ -20,7 +22,7 @@ import {
   debitUserAcc,
   getCurrencySymbol,
 } from "../utils/transaction";
-import { sendNotificationMail } from "../utils/file-handlers";
+import { sendAdminMail, sendNotificationMail } from "../utils/file-handlers";
 import { getUserMetrics } from "../utils/user";
 
 const stripe = stripeSDK(process.env.STRIPE_SECRET_KEY);
@@ -371,6 +373,8 @@ export const recordCrypoPayment = async (req, res, next) => {
           "Transaction details has been received. Please await confirmation!",
       })
     );
+
+    sendAdminMail(MAIL_TYPE.trans, trans);
   } catch (err) {
     next(err);
   }
@@ -475,31 +479,35 @@ export const updateTransactionStatus = async (req, res, next) => {
     );
 
     if (trans) {
-      const mailUser = (metrics = {}) =>
+      const isConfirm = status === "confirm";
+
+      const mailUser = (metrics = {}) => {
         sendNotificationMail(trans.user.email, {
           mailOpts: {
-            subject: `Caltex Transaction Alert`,
+            subject: MAIL_CONFIG.TRANS.subject,
           },
           tempOpts: {
-            heading: "Transaction Alert",
+            heading: MAIL_CONFIG.TRANS.heading,
+            subText: MAIL_CONFIG.TRANS.subText,
             fullname: trans.user.fullname,
             text: `We ${
-              status === "confirm" ? "are pleased" : "regret"
-            } to inform you that your ${
-              trans.transactionType
-            } request of ${getCurrencySymbol(trans.currency)}${
-              trans.amount
-            } at ${new Date(trans.createdAt).toLocaleDateString()} has been ${
-              status === "confirm"
-                ? `${status}ed. Funds will be refunded within 5 working days`
-                : status + "ed"
-            }. \n Available Balance: $${
-              metrics.availableBalance
-            }. Transaction Details: ${
-              trans.description || "Caltex transaction sym-link."
+              isConfirm ? "are pleased" : "regret"
+            } to inform you that your ${trans.transactionType}${
+              trans.isDeposit ? "" : " request"
+            } of ${getCurrencySymbol(trans.currency)}${trans.amount}${
+              trans.isDeposit ? "" : ` on ${trans.createdAt.toLocaleString()}`
+            } has been ${
+              isConfirm ? `${status}ed successfully` : `${status}ed.`
+            }. ${
+              trans.isDepsoit
+                ? isConfirm
+                  ? "Log into your account now and purchase an investment package to start earning with caltex trader. Thanks"
+                  : "Funds will be refunded within 5 working days"
+                : `Available Balance: $${metrics.availableBalance}`
             }.`,
           },
         });
+      };
 
       getUserMetrics(trans.user.id)
         .then((metrics) => {
@@ -533,6 +541,8 @@ export const requestWithdraw = async (req, res, next) => {
         data: trans,
       })
     );
+
+    sendAdminMail(MAIL_TYPE.withdraw, trans);
   } catch (err) {
     next(err);
   }

@@ -8,13 +8,13 @@ import {
   getAllTransactions,
   updateTransactionStatus,
   requestWithdraw,
-  getTransactionById
+  getTransactionById,
 } from "../controllers/transaction";
 import {
   verifyToken,
   userExist,
   verifyAdminStatus,
-  verifyKyc
+  verifyKyc,
 } from "../middlewares";
 import { uploadFile } from "../utils/file-handlers";
 
@@ -31,7 +31,7 @@ transactionRouter
     userExist,
     uploadFile({
       dirPath: "transactions/crypto",
-      defaultFieldName: "payment-proof"
+      defaultFieldName: "payment-proof",
     }),
     recordCrypoPayment
   )

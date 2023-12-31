@@ -401,7 +401,7 @@ export const verifyUserToken = async (req, res, next) => {
         tempOpts: {
           heading: "Account verification",
           fullname: req.user.fullname,
-          text: "We are pleased to confirm that your account has been successfully verified.",
+          text: "Congratulations, your account has been successfully verified and you can log in now to start your trading experience in caltex trader. Thanks.",
         },
       });
   } catch (err) {

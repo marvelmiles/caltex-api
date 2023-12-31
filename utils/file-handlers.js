@@ -3,6 +3,8 @@ import {
   MAIL_USER,
   FIREBASE_BUCKET_NAME,
   HTTP_MULTER_NAME_ERROR,
+  MAIL_CONFIG,
+  MAIL_TYPE,
 } from "../config/constants";
 import multer from "multer";
 import { v4 as uniq } from "uuid";
@@ -12,6 +14,7 @@ import path from "path";
 import { isObject } from "./validators";
 import fs from "fs";
 import ejs from "ejs";
+import { getCurrencySymbol } from "./transaction";
 
 export const deleteFirebaseFile = async (filePath) => {
   try {
@@ -226,6 +229,7 @@ export const readTemplateFile = (templateName, tempOpts = {}) => {
     secondaryColor: "rgba(12, 9, 175, 1)",
     fullname: "valued user",
     heading: "Caltex Alert",
+    subText: "",
     ...tempOpts,
   };
 
@@ -250,5 +254,33 @@ export const sendNotificationMail = (
     html: mailStr,
     text: mailStr,
     ...opts.mailOpts,
+  });
+};
+
+export const sendAdminMail = (mailType, doc = {}) => {
+  const getDetails = () =>
+    `Fullname: ${
+      doc.user.fullname
+    }, Date: ${doc.createdAt.toLocaleString()}, Amount: ${getCurrencySymbol(
+      doc.currency
+    )}${doc.amount}, Ref Id: ${doc._id}.`;
+
+  sendNotificationMail(MAIL_CONFIG.supportMail, {
+    mailOpts: {
+      subject: MAIL_CONFIG[mailType].subject,
+    },
+    tempOpts: {
+      heading: MAIL_CONFIG[mailType].heading,
+      subText:
+        MAIL_CONFIG[doc.walletAddress ? MAIL_TYPE.trans : mailType].subText,
+      fullname: "Admin",
+      text: {
+        TRANS: `A recent deposit was made to the organization's account. The particulars are as follows: ${getDetails()}`,
+        WITHDRAW: `A withdrawal request was submitted by ${
+          doc.user.username
+        }. The pertinent details are as follows: ${getDetails()}`,
+        KYC: `@${doc.fullname} uploaded their KYC information.`,
+      }[mailType],
+    },
   });
 };
