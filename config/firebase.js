@@ -2,6 +2,7 @@ import admin from "firebase-admin";
 import dotenv from "dotenv";
 
 dotenv.config();
+
 export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
@@ -14,11 +15,11 @@ export const firebaseCredential = admin.credential.cert({
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
   client_x509_cert_url:
     "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-hocuy%40caltex-api.iam.gserviceaccount.com",
-  universe_domain: "googleapis.com"
+  universe_domain: "googleapis.com",
 });
 
 admin.initializeApp({
-  credential: firebaseCredential
+  credential: firebaseCredential,
 });
 export const storage = admin.storage();
 

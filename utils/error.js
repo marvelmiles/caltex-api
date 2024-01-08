@@ -8,7 +8,7 @@ export const invalidate = (msg, path, name = "ValidationError") => {
   throw err;
 };
 
-export const getMongooseErrMsg = err => {
+export const getMongooseErrMsg = (err) => {
   let msg = "";
 
   const obj = err.errors || {};
@@ -71,7 +71,7 @@ export const createError = (message, status, code) => {
         400: "BAD_REQUEST",
         428: "PRECONDITION_REQUIRED",
         404: "NOT_FOUND",
-        409: "RESOURCE_CONFLICTED"
+        409: "RESOURCE_CONFLICTED",
       }[err.statusCode] ||
       message.code ||
       "ERROR_CODE";
@@ -87,10 +87,12 @@ export const createError = (message, status, code) => {
     "__==__"
   );
 
-  const keyName =
-    message.type?.toLowerCase?.() ||
-    message.name?.toLowerCase?.() ||
-    message.code?.toLowerCase?.();
+  const keyName = (
+    message.type ||
+    message.name ||
+    message.code ||
+    ""
+  ).toLowerCase();
 
   switch (keyName) {
     case "mongoservererror":
@@ -119,7 +121,7 @@ export const createError = (message, status, code) => {
     case "rangeerror":
     case "referenceerror":
     case "multererror":
-      switch (message.code?.toLowerCase()) {
+      switch (message.code && message.code.toLowerCase()) {
         case HTTP_MULTER_NAME_ERROR.toLowerCase():
           err.message = "File field not found!";
           err.statusCode = 400;
@@ -135,7 +137,7 @@ export const createError = (message, status, code) => {
       err.statusCode = 504;
       break;
     default:
-      const msg = message.message || message;
+      const msg = message.message || message || "";
       console.error(
         "error 500... defualting ",
         msg,
@@ -143,10 +145,10 @@ export const createError = (message, status, code) => {
         msg.indexOf("getaddrinfo")
       );
       switch (
-        (msg?.indexOf &&
+        (msg.indexOf &&
           msg.toLowerCase().indexOf("getaddrinfo") > -1 &&
           "econnection") ||
-          keyName
+        keyName
       ) {
         case "edns":
         case "econnection":

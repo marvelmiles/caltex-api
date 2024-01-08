@@ -1,12 +1,8 @@
 import { createLookupPipeline } from "./normalizers";
-import { SERVER_ORIGIN } from "../config/constants";
-import { createError } from "./error";
 import { isObject } from "./validators";
-import Transaction from "../models/Transaction";
-import mongoose from "mongoose";
 
-export const setFutureDate = days => {
-  return new Date(new Date().getTime() + days * 86400000);
+export const setFutureDate = (days, date = new Date()) => {
+  return new Date(new Date(date).getTime() + days * 86400000);
 };
 
 export const getDaysDifference = (startDate, endDate) => {
@@ -22,16 +18,16 @@ export const getAll = async ({
   query = {},
   lookups = [
     {
-      from: "user"
-    }
-  ]
+      from: "user",
+    },
+  ],
 }) => {
   let {
     limit = Infinity,
     cursor = "",
     randomize = false,
     asc = false,
-    withEq = false
+    withEq = false,
   } = query;
 
   // MAX_SAFE_INTEGER IS to large and might impact performance
@@ -42,15 +38,15 @@ export const getAll = async ({
 
   let pipeline = [
     {
-      $match: match
+      $match: match,
     },
     {
-      $limit: limit
-    }
+      $limit: limit,
+    },
   ];
 
   const addFields = {
-    id: "$_id"
+    id: "$_id",
   };
 
   const unsetProject = {
@@ -58,19 +54,19 @@ export const getAll = async ({
     password: 0,
     resetToken: 0,
     resetDate: 0,
-    "address._id": 0
+    "address._id": 0,
   };
 
   if (match._id && !isObject(match._id))
     match._id = {
-      $eq: match._id
+      $eq: match._id,
     };
 
   if (cursor) {
     cursor = decodeURIComponent(cursor);
 
     const cursorIdRules = {
-      [asc ? (withEq ? "$gte" : "$gt") : withEq ? "$lte" : "$lt"]: cursor
+      [asc ? (withEq ? "$gte" : "$gt") : withEq ? "$lte" : "$lt"]: cursor,
     };
 
     pipeline.splice(0, 1, {
@@ -78,9 +74,9 @@ export const getAll = async ({
         ...pipeline[0].$match,
         _id: {
           ...pipeline[0].$match._id,
-          ...cursorIdRules
-        }
-      }
+          ...cursorIdRules,
+        },
+      },
     });
   }
 
@@ -109,7 +105,7 @@ export const getAll = async ({
 
   if (!cursor)
     pipeline.splice(pipeline.length, 0, {
-      $sort: { _id: asc ? 1 : -1 }
+      $sort: { _id: asc ? 1 : -1 },
     });
 
   pipeline.splice(
@@ -117,10 +113,10 @@ export const getAll = async ({
     0,
 
     {
-      $addFields: addFields
+      $addFields: addFields,
     },
     {
-      $project: unsetProject
+      $project: unsetProject,
     }
   );
 
@@ -136,9 +132,9 @@ export const getAll = async ({
   return {
     paging: {
       totalCount: data.length,
-      cursor
+      cursor,
     },
-    data
+    data,
   };
 };
 

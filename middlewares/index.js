@@ -7,7 +7,7 @@ import {
   COOKIE_ACCESS_TOKEN,
   HTTP_CODE_ACCOUNT_VERIFICATION_ERROR,
   MSG_USER_404,
-  HTTP_CODE_UNVERIFIED_KYC
+  HTTP_CODE_UNVERIFIED_KYC,
 } from "../config/constants";
 import User from "../models/User";
 import { isObjectId, isObject } from "../utils/validators";
@@ -16,17 +16,9 @@ import { deleteFirebaseFile } from "../utils/file-handlers";
 const select = "-kycDocs._id -kycIds._id";
 
 export const verifyToken = (req, res = {}, next) => {
-  req.headers &&
-    console.log(
-      !!req.cookies,
-      req.originalUrl,
-      req.headers?.authorization?.slice?.(7).length,
-      "token...url...auth, verify token middleware"
-    );
-
   const {
     cookieKey = COOKIE_ACCESS_TOKEN,
-    hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN
+    hasForbidden = cookieKey === COOKIE_REFRESH_TOKEN,
   } = res;
 
   const token =
@@ -64,14 +56,14 @@ export const verifyToken = (req, res = {}, next) => {
   });
 };
 
-export const userExist = async (req, res, next) => {
+export const userExist = async (req, res = {}, next) => {
   try {
-    const match = res?.match || {};
+    const match = res.match || {};
 
     const message = createError(
-      res?.message || MSG_USER_404,
-      res?.status || 403,
-      res?.code || HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
+      res.message || MSG_USER_404,
+      res.status || 403,
+      res.code || HTTP_CODE_ACCOUNT_VERIFICATION_ERROR
     );
 
     const email = req.body.email || req.body.userHolder || req.user?.email;
@@ -115,8 +107,8 @@ export const errHandler = (err, req, res, next) => {
           message: err.message,
           code: err.code,
           details: {
-            timeout: err.timeout
-          }
+            timeout: err.timeout,
+          },
         },
         err.statusCode
       );
@@ -200,8 +192,8 @@ export const verifyUserIdMatch = (req, res, next) => {
         {
           message: HTTP_403_MSG,
           details: {
-            message: "Conflict between authenticated user and request user id"
-          }
+            message: "Conflict between authenticated user and request user id",
+          },
         },
         403
       );

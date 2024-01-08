@@ -1,9 +1,9 @@
 import {
   SERVER_ORIGIN,
   HTTP_403_MSG,
-  HTTP_CODE_TRANSACTION_ALERT,
   MAIL_CONFIG,
   MAIL_TYPE,
+  HTTP_CODE_TRANSACTION_METRICS,
 } from "../config/constants";
 import Investment from "../models/Investment";
 import Transaction from "../models/Transaction";
@@ -514,7 +514,7 @@ export const updateTransactionStatus = async (req, res, next) => {
           mailUser(metrics);
         })
         .catch((err) => {
-          console500MSG(err, HTTP_CODE_TRANSACTION_ALERT);
+          console500MSG(err, HTTP_CODE_TRANSACTION_METRICS);
           mailUser();
         });
     }

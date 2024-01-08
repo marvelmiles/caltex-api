@@ -3,7 +3,7 @@ import { setFutureDate, getDaysDifference } from "../utils";
 import { isTodayDate } from "../utils/validators";
 import {
   createInvestmentDesc,
-  convertExponentToLarge
+  convertExponentToLarge,
 } from "../utils/serializers";
 import { formatToDecimalPlace } from "../utils/normalizers";
 
@@ -12,26 +12,26 @@ const schema = new mongoose.Schema(
     user: {
       type: mongoose.Types.ObjectId,
       required: "User id is required",
-      ref: "user"
+      ref: "user",
     },
 
     amount: {
       type: Number,
       required: "Amount to invest is required",
       validate: {
-        validator: function(v) {
+        validator: function (v) {
           if (v === Infinity) return false;
           return v >= this.minAmount && v <= this.maxAmount;
         },
-        message: function(props, doc) {
+        message: function (props, doc) {
           return `Investment amount must be an integer between ${
             doc.minAmount
           } and ${doc.maxAmount === Infinity ? "Unlimited" : doc.maxAmount}`;
-        }
+        },
       },
       get(v) {
         return Number(v) || 0;
-      }
+      },
     },
 
     startDate: {
@@ -40,8 +40,8 @@ const schema = new mongoose.Schema(
       validate: {
         validator: isTodayDate,
         message:
-          "Invalid date. Expect investment start date to be set to a future or current time epoch"
-      }
+          "Invalid date. Expect investment start date to be set to a future or current time epoch",
+      },
     },
     endDate: {
       type: Date,
@@ -80,26 +80,26 @@ const schema = new mongoose.Schema(
 
         return v;
       },
-      default: setFutureDate(14)
+      default: setFutureDate(14),
     },
     plan: {
       type: String,
       default: "starter",
-      enum: ["starter", "master", "professional"]
+      enum: ["starter", "master", "professional"],
     },
     tradeType: {
       type: String,
       enum: ["forex", "crypto"],
-      default: "forex"
+      default: "forex",
     },
     paymentType: {
       type: String,
       enum: ["fiat", "crypto"],
-      default: "fiat"
+      default: "fiat",
     },
     minAmount: {
       type: Number,
-      default: function() {
+      default: function () {
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
@@ -119,11 +119,11 @@ const schema = new mongoose.Schema(
               return 100;
           }
         }
-      }
+      },
     },
     maxAmount: {
       type: Number,
-      default: function() {
+      default: function () {
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
@@ -143,11 +143,11 @@ const schema = new mongoose.Schema(
               return 10000;
           }
         }
-      }
+      },
     },
     withdrawalFeePct: {
       type: Number,
-      default: function() {
+      default: function () {
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
@@ -167,11 +167,11 @@ const schema = new mongoose.Schema(
               return 10;
           }
         }
-      }
+      },
     },
     duration: {
       type: Number,
-      default: function() {
+      default: function () {
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
@@ -191,11 +191,11 @@ const schema = new mongoose.Schema(
               return 7;
           }
         }
-      }
+      },
     },
     roiPct: {
       type: Number,
-      default: function() {
+      default: function () {
         if (this.tradeType === "crypto") {
           switch (this.plan) {
             case "master":
@@ -215,7 +215,7 @@ const schema = new mongoose.Schema(
               return 1.0;
           }
         }
-      }
+      },
     },
     roi: {
       type: Number,
@@ -228,23 +228,23 @@ const schema = new mongoose.Schema(
         if (!v && this.amount && this.roiPct && this.duration)
           v = (this.roiPct / 100) * this.duration;
         return Number(v);
-      }
+      },
     },
     status: {
       type: String,
       enum: ["new", "invested", "rejected"],
-      default: "new"
+      default: "new",
     },
     description: {
       type: String,
-      default: function() {
+      default: function () {
         return createInvestmentDesc(this);
-      }
+      },
     },
     matured: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   {
     collection: "investment",
@@ -256,19 +256,19 @@ const schema = new mongoose.Schema(
         ret.id = ret._id;
 
         delete ret._id;
-      }
-    }
+      },
+    },
   }
 );
 
 schema.index({
-  endDate: 1
+  endDate: 1,
 });
 
-schema.virtual("totalAmount").get(function() {
+schema.virtual("totalAmount").get(function () {
   if (this.roi && this.amount) {
     return formatToDecimalPlace(this.amount + this.roi, true);
-  }
+  } else return this.amount || this.roi || 0;
 });
 
 export default mongoose.model("investment", schema);
