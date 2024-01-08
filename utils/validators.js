@@ -4,17 +4,19 @@ import { replaceString } from "./serializers";
 
 dotenv.config();
 
+console.log(process.env);
+
 export const isProdMode = process.env.NODE_ENV === "production";
 
-export const isEmail = str => {
+export const isEmail = (str) => {
   return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
     str
   );
 };
 
-export const isObjectId = id => mongoose.isObjectIdOrHexString(id);
+export const isObjectId = (id) => mongoose.isObjectIdOrHexString(id);
 
-export const isTodayDate = function(v) {
+export const isTodayDate = function (v) {
   const uDate = new Date(v);
   const date = new Date();
 
@@ -35,7 +37,7 @@ export const isTodayDate = function(v) {
   return isT;
 };
 
-export const isPassword = password => {
+export const isPassword = (password) => {
   if (password.length < 8) return "Weak";
 
   const hasUpperCase = /[A-Z]/.test(password);
@@ -61,7 +63,7 @@ export const isPassword = password => {
   return msg;
 };
 
-export const isObject = obj =>
+export const isObject = (obj) =>
   obj &&
   (typeof obj.toString === "function"
     ? obj.toString() === "[object Object]"
