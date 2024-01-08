@@ -14,7 +14,7 @@ import investmentRouter from "./routers/investment";
 import userRouter from "./routers/user";
 import transactionRouter from "./routers/transaction";
 import queryType from "query-types";
-import { isProdMode } from "./utils/validators";
+import { isProdMode } from "./config/constants";
 import timeout from "connect-timeout";
 import { errHandler } from "./middlewares";
 import miscRouter from "./routers/misc";
@@ -71,7 +71,8 @@ app
 
 console.log(
   process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"],
-  process.env.MONGODB_PROD_URI
+  process.env.MONGODB_PROD_URI,
+  isProdMode
 );
 
 mongoose
