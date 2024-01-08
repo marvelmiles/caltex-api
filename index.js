@@ -69,6 +69,11 @@ app
 
 // MONGOOSE SETUP
 
+console.log(
+  process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"],
+  process.env.MONGODB_PROD_URI
+);
+
 mongoose
   .connect(process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"], {
     useNewUrlParser: true,
