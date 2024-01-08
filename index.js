@@ -34,11 +34,14 @@ app
       optionsSuccessStatus: 200,
       credentials: true,
       origin: (origin = "", callback) => {
-        console.log(origin, "origin");
+        const allowedOrigins = [
+          CLIENT_ORIGIN.toLowerCase(),
+          SERVER_ORIGIN.toLowerCase(),
+        ];
 
-        const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
+        console.log(origin, allowedOrigins, "origin");
 
-        if (!origin || allowedOrigins.includes(origin)) {
+        if (!origin || allowedOrigins.includes(origin.toLowerCase())) {
           callback(null, true); // Allow the request
         } else {
           callback(createError(`${origin} not allowed by CORS`, 403)); // Deny the request
