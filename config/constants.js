@@ -1,6 +1,4 @@
-export const isProdMode = process.env.NODE_ENV === "production";
-
-console.log(isProdMode, process.env.NODE_ENV, " is...");
+import { isProdMode } from "../utils/validators";
 
 export const CLIENT_ORIGIN = isProdMode
   ? "https://app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"

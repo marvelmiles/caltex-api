@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 import { replaceString } from "./serializers";
 
-dotenv.config();
+export const isProdMode = process.env.NODE_ENV === "production";
+
+console.log(process.env.NODE_ENV, isProdMode);
 
 export const isEmail = (str) => {
   return /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i.test(
