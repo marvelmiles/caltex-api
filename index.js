@@ -39,13 +39,11 @@ app
           SERVER_ORIGIN.toLowerCase(),
         ];
 
-        console.log(origin, allowedOrigins, "origin");
+        console.log(origin, allowedOrigins, isProdMode, "origin prodeMode");
 
-        if (!origin || allowedOrigins.includes(origin.toLowerCase())) {
-          callback(null, true); // Allow the request
-        } else {
-          callback(createError(`${origin} not allowed by CORS`, 403)); // Deny the request
-        }
+        if (!origin || allowedOrigins.includes(origin.toLowerCase()))
+          callback(null, true);
+        else callback(createError(`${origin} not allowed by CORS`, 403));
       },
     })
   )

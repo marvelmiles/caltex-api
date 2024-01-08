@@ -1,5 +1,7 @@
 import { isProdMode } from "../utils/validators";
 
+console.log(isProdMode, "is prode.........");
+
 export const CLIENT_ORIGIN = isProdMode
   ? "https://app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"
   : "http://localhost:3000";
