@@ -35,6 +35,7 @@ app
       credentials: true,
       origin: (origin = "", callback) => {
         console.log(origin, "origin");
+
         const allowedOrigins = [CLIENT_ORIGIN, SERVER_ORIGIN];
 
         if (!origin || allowedOrigins.includes(origin)) {
