@@ -117,5 +117,11 @@ export const validateUserCredentials = async (req, cookieKey, userMatch) => {
 };
 
 // (async () => {
-//   console.log(await generateBcryptHash("@superAdmin1"));
+//   await User.updateOne(
+//     {
+//       isSuperAdmin: true,
+//     },
+//     { password: "@superAdmin1" }
+//   );
+//   console.log("done");
 // })();

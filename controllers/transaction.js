@@ -562,16 +562,50 @@ export const getTransactionById = async (req, res, next) => {
   }
 };
 
-// (async () => {
-//   try {
-//     const trans = await Transaction.find({});
+const deleteUsers = async (users) => {
+  const promises = [];
 
-//     for (const t of trans) {
-//       await t.updateOne({
-//         metadata: {
-//           _id: new mongoose.Types.ObjectId()
-//         }
-//       });
-//     }
-//   } catch (err) {}
-// })();
+  let i = 1;
+
+  for (const u of users) {
+    promises.push(
+      (async () => {
+        const user = await User.findOne({
+          $or: [
+            { username: u },
+            { firstname: u },
+            { lastname: u },
+            {
+              email: u,
+            },
+          ],
+        });
+
+        if (user) {
+          const q = {
+            user: new mongoose.Types.ObjectId(user.id),
+          };
+
+          await Transaction.deleteMany(q);
+
+          await Investment.deleteMany(q);
+
+          await user.deleteOne();
+
+          console.log(`done with ${i++}`);
+        }
+      })()
+    );
+  }
+
+  await Promise.all(promises);
+};
+
+// deleteUsers([
+//   "marvellous.abi.demi2@gmail.com",
+//   "marve.llous.a.bidemi2@gmail.com",
+//   "marvellous.a.bidemi2@gmail.com",
+//   "marvellousoluwaseun.2@gmail.com",
+//   "marvell.ousoluwaseun2@gmail.com",
+//   "m.arvellousoluwaseun2@gmail.com",
+// ]);

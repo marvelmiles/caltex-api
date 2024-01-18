@@ -111,8 +111,9 @@ export const updateUserById = async (req, res, next) => {
       })
     );
 
-    sendAdminMail(MAIL_TYPE.kyc, user);
+    (req.body.kycIds || req.body.kycDocs) && sendAdminMail(MAIL_TYPE.kyc, user);
   } catch (err) {
+    console.log(err.message);
     next(err);
   }
 };

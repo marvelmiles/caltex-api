@@ -259,11 +259,13 @@ export const sendNotificationMail = (
 
 export const sendAdminMail = (mailType, doc = {}) => {
   const getDetails = () =>
-    `Fullname: ${
-      doc.user.fullname
-    }, Date: ${doc.createdAt.toLocaleString()}, Amount: ${getCurrencySymbol(
-      doc.currency
-    )}${doc.amount}, Ref Id: ${doc._id}.`;
+    doc.currency
+      ? `Fullname: ${
+          doc.user.fullname
+        }, Date: ${doc.createdAt.toLocaleString()}, Amount: ${getCurrencySymbol(
+          doc.currency
+        )}${doc.amount}, Ref Id: ${doc._id}.`
+      : "";
 
   sendNotificationMail(MAIL_CONFIG.supportMail, {
     mailOpts: {

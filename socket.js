@@ -7,7 +7,7 @@ import { getCurrencySymbol } from "./utils/transaction";
 import { getUserMetrics } from "./utils/user";
 import { sendNotificationMail } from "./utils/file-handlers";
 
-export default (app, port = process.env.PORT || 8800) => {
+export default (app, port = process.env.PORT || 8080) => {
   app.listen(port, () => {
     console.log(`App listening on port ${port}`);
 
