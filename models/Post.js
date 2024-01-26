@@ -15,8 +15,16 @@ const schema = new mongoose.Schema(
       ref: "user",
       required: "Post author id is required",
     },
+    category: {
+      type: String,
+      required: "Post category is required",
+    },
     coverImage: {
       type: String,
+    },
+    tags: {
+      type: Array,
+      default: [],
     },
   },
   { versionKey: false, timestamps: true, collection: "post" }
