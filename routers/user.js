@@ -3,18 +3,17 @@ import {
   verifyToken,
   userExist,
   verifyAdminStatus,
-  verifyUserIdMatch
+  verifyUserIdMatch,
 } from "../middlewares";
 import {
   getUserInvestmentsById,
   updateUserById,
   getUserById,
   getUserTransactionsById,
-  verifyUserIdentity,
   getUserTransactionMetrics,
   getAllUsers,
   deleteUser,
-  updateUserKycStatus
+  updateUserKycStatus,
 } from "../controllers/user";
 import { uploadFile } from "../utils/file-handlers";
 

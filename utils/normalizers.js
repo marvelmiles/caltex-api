@@ -1,10 +1,10 @@
-export const convertToCamelCase = obj => {
+export const convertToCamelCase = (obj) => {
   if (typeof obj !== "object" || obj === null) {
     return obj;
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => convertToCamelCase(item));
+    return obj.map((item) => convertToCamelCase(item));
   }
 
   const camelObj = {};
@@ -22,7 +22,7 @@ export const convertToCamelCase = obj => {
 };
 
 export const createLookupPipeline = ({
-  from,
+  from = "user",
   localField,
   foreignField = "_id",
   as: lookupAs,
@@ -40,27 +40,33 @@ export const createLookupPipeline = ({
         localField,
         foreignField,
         as: lookupAs,
-        ...lookup
-      }
+        ...lookup,
+      },
     },
     {
       $addFields: {
         [lookupAs]: { $arrayElemAt: [`$${lookupAs}`, 0] },
-        id: "$_id"
-      }
+        id: "$_id",
+      },
     },
     {
       $match: strict
         ? {
-            [lookupAs]: { $ne: null, $exists: true }
+            [lookupAs]: { $ne: null, $exists: true },
           }
-        : {}
-    }
+        : {},
+    },
   ];
 };
 
-export const createSuccessBody = (config = {}) => {
-  const { data, message = "Request was successful", format = "json" } = config;
+export const createSuccessBody = (
+  config = {
+    message: "Request was successful",
+    data: {},
+    format: "json",
+  }
+) => {
+  const { data, message, format } = config;
 
   switch (format) {
     default:
@@ -71,7 +77,7 @@ export const createSuccessBody = (config = {}) => {
         statusCode: 200,
         status: 200,
         message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       };
   }
 };

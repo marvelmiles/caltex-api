@@ -1,10 +1,7 @@
 import mongoose from "mongoose";
 import { setFutureDate, getDaysDifference } from "../utils";
 import { isTodayDate } from "../utils/validators";
-import {
-  createInvestmentDesc,
-  convertExponentToLarge,
-} from "../utils/serializers";
+import { createInvestmentDesc } from "../utils/serializers";
 import { formatToDecimalPlace } from "../utils/normalizers";
 
 const schema = new mongoose.Schema(

@@ -56,7 +56,16 @@ export const sendMail = (
   });
 };
 
-export const uploadFile = (config = {}) => {
+export const uploadFile = (
+  config = {
+    dirPath: "avatars",
+    type: "image",
+    single: true,
+    defaultFieldName: "avatar",
+    bodySet: "",
+    required: true,
+  }
+) => {
   config = {
     dirPath: "avatars",
     type: "image",

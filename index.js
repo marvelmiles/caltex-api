@@ -18,6 +18,7 @@ import { isProdMode } from "./config/constants";
 import timeout from "connect-timeout";
 import { errHandler } from "./middlewares";
 import miscRouter from "./routers/misc";
+import postRouter from "./routers/post";
 
 // CONFIGURATIONS
 
@@ -65,6 +66,7 @@ app
   .use("/api/investments", investmentRouter)
   .use("/api/users", userRouter)
   .use("/api/transactions", transactionRouter)
+  .use("/api/posts", postRouter)
   .use("/api", miscRouter);
 
 // MONGOOSE SETUP
