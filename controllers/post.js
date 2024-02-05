@@ -42,6 +42,18 @@ export const getPostFeed = async (req, res, next) => {
   }
 };
 
+export const getPostById = async (req, res, next) => {
+  try {
+    res.json(
+      createSuccessBody({
+        data: await Post.findById(req.params.postId),
+      })
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const deletePostById = async (req, res, next) => {
   try {
     const { coverImage } =

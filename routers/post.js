@@ -1,6 +1,11 @@
 import express from "express";
 import { verifyAdminStatus, verifyToken } from "../middlewares";
-import { createPost, deletePostById, getPostFeed } from "../controllers/post";
+import {
+  createPost,
+  deletePostById,
+  getPostById,
+  getPostFeed,
+} from "../controllers/post";
 import { uploadFile } from "../utils/file-handlers";
 
 const postRouter = express.Router();
@@ -16,6 +21,7 @@ postRouter
     }),
     createPost
   )
+  .get("/:postId", getPostById)
   .get("/", getPostFeed)
   .delete("/:postId", verifyToken, verifyAdminStatus, deletePostById);
 

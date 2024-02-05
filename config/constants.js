@@ -4,6 +4,8 @@ export const CLIENT_ORIGIN = isProdMode
   ? "https://app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"
   : "http://localhost:3000";
 
+export const HOME_ORIGIN = "https://www.caltextrader.com";
+
 export const HTTP_401_MSG = "Authorization credentials is invalid";
 
 export const HTTP_403_MSG = "Access is forbidden";
