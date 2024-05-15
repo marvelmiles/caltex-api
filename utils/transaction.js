@@ -34,7 +34,7 @@ export const validateAccBalanace = async (
 };
 
 export const debitUserAcc = async (uid, amount, transId, investId) => {
-  if (!transId)
+  if (!transId) // use-case investment
     transId = (
       await new Transaction({
         amount,

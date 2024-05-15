@@ -20,19 +20,25 @@ export default (app, port = process.env.PORT || 8080) => {
           const mth = today.getMonth();
           const yr = today.getFullYear();
 
-          const startOfToday = new Date(yr, mth, date);
+          // Querying from last quarter ensures users
+          // who got skipped due, to a glitch or server down
+          // time gets their roi deposited.
+
+          const startOfLastQtr = new Date(yr, mth > 4 ? mth - 4 : 0, date);
 
           const nextDay = new Date(yr, mth, date + 1);
 
           const invs = await Investment.find(
             investQuery || {
               endDate: {
-                $gte: startOfToday,
+                $gte: startOfLastQtr,
                 $lt: nextDay,
               },
               matured: false,
             }
           );
+
+          // console.log(invs.length);
 
           for (const inv of invs) {
             await inv.updateOne({

@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 import Transaction from "../models/Transaction";
 import { calcSum } from "./transaction";
 
-export const getUserMetrics = async uid => {
+export const getUserMetrics = async (uid) => {
   console.log("getting metrics...", uid);
 
   const transMatch = {
     user: new mongoose.Types.ObjectId(uid),
-    transactionType: "deposit"
+    transactionType: "deposit",
   };
 
   const pipeline = [
@@ -17,28 +17,28 @@ export const getUserMetrics = async uid => {
           {
             $match: {
               ...transMatch,
-              status: "confirmed"
-            }
-          }
+              status: "confirmed",
+            },
+          },
         ],
         awaitingTransactions: [
           {
             $match: {
               ...transMatch,
-              status: "awaiting"
-            }
-          }
+              status: "awaiting",
+            },
+          },
         ],
         rejectedTransactions: [
           {
             $match: {
               ...transMatch,
-              status: "rejected"
-            }
-          }
-        ]
-      }
-    }
+              status: "rejected",
+            },
+          },
+        ],
+      },
+    },
   ];
 
   const trans = (await Transaction.aggregate(pipeline))[0];
@@ -56,6 +56,6 @@ export const getUserMetrics = async uid => {
 
   return {
     balance,
-    availableBalance: balance.availableBalance
+    availableBalance: balance.availableBalance,
   };
 };

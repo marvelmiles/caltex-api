@@ -3,12 +3,12 @@ import { createSuccessBody } from "../utils/normalizers";
 import {
   validateAccBalanace,
   debitUserAcc,
-  rewardReferrals
+  rewardReferrals,
 } from "../utils/transaction";
 import { console500MSG } from "../utils/error";
 import {
   HTTP_CODE_DEBIT_ERROR,
-  HTTP_CODE_REWARD_ERROR
+  HTTP_CODE_REWARD_ERROR,
 } from "../config/constants";
 
 export const setupUserInvestment = async (req, res, next) => {
@@ -26,7 +26,7 @@ export const setupUserInvestment = async (req, res, next) => {
     res.json(
       createSuccessBody({
         message: "Thank you for investing with us!",
-        data: await (await investment.save()).populate("user")
+        data: await (await investment.save()).populate("user"),
       })
     );
 
@@ -61,7 +61,7 @@ export const getInvestmentById = async (req, res, next) => {
       createSuccessBody({
         data: await Investment.findById(req.params.investmentId).populate(
           "user"
-        )
+        ),
       })
     );
   } catch (err) {

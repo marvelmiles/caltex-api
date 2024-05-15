@@ -52,6 +52,7 @@ export const sendMail = (
           mailOptions.to
         } at ${new Date()}`
       );
+    console.log("Mailed user");
     cb && cb(err, info);
   });
 };
