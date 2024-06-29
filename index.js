@@ -71,7 +71,7 @@ app
   .use("/api", miscRouter);
 
 // MONGOOSE SETUP
-console.log(isProdMode,process.env.NODE_ENV, 'is pro')
+
 mongoose
   .connect(process.env[isProdMode ? "MONGODB_PROD_URI" : "MONGODB_DEV_URI"], {
     useNewUrlParser: true,
