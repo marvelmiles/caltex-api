@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Api Documentation</title>
+    <link rel="stylesheet" href="index.css" />
+    <script src="polyfills.js"></script>
+  </head>
+
+  <body>
+    <h4>Temporary api documentation on caltex api</h4>
+    <h4>Base url: https://caltex-api.onrender.com</h4>
+    <h4>Api url: https://caltex-api.onrender.com/api</h4>
+
+    <h4>Result column specifiy the endpoint object e.g user apis returns user object defined in the get endpoint of that api</h4>
+
+    <div>
+      <strong>Error Body:</strong>
+      {
+        success: false,
+        message:String,
+        code:String,
+        status:Number
+      }
+    </div>
+
+    <div style="margin:20px 0px" > 
+      <strong>Success Body:</strong>
+      { success: true, data: data of result column }
+    </div>
+
+    <table>
+      <thead id="headerRow">
+        <tr>
+          <th>Reason</th>
+          <th>Method</th>
+          <th>Body</th>
+          <th>Result</th>
+          <th>
+            Endpoint
+          </th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+
+    <div class="content">
+
+      <h4 class="center">
+        User Apis Details</h4>
+
+        <p>User verification request body </p>
+        <div>
+          <strong>documentType:</strong> 
+         nationalId or driverLicense or passport
+        </div>
+ 
+                <ul>documentNumber one of</ul>
+                  <li> <strong>national id:</strong> [ "987654321B", "987654321", "567890123", "321098765", "678901234" ]</li>
+                  <li> <strong>passport:</strong>  [ "AB123456", "CD987654", "EF567890", "GH123456", "IJ987654" ]</li>
+                  <li><strong>license id: </strong> [ "A123-456-789-012", "B987-654-321-098", "C567-890-123-456", "D321-098-765-432", "E678-901-234-567" ]</li>
+                </ul>
+
+
+      <h4 class="center">Investment Apis Details</h4>
+
+      <div>
+        <strong>tradeType:</strong> String (one of ["forex","crypto"] default to
+        forex)
+      </div>
+      
+      <div>
+        <strong>plan:</strong> String (one of ["starter","professional","master"]
+        default to starter)
+      </div>
+       
+      <div>
+        <strong>duration:</strong> Number (difference between start and end date)
+      </div>
+        
+      <div>
+        <strong>totalAmount:</strong> Number (roi + amount)
+      </div>
+      
+      <div>
+        <strong>withdrawalFeePct: Number (Range 0 - 100)</strong>
+        <li>forex</li>
+        
+        <ul>
+    <li>starter: 10%</li>
+    <li>professional: 7%</li>
+    <li>master: 5%</li>
+  </ul>
+
+  <li>crypto</li>
+  <ul>
+    <li>starter: 5%</li>
+    <li>professional: 10%</li>
+    <li>master: 10%</li>
+  </ul>
+
+</div>
+
+<div>
+  <strong>roiPct: Number (Range 0 - 100)</strong>
+  <li>forex: 2.5%</li>
+
+  <li>crypto</li>
+  <ul>
+    <li>starter: 3.0%</li>
+    <li>professional: 3.5%</li>
+    <li>master: 4.0%</li>
+  </ul>
+
+</div>
+
+
+      <div>
+        <strong>minInvestment: Number </strong>
+         <li>forex</li>
+       
+         <ul>
+       <li>starter: 100</li>
+      <li>professional: 11000</li>
+        <li>master: 51000</li>
+     </ul>
+
+    <li>crypto</li>
+    <ul>
+      <li>starter: 300</li>
+      <li>professional: 16000</li>
+      <li>master: 101000</li>
+    </ul>
+
+    </div>
+<<<<<<< Updated upstream
+ 
+=======
+663464
+trumpet dizzy maximum
+
+clerk feature agree
+
+aware muffin quality
+
+glad fog distance
+>>>>>>> Stashed changes
+    <div>
+      <strong>maxInvestment: Number</strong>
+      <li>forex</li>
+    
+      <ul>
+        <li>starter: 10000</li>
+        <li>professional: 50000</li>
+        <li>master: 100000</li>
+      </ul>
+    
+      <li>crypto</li>
+      <ul>
+        <li>starter: 15000</li>
+        <li>professional: 101000</li>
+        <li>master: Unlimited</li>
+      </ul>
+    
+    </div>
+
+    <div>
+      <strong>duration: Number (investment duration in days)</strong>
+      <li>forex</li>
+    
+      <ul>
+        <li>starter: 7</li>
+        <li>professional: 14</li>
+        <li>master: 21</li>
+      </ul>
+    
+      <li>crypto</li>
+      <ul>
+        <li>starter: 10</li>
+        <li>professional: 20</li>
+        <li>master: 30</li>
+      </ul>
+    
+      <h4 class="center">
+        Transaction Apis Details</h4>
+
+ <div> Data recieved by each payment processor is dependent on the payment gateway
+</div>
+          <div>
+            <strong>process-fiat-payment</strong> by default stripe is used to handle payment. Payment method id is expect to be created
+            by strie.js createPaymentMethod
+          </div>
+          <div>
+            <strong>
+              process-crypto-payment</strong> by default coinbase is used
+
+          </div>
+    </div>
+
+
+
+    <p class="center">
+      &copy;2023 caltex-api v1
+    </p>
+    <script src="script.js"></script>
+  </body>
+</html>
+
+ 
