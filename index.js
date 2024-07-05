@@ -15,7 +15,6 @@ import userRouter from "./routers/user";
 import transactionRouter from "./routers/transaction";
 import queryType from "query-types";
 import { isProdMode } from "./config/constants";
-import timeout from "connect-timeout";
 import { errHandler } from "./middlewares";
 import miscRouter from "./routers/misc";
 import postRouter from "./routers/post";
@@ -58,7 +57,6 @@ app
   .use(express.urlencoded({ extended: true }))
   .use(queryType.middleware())
   .use(express.static("public"))
-  .use(timeout("60s"));
 
 // ROUTES
 
