@@ -7,7 +7,7 @@ export const firebaseCredential = admin.credential.cert({
   type: "service_account",
   project_id: "caltex-api",
   private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
-  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\\\n/gm, "\n"),
+  private_key: process.env.FIREBASE_PRIVATE_KEY,
   client_email: "firebase-adminsdk-hocuy@caltex-api.iam.gserviceaccount.com",
   client_id: "113433279036650090499",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
