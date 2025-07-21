@@ -1,4 +1,6 @@
-export const isProdMode = process.env.NODE_ENV === "production" || process.env.ENVIRONMENT === "production";
+export const isProdMode =
+  process.env.NODE_ENV === "production" ||
+  process.env.ENVIRONMENT === "production";
 
 export const CLIENT_ORIGIN = isProdMode
   ? "https://app.caltextrader.com" // "https://stupendous-sorbet-26cfc4.netlify.app"
@@ -52,7 +54,7 @@ export const MSG_ACCOUNT_DISABLED = `Your account as been disabled. To verify yo
 export const FIREBASE_BUCKET_NAME = "gs://caltex-api.appspot.com/";
 
 export const SERVER_ORIGIN = isProdMode
-  ? "https://caltex-api.glitch.me"
+  ? "https://caltex-api-yzhj.onrender.com"
   : "http://localhost:8080";
 
 export const COOKIE_PWD_RESET = "pwd_reset";
