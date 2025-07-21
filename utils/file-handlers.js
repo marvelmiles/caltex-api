@@ -196,7 +196,6 @@ export const uploadToFirebase = (file, config) =>
       }` +
       uniq() +
       path.extname(file.originalname);
-    
     const bucket = storage.bucket(FIREBASE_BUCKET_NAME);
     const fileRef = bucket.file(filename);
 
@@ -205,18 +204,10 @@ export const uploadToFirebase = (file, config) =>
         contentType: file.mimetype,
       },
     };
-    
-     
 
     const outstream = fileRef.createWriteStream(streamConfig);
-    
 
-    console.log("trying to upload to fb...");
-    
-    const handleError = (err) =>  {
-      console.log(err.message,' write error...');
-      reject(err);
-    };
+    const handleError = (err) => reject(err);
 
     const handleSuccess = () => {
       file.filename = filename;

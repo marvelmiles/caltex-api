@@ -41,8 +41,11 @@
     "@babel/core": "^7.23.7",
     "@babel/preset-env": "^7.23.7",
     "@babel/register": "^7.23.7"
+<<<<<<< HEAD
   },
   "engines": {
     "node": "16.x"
+=======
+>>>>>>> origin/main
   }
 }
